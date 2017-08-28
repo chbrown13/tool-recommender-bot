@@ -1,4 +1,4 @@
-package com.chbrown13.pull_rec.src;
+package com.chbrown13.pull_rec;
 
 import java.io.*;
 import java.util.*;
@@ -21,8 +21,10 @@ public class RepoManager {
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
-				Analyzer err = new Analyzer();
-				Analyzer.getFile(file.getString("raw_url"));
+				String srcFile = "src.java";
+				String outFile = "out.txt";
+				Analyzer.wgetFile(file.getString("raw_url"), srcFile);
+				Analyzer.errorProne(srcFile, outFile);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -68,3 +70,4 @@ public class RepoManager {
 		}
     }
 }
+
