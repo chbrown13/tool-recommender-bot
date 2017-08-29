@@ -10,10 +10,12 @@ public class RepoManager {
 
 	private Repo repo;
 	private String project;
+	private JsonObject master;
 
 	public RepoManager(Repo repo, String name) {
 		this.repo = repo;
 		this.project = name;
+		this.master = analyzeBase();
 	}
 	
 	private void analyze(Pull.Smart pull) {
@@ -22,9 +24,13 @@ public class RepoManager {
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
 				String srcFile = "src.java";
-				String outFile = "out.txt";
 				Analyzer.wgetFile(file.getString("raw_url"), srcFile);
-				Analyzer.errorProne(srcFile, outFile);
+				String log = Analyzer.errorProne(srcFile);
+				if(!log.isEmpty()) {
+					Analyzer.parseErrorProne(log);
+					//compare
+					//comment
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -58,6 +64,26 @@ public class RepoManager {
 			}
 		}
 		return requests;
+	}
+	
+	private JsonObject analyzeBase() {
+		System.out.println("Analyzing master branch...");
+		String log = null;
+		try{
+			BufferedReader br = new BufferedReader(new FileReader("master.txt"));
+			StringBuilder sb = new StringBuilder();
+		    String line = null;
+
+		    while ((line = br.readLine()) != null) {
+		        sb.append(line+"\n");
+			}
+	    	br.close();
+			log = sb.toString();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return Analyzer.parseErrorProne(log);
 	}
 
 	public static void main(String[] args) {

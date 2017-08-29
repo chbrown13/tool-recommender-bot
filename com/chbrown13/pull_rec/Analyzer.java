@@ -10,29 +10,6 @@ import javax.json.JsonObject;
 public class Analyzer {
 
 	public static JsonObject parseErrorProne(String file) {
-        /*File f = new File(file);
-        if (!f.exists()) {
-            System.err.println("file path not specified");
-        }
-        try {
-            //String regex = "^\w+.java\:\d+\:";
-
-            Scanner sc = new Scanner(f);
-
-            while (sc.hasNextLine()) {
-                System.out.println("Hello");
-                String line = sc.nextLine();
-                if (line != null) {
-                    //if (matcher.lookingAt(regex)) {
-                        System.out.println(line);
-
-                    //}
-                }
-            }   
-			sc.close();
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }*/
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = file.split("\n");
 		for(String line: lines) {
@@ -52,7 +29,7 @@ public class Analyzer {
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			BufferedWriter out = new BufferedWriter(new FileWriter(output));
 			while ((s = br.readLine()) != null) {
-				out.write(s);
+				out.write(s+"\n");
 			}
 			out.close();
 		} catch (IOException e) {
@@ -60,8 +37,21 @@ public class Analyzer {
 		}
 	}
 
-	public static void errorProne(String file, String output) {
-		System.out.println("error-prone");
+	public static String errorProne(String file) {
+		String cmd = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler " + file;
+		String output = "";
+		try {
+			Process p = Runtime.getRuntime().exec(cmd);	
+			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			String line;
+			while ((line = br.readLine()) != null) {
+			    output += line + "\n";
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return output;
 	}
 }
 
