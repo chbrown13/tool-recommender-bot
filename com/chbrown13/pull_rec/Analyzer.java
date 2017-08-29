@@ -1,9 +1,8 @@
 package com.chbrown13.pull_rec;
 
-import com.google.errorprone.*;
-import com.sun.tools.javac.main.Main.Result;
+//import com.google.errorprone.*;
+//import com.sun.tools.javac.main.Main.Result;
 import java.io.*;
-import java.net.*;
 import java.util.*;
 import javax.json.JsonObject;
 
@@ -18,23 +17,6 @@ public class Analyzer {
 			}
 		}
 		return null;
-	}
-
-	public static void wgetFile(String fileUrl, String output) {
-		String s;
-
-		try {
-			URL url = new URL(fileUrl);
-			InputStream in = url.openStream();
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			BufferedWriter out = new BufferedWriter(new FileWriter(output));
-			while ((s = br.readLine()) != null) {
-				out.write(s+"\n");
-			}
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public static String errorProne(String file) {

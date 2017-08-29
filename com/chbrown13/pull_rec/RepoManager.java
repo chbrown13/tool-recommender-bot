@@ -24,7 +24,7 @@ public class RepoManager {
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
 				String srcFile = "src.java";
-				Analyzer.wgetFile(file.getString("raw_url"), srcFile);
+				Utils.wgetFile(file.getString("raw_url"), srcFile);
 				String log = Analyzer.errorProne(srcFile);
 				if(!log.isEmpty()) {
 					Analyzer.parseErrorProne(log);
