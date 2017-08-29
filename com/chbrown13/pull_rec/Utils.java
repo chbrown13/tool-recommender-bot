@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 
 public class Utils {
+
 	public static void wgetFile(String fileUrl, String output) {
 		String s;
 
@@ -20,5 +21,23 @@ public class Utils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static String[] getCredentials(String filename) {
+		String[] creds = new String[2];
+		File file = new File(filename);
+		try {
+			int i = 0;
+		    Scanner sc = new Scanner(file);
+		    while (i < 2) {
+		        creds[i] = sc.nextLine();
+				i++;
+		    }
+		    sc.close();
+		} 
+		catch (FileNotFoundException e) {
+		    e.printStackTrace();
+		}
+		return creds;
 	}
 }

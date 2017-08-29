@@ -87,7 +87,8 @@ public class RepoManager {
 	}
 
 	public static void main(String[] args) {
-        RtGithub github = new RtGithub("<username>","<password>"); //git credentials
+		String[] acct = Utils.getCredentials(".github.creds");
+        RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
 		RepoManager manager = new RepoManager(repo, "RecommenderTest");
 		ArrayList<Pull.Smart> requests = manager.getRequests();
