@@ -43,12 +43,28 @@ public class Analyzer {
 	public String generateComment() {
 		String comment = Utils.BASE_COMMENT;
 		comment = comment.replace("{fixed}", "\n"+this.log+"\n");
-		if(this.similar.isEmpty()) {
+		if (this.similar.isEmpty()) {
 			comment = comment.replace("{errors}", ". ");
 		} else {
-			comment = comment.replace("{errors}", " such as:\n\n" + this.similar.get(0).getLog()+"\n\n");
+			comment = comment.replace("{errors}", " such as:\n\n" + this.getSimilarErrorsStr());
 		}
 		return comment;
+	}
+
+	public ArrayList<Analyzer> getSimilarErrors() {
+		return this.similar;
+	}
+	
+	public String getSimilarErrorsStr() {
+		String str = "";
+		for (Analyzer a: this.similar) {
+			str += this.log + "\n\n";
+		}
+		return str;
+	}
+
+	public void addSimilarError(Analyzer error) {
+		this.similar.add(error);
 	}
 
 	public String getLog() {
@@ -90,15 +106,28 @@ public class Analyzer {
 	public String getMessage() {
 		return this.message;
 	}
+	
+	public String getError() {
+		return this.error;
+	}
 
+	private static void getSimilar(Analyzer error, ArrayList<Analyzer> list) {
+		for (Analyzer a: list) {
+			if (a.getError().equals(error.getError()) && !a.getKey().equals(error.getKey())) {
+				error.addSimilarError(a);
+				a.addSimilarError(error);
+			}
+		}
+	}
 	public static List<Analyzer> parseErrorProne(String file) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = file.split("\n");
 		Analyzer temp = null;
 		ArrayList<Analyzer> list = new ArrayList<Analyzer>();
+		ArrayList<Analyzer> seen = new ArrayList<Analyzer>();
 		for (String line: lines) {
 			if (line.matches(regex)) {
-				if (temp != null) {	list.add(temp);	}
+				if (temp != null) {	list.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
 				String errorFileName = errorFilePath.substring(errorFilePath.lastIndexOf("/")+1);
@@ -112,6 +141,8 @@ public class Analyzer {
 				String errorKey = errorFilePath+":"+errorLine+":"+errorProne;
 				String errorMessage = error[3];
 				temp = new Analyzer(errorKey, errorFileName, errorFilePath, errorLine, errorProne, errorMessage, line);
+				seen.add(temp);
+				getSimilar(temp, seen);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}
