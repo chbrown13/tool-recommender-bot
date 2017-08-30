@@ -20,6 +20,7 @@ public class RepoManager {
 	
 	private void analyze(Pull.Smart pull) {
 		try {
+			ArrayList<String> fixed = new ArrayList<String>();
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
@@ -29,9 +30,11 @@ public class RepoManager {
 				if(!log.isEmpty()) {
 					List<Analyzer> fileChange = Analyzer.parseErrorProne(log);
 					for (Analyzer err: this.master) {
-						if (!fileChange.contains(err)) {
+						if (!fileChange.contains(err) && !fixed.contains(err.getKey())) {
 							System.out.println("Fixed: "+err.getKey());
-							//generateComment(a)
+							fixed.add(err.getKey());
+							String prComment = err.generateComment();
+							System.out.println(prComment);
 							//comment on PR
 						}
 					}

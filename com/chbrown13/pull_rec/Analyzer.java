@@ -14,6 +14,7 @@ public class Analyzer {
 	private String error;
 	private String message;
 	private String log;
+	private ArrayList<Analyzer> similar;
 
 	public Analyzer(String key, String name, String path, int line, String err, String msg, String log) {
 		this.key = key;
@@ -23,6 +24,7 @@ public class Analyzer {
 		this.error = err;
 		this.message = msg;
 		this.log = log;
+		this.similar = new ArrayList<Analyzer>();
 	}
 
 	public void print() {
@@ -36,6 +38,17 @@ public class Analyzer {
 		System.out.println("\tLog- ");
 		System.out.println(this.log);
 		System.out.println();
+	}
+
+	public String generateComment() {
+		String comment = Utils.BASE_COMMENT;
+		comment = comment.replace("{fixed}", "\n"+this.log+"\n");
+		if(this.similar.isEmpty()) {
+			comment = comment.replace("{errors}", ". ");
+		} else {
+			comment = comment.replace("{errors}", " such as:\n\n" + this.similar.get(0).getLog()+"\n\n");
+		}
+		return comment;
 	}
 
 	public String getLog() {
@@ -104,7 +117,7 @@ public class Analyzer {
 			}
 		}
 		if (temp != null) { list.add(temp); }
-		System.out.println(String.format("%d errors found", list.size()));
+		System.out.println(String.format("%d errors found", list.size()));	
 		return list;
 	}
 

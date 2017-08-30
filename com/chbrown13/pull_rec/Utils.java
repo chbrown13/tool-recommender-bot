@@ -6,6 +6,8 @@ import java.util.*;
 
 public class Utils {
 
+	public static final String BASE_COMMENT = "You fixed the following error in this Pull Request:\n{fixed}\nGoogle's Error Prone static analysis tool can be used to find more issues similar to this{errors}Check out http://errorprone.info for more information.";
+
 	public static void wgetFile(String fileUrl, String output) {
 		String s;
 
