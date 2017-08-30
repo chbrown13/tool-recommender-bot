@@ -10,7 +10,7 @@ public class RepoManager {
 
 	private Repo repo;
 	private String project;
-	private JsonObject master;
+	private List<Analyzer> master;
 
 	public RepoManager(Repo repo, String name) {
 		this.repo = repo;
@@ -27,9 +27,14 @@ public class RepoManager {
 				Utils.wgetFile(file.getString("raw_url"), srcFile);
 				String log = Analyzer.errorProne(srcFile);
 				if(!log.isEmpty()) {
-					Analyzer.parseErrorProne(log);
-					//compare
-					//comment
+					List<Analyzer> fileChange = Analyzer.parseErrorProne(log);
+					for (Analyzer err: this.master) {
+						if (!fileChange.contains(err)) {
+							System.out.println("Fixed: "+err.getKey());
+							//generateComment(a)
+							//comment on PR
+						}
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -38,7 +43,7 @@ public class RepoManager {
 	}
 
 	private ArrayList<Pull.Smart> getRequests() {
-		System.out.println("Getting pull requests...");
+		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("status","open");
@@ -66,7 +71,7 @@ public class RepoManager {
 		return requests;
 	}
 	
-	private JsonObject analyzeBase() {
+	private List<Analyzer> analyzeBase() {
 		System.out.println("Analyzing master branch...");
 		String log = null;
 		try{
