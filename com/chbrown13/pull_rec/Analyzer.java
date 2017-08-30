@@ -138,7 +138,7 @@ public class Analyzer {
 				} else {
 					errorProne = error[2].trim();
 				}
-				String errorKey = errorFilePath+":"+errorLine+":"+errorProne;
+				String errorKey = String.join(":", errorFilePath, error[1], errorProne);
 				String errorMessage = error[3];
 				temp = new Analyzer(errorKey, errorFileName, errorFilePath, errorLine, errorProne, errorMessage, line);
 				seen.add(temp);
