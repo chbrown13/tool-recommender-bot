@@ -14,6 +14,7 @@ public class Analyzer {
 	private String error;
 	private String message;
 	private String log;
+	private String commit;
 	private ArrayList<Analyzer> similar;
 
 	public Analyzer(String key, String name, String path, int line, String err, String msg, String log) {
@@ -95,6 +96,13 @@ public class Analyzer {
 		this.filepath = path;
 	}
 
+	public String getProjectPath(String project) {
+		if (this.filepath.startsWith(project+"/")) {
+			return this.filepath.replace(project+"/","");
+		}
+		return this.filepath;
+	}
+
 	public String getFileName() {
 		return this.filename;
 	}
@@ -109,6 +117,18 @@ public class Analyzer {
 	
 	public String getError() {
 		return this.error;
+	}
+
+	public int getLineNumber() {
+		return this.line;
+	}
+
+	public String getCommit() {
+		return this.commit;
+	}
+
+	public void setCommit(String hash) {
+		this.commit = hash;
 	}
 
 	private static void getSimilar(Analyzer error, ArrayList<Analyzer> list) {
@@ -153,7 +173,7 @@ public class Analyzer {
 	}
 
 	public static String errorProne(String file) {
-		String cmd = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler " + file;
+		String cmd = Utils.ERROR_PRONE_CMD.replace("{file}", file);
 		String output = "";
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);	

@@ -18,31 +18,41 @@ public class RepoManager {
 		this.master = analyzeBase();
 	}
 	
+	private void pullRequestComment(String comment, Pull.Smart pull, Analyzer error, JsonObject file) {
+		try {
+			PullComments pullComments = pull.comments();	
+			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, error.getCommit(), file.getString("filename"), error.getLineNumber()));	
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void analyze(Pull.Smart pull) {
 		try {
 			ArrayList<String> fixed = new ArrayList<String>();
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
-				String srcFile = "src.java";
-				Utils.wgetFile(file.getString("raw_url"), srcFile);
-				String log = Analyzer.errorProne(srcFile);
+				String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=")+4);
+				String tempFile = "src.java";
+				Utils.wgetFile(file.getString("raw_url"), tempFile);
+				String log = Analyzer.errorProne(tempFile);
 				if(!log.isEmpty()) {
-					List<Analyzer> fileChange = Analyzer.parseErrorProne(log);
+					List<Analyzer> changes = Analyzer.parseErrorProne(log);
 					for (Analyzer err: this.master) {
-						if (!fileChange.contains(err) && !fixed.contains(err.getKey())) {
+						if (!changes.contains(err) && !fixed.contains(err.getKey())) {
+							err.setCommit(commit);
 							System.out.println("Fixed: "+err.getKey());
 							fixed.add(err.getKey());
 							String prComment = err.generateComment();
-							System.out.println(prComment);
-							//comment on PR
+							pullRequestComment(prComment, pull, err, file);
 						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}	
 	}
 
 	private ArrayList<Pull.Smart> getRequests() {
