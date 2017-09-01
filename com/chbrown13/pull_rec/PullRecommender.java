@@ -119,6 +119,7 @@ public class PullRecommender {
 	 */
 	private List<ErrorProneItem> analyzeBase() {
 		System.out.println("Analyzing {project} master branch...".replace("{project}", this.project));
+		//Repo.Smart = new Repo.Smart(this.repo);
 		String log = null;
 		try{
 			BufferedReader br = new BufferedReader(new FileReader("master.txt"));
@@ -137,24 +138,49 @@ public class PullRecommender {
 		return ErrorProneItem.parseErrorProneOutput(log);
 	}
 
+
+
 	public static void main(String[] args) {
+		String[][] testRepos = {
+			{"chbrown13", "RecommenderTest"},
+			{"jMonkeyEngine", "jmonkeyengine"},
+			{"libgdx", "libgdx"}
+		};
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
-        Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
-		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
-		int recs = 0;
-		if (requests != null && !requests.isEmpty()) {
-			for (Pull.Smart pull: requests) {
-				recs += recommender.analyze(pull);
+		for (String[] project: testRepos) {
+			int recs = 0;
+			String recFile = "../"+project[1]+"_recs";
+			try {
+				try {
+					Scanner scanner = new Scanner(new File(recFile));
+					recs = scanner.nextInt();
+					scanner.close();
+				} catch (FileNotFoundException e) {
+					BufferedWriter bw = new BufferedWriter(new FileWriter(recFile));
+					bw.write("0");
+					bw.close();
+				}
+				Repo repo = github.repos().get(new Coordinates.Simple(project[0], project[1]));
+				PullRecommender recommender = new PullRecommender(repo);
+				ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+			
+				if (requests != null && !requests.isEmpty()) {
+					for (Pull.Smart pull: requests) {
+						recs += recommender.analyze(pull);
+					}
+				} else {
+					System.out.println("No new pull requests opened.");
+				}
+				BufferedWriter writer = new BufferedWriter(new FileWriter(recFile));
+				writer.write(Integer.toString(recs));
+				writer.close();
+			} catch (IOException e) {e.printStackTrace(); }
+			if (recs != 1) {
+				System.out.println(Integer.toString(recs)+" recommendations made.");
+			} else {
+				System.out.println("1 recommendation made.");
 			}
-		} else {
-			System.out.println("No new pull requests opened.");
-		}
-		if (recs != 1) {
-			System.out.println(Integer.toString(recs)+" recommendations made.");
-		} else {
-			System.out.println("1 recommendation made.");
 		}
     }
 }
