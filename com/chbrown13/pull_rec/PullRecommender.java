@@ -41,27 +41,41 @@ public class PullRecommender {
 	 * Analyze code of files in pull request and compare to master branch.
 	 *
 	 * @param pull   Current pull request
+	 * @return       Number of recommendations made
 	 */
-	private void analyze(Pull.Smart pull) {
+	private int analyze(Pull.Smart pull) {
+		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		int count = 0;
 		try {
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
-				ArrayList<String> recommended = new ArrayList<String>();
 				JsonObject file = fileit.next();
-				String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=")+4);
-				String tempFile = "src.java";
-				Utils.wgetFile(file.getString("raw_url"), tempFile);
-				String log = ErrorProneItem.analyzeCode(tempFile);
-				if(!log.isEmpty()) {
-					List<ErrorProneItem> changes = ErrorProneItem.parseErrorProneOutput(log);
-					for (ErrorProneItem epi: this.master) {
-						if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
-							System.out.println("Fixed: "+epi.getKey());
-							epi.setCommit(commit);
-							epi.setFilePath(file.getString("filename")); //Remove project directory from start
-							String prComment = epi.generateComment();
-							makeRecommendation(prComment, pull, epi);
-							recommended.add(epi.getKey());
+				String filename = file.getString("filename");
+				System.out.println(tempFile);
+				if (filename.endsWith(".java")) {
+					ArrayList<String> recommended = new ArrayList<String>();
+					String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=") + 4);
+					String tempFile = "";
+					if (filename.contains("/")) {
+						tempFile = filename.substring(filename.lastIndexOf("/") + 1);
+					} else {
+						tempFile = filename; //file is in top directory
+					}
+					Utils.wgetFile(file.getString("raw_url"), tempFile);
+					String log = ErrorProneItem.analyzeCode(tempFile);
+					System.out.println(log);
+					if(!log.isEmpty()) {
+						List<ErrorProneItem> changes = ErrorProneItem.parseErrorProneOutput(log);
+						for (ErrorProneItem epi: this.master) {
+							if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
+								count++;
+								System.out.println("Fixed: "+epi.getKey());
+								epi.setCommit(commit);
+								epi.setFilePath(filename); //Relative path in project directory
+								String prComment = epi.generateComment();
+								//makeRecommendation(prComment, pull, epi);
+								recommended.add(epi.getKey());
+							}
 						}
 					}
 				}
@@ -69,6 +83,7 @@ public class PullRecommender {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
+		return count;
 	}
 
 	/**
@@ -85,9 +100,9 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (pull.number() >= 20) { //if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
-					System.out.println(pull.url());
+					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -103,7 +118,7 @@ public class PullRecommender {
 	 * @return   List of errors
 	 */
 	private List<ErrorProneItem> analyzeBase() {
-		System.out.println("Analyzing master branch...");
+		System.out.println("Analyzing {project} master branch...".replace("{project}", this.project));
 		String log = null;
 		try{
 			BufferedReader br = new BufferedReader(new FileReader("master.txt"));
@@ -128,12 +143,18 @@ public class PullRecommender {
         Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		int recs = 0;
 		if (requests != null && !requests.isEmpty()) {
 			for (Pull.Smart pull: requests) {
-				recommender.analyze(pull);
+				recs += recommender.analyze(pull);
 			}
 		} else {
 			System.out.println("No new pull requests opened.");
+		}
+		if (recs != 1) {
+			System.out.println(Integer.toString(recs)+" recommendations made.");
+		} else {
+			System.out.println("1 recommendation made.");
 		}
     }
 }
