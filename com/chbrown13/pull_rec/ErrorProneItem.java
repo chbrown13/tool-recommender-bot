@@ -5,6 +5,9 @@ package com.chbrown13.pull_rec;
 import java.io.*;
 import java.util.*;
 
+/**
+ * The ErrorProneItem class contains methods concerning the ErrorProne static analysis tool and an object storing information for a bug reported.
+ */
 public class ErrorProneItem {
 
 	private String key;
@@ -17,17 +20,23 @@ public class ErrorProneItem {
 	private String commit;
 	private ArrayList<ErrorProneItem> similar;
 
-	public ErrorProneItem(String key, String name, String path, int line, String err, String msg, String log) {
-		this.key = key;
+	public ErrorProneItem(String name, String path, String line, String error, String msg, String hash, String log) {
+		this.key = String.join(":", path, line, error);
 		this.filename = name;
 		this.filepath = path;
-		this.line = line;
-		this.error = err;
+		this.line = Integer.parseInt(line);
+		this.error = error;
 		this.message = msg;
+		this.commit = hash;
 		this.log = log;
 		this.similar = new ArrayList<ErrorProneItem>();
 	}
 
+	/**
+	 * Creates comment to recommend ErrorProne for a Github pull request.
+	 *
+	 * @return   Message containing the fixed error and other similar errors found
+	 */
 	public String generateComment() {
 		String comment = Utils.BASE_COMMENT;
 		comment = comment.replace("{fixed}", "\n"+this.log+"\n");
@@ -39,10 +48,20 @@ public class ErrorProneItem {
 		return comment;
 	}
 
+	/**
+	 * Gets errors similar to the current error.
+	 *
+	 * @return   List of other ErrorProneItems with the same error
+	 */
 	public ArrayList<ErrorProneItem> getSimilarErrors() {
 		return this.similar;
 	}
 	
+	/**
+	 * Gets String representation of other similar errors.
+	 *
+	 * @return   Logs of all errors similar to the current ErrorProneItem
+	 */
 	public String getSimilarErrorsStr() {
 		String str = "";
 		for (ErrorProneItem epi: this.similar) {
@@ -51,73 +70,138 @@ public class ErrorProneItem {
 		return str;
 	}
 
+	/**
+	 * Adds an ErrorProneItem with a similar error to current item's list.
+	 *
+	 * @param error   ErrorProneItem with the same error message as current object
+	 */
 	public void addSimilarError(ErrorProneItem error) {
 		this.similar.add(error);
 	}
-
+	
+	/**
+	 * Gets ErrorProne static analysis output for current error
+	 *
+	 * @return   ErrorProne error message
+	 */
 	public String getLog() {
 		return this.log;
 	}
-
-	public void setLog(String log) {
-		this.log = log;
-	}
-
+	
+	/**
+	 * Appends ErrorProne output to the log.
+	 *
+ 	 * @param log   Message to add to log
+	 */
 	public void addLog(String log) {
 		this.log += "\n"+log;
 	}
-
+	
+	/**
+	 * Gets key to uniquely identify ErrorProneItems
+	 *
+	 * @return   String key for ErrorProneItem
+	 */
 	public String getKey() {
 		return this.key;
 	}
 
-	public void setKey(String key) {
-		this.key = key;
-	}
-
+	/**
+	 * Gets filepath to where error was reported.
+	 *
+ 	 * @return   String filepath
+	 */
 	public String getFilePath() {
 		return this.filepath;
 	}
 
+	/**
+	 * Sets the filepath for ErrorProne error.
+	 *
+	 * @param path   Filepath to error
+	 */
 	public void setFilePath(String path) {
 		this.filepath = path;
 	}
 
-	public String getProjectPath(String project) {
-		if (this.filepath.startsWith(project+"/")) {
-			return this.filepath.replace(project+"/","");
-		}
-		return this.filepath;
-	}
-
+	/**
+	 * Gets filename of file containing ErrorProne error reported.
+	 *
+ 	 * @return   String filepath
+	 */
 	public String getFileName() {
 		return this.filename;
 	}
 
+	/**
+	 * Sets the filename for ErrorProne error.
+	 *
+	 * @param path   Filename of file with error
+	 */
 	public void setFileName(String file) {
 		this.filename = file;
 	}
 
+	/**
+	 * Gets the error message from ErrorProne analysis output.
+	 *
+	 * @return   Error message
+	 */
 	public String getMessage() {
 		return this.message;
 	}
 	
+	/**
+	 * Gets the name of the error reported in ErrorProne output.
+	 *
+	 * @return   Error name
+	 */
 	public String getError() {
 		return this.error;
 	}
 
+	/**
+	 * Gets the line number in file where error was found.
+	 *
+	 * @return   Line number
+	 */
 	public int getLineNumber() {
 		return this.line;
 	}
 
+	/**
+	 * Gets line number where error was found as a string.
+	 *
+	 * @return   String representation of line number
+	 */
+	public String getLineNumberStr() {
+		return Integer.toString(this.line);
+	}
+
+	/**
+	 * Gets hash of project commit where error was found.
+	 *
+	 * @return   git commit hash
+	 */
 	public String getCommit() {
 		return this.commit;
 	}
 
+	/**
+	 * Sets Github commit hash for ErrorProne error output.
+	 *
+	 * @param hash   git commit hash
+	 */
 	public void setCommit(String hash) {
 		this.commit = hash;
 	}
 
+	/**
+	 * Checks if ErrorProne reported multiple instances of the same error.
+	 *
+	 * @param error   Current ErrorProneItem
+	 * @param list    List of previous ErrorProneItems
+	 */
 	private static void checkSimilarError(ErrorProneItem error, ArrayList<ErrorProneItem> list) {
 		for (ErrorProneItem epi: list) {
 			if (epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey())) {
@@ -127,6 +211,12 @@ public class ErrorProneItem {
 		}
 	}
 
+	/**
+	 * Parses output from ErrorProne static analysis of code and creates objects.
+	 *
+	 * @param file   Name of file containing ErrorProne output
+	 * @return       List of ErrrorProneItems
+	  */
 	public static List<ErrorProneItem> parseErrorProneOutput(String file) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = file.split("\n");
@@ -139,16 +229,15 @@ public class ErrorProneItem {
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
 				String errorFileName = errorFilePath.substring(errorFilePath.lastIndexOf("/")+1);
-				int errorLine = Integer.parseInt(error[1]);
+				String errorLine = error[1];
 				String errorProne;
 				if (error[3].contains("[")) {
 					errorProne = error[3].substring(error[3].indexOf("[")+1,error[3].indexOf("]"));
 				} else {
 					errorProne = error[2].trim();
 				}
-				String errorKey = String.join(":", errorFilePath, error[1], errorProne);
 				String errorMessage = error[3];
-				temp = new ErrorProneItem(errorKey, errorFileName, errorFilePath, errorLine, errorProne, errorMessage, line);
+				temp = new ErrorProneItem(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, null, line);
 				seen.add(temp);
 				checkSimilarError(temp, seen);
 			} else if (temp != null) {
@@ -156,10 +245,17 @@ public class ErrorProneItem {
 			}
 		}
 		if (temp != null) { list.add(temp); }
-		System.out.println(String.format("%d errors found", list.size()));	
+		System.out.println(String.format("%d error(s) found", list.size()));	
 		return list;
 	}
 
+	/**
+	 * Runs ErrorProne static analysis tool on a java file.
+	 * TODO: run ErrorProne from source code
+	 *
+	 * @param file   Name of file to analyze
+	 * @return       ErrorProne results
+	 */
 	public static String analyzeCode(String file) {
 		String cmd = Utils.ERROR_PRONE_CMD.replace("{file}", file);
 		String output = "";
@@ -177,6 +273,11 @@ public class ErrorProneItem {
 		return output;
 	}
 
+	/**
+	 * Compare ErrorProneItem objects based on key
+	 *
+	 * @param o   ErrorProneItem
+	 */
 	@Override
  	public boolean equals(Object o) {
         if (o instanceof ErrorProneItem){
@@ -186,6 +287,11 @@ public class ErrorProneItem {
 		return false;
   	}
 
+	/**
+	 * Hash ErrorProneItem objects based on class variables.
+	 *
+	 * @return   Hash value
+	 */
 	@Override
 	public int hashCode() {
 		return Objects.hash(key, filename, filepath, line, error, message, log, commit, similar);
