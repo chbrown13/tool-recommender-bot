@@ -6,19 +6,19 @@ import com.jcabi.github.*;
 import java.util.concurrent.TimeUnit;
 import javax.json.JsonObject;
 			
-public class RepoManager {
+public class PullRecommender {
 
 	private Repo repo;
 	private String project;
-	private List<Analyzer> master;
+	private List<ErrorProneItem> master;
 
-	public RepoManager(Repo repo, String name) {
+	public PullRecommender(Repo repo) {
 		this.repo = repo;
-		this.project = name;
+		this.project = repo.coordinates().repo();
 		this.master = analyzeBase();
 	}
 	
-	private void pullRequestComment(String comment, Pull.Smart pull, Analyzer error, JsonObject file) {
+	private void makeRecommendation(String comment, Pull.Smart pull, ErrorProneItem error, JsonObject file) {
 		try {
 			PullComments pullComments = pull.comments();	
 			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, error.getCommit(), file.getString("filename"), error.getLineNumber()));	
@@ -36,16 +36,16 @@ public class RepoManager {
 				String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=")+4);
 				String tempFile = "src.java";
 				Utils.wgetFile(file.getString("raw_url"), tempFile);
-				String log = Analyzer.errorProne(tempFile);
+				String log = ErrorProneItem.analyzeCode(tempFile);
 				if(!log.isEmpty()) {
-					List<Analyzer> changes = Analyzer.parseErrorProne(log);
-					for (Analyzer err: this.master) {
-						if (!changes.contains(err) && !fixed.contains(err.getKey())) {
-							err.setCommit(commit);
-							System.out.println("Fixed: "+err.getKey());
-							fixed.add(err.getKey());
-							String prComment = err.generateComment();
-							pullRequestComment(prComment, pull, err, file);
+					List<ErrorProneItem> changes = ErrorProneItem.parseErrorProneOutput(log);
+					for (ErrorProneItem epi: this.master) {
+						if (!changes.contains(epi) && !fixed.contains(epi.getKey())) {
+							epi.setCommit(commit);
+							System.out.println("Fixed: "+epi.getKey());
+							fixed.add(epi.getKey());
+							String prComment = epi.generateComment();
+							makeRecommendation(prComment, pull, epi, file);
 						}
 					}
 				}
@@ -55,7 +55,7 @@ public class RepoManager {
 		}	
 	}
 
-	private ArrayList<Pull.Smart> getRequests() {
+	private ArrayList<Pull.Smart> getPullRequests() {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -84,7 +84,7 @@ public class RepoManager {
 		return requests;
 	}
 	
-	private List<Analyzer> analyzeBase() {
+	private List<ErrorProneItem> analyzeBase() {
 		System.out.println("Analyzing master branch...");
 		String log = null;
 		try{
@@ -101,17 +101,21 @@ public class RepoManager {
 			e.printStackTrace();
 		}
 		
-		return Analyzer.parseErrorProne(log);
+		return ErrorProneItem.parseErrorProneOutput(log);
 	}
 
 	public static void main(String[] args) {
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
-		RepoManager manager = new RepoManager(repo, "RecommenderTest");
-		ArrayList<Pull.Smart> requests = manager.getRequests();
-		for (Pull.Smart pull: requests) {
-			manager.analyze(pull);
+		PullRecommender recommender = new PullRecommender(repo);
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		if (!requests.isEmpty()) {
+			for (Pull.Smart pull: requests) {
+				recommender.analyze(pull);
+			}
+		} else {
+			System.out.println("No new pull requests found.");
 		}
     }
 }

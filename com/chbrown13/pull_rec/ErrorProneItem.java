@@ -5,7 +5,7 @@ package com.chbrown13.pull_rec;
 import java.io.*;
 import java.util.*;
 
-public class Analyzer {
+public class ErrorProneItem {
 
 	private String key;
 	private String filename;
@@ -15,9 +15,9 @@ public class Analyzer {
 	private String message;
 	private String log;
 	private String commit;
-	private ArrayList<Analyzer> similar;
+	private ArrayList<ErrorProneItem> similar;
 
-	public Analyzer(String key, String name, String path, int line, String err, String msg, String log) {
+	public ErrorProneItem(String key, String name, String path, int line, String err, String msg, String log) {
 		this.key = key;
 		this.filename = name;
 		this.filepath = path;
@@ -25,20 +25,7 @@ public class Analyzer {
 		this.error = err;
 		this.message = msg;
 		this.log = log;
-		this.similar = new ArrayList<Analyzer>();
-	}
-
-	public void print() {
-		System.out.println();
-		System.out.println("\tKey- "+this.key);
-		System.out.println("\tFilepath- "+this.filepath);
-		System.out.println("\tFilename- "+this.filename);
-		System.out.println("\tLine Number- "+this.line);
-		System.out.println("\tError- "+this.error);
-		System.out.println("\tError Message- "+this.message);
-		System.out.println("\tLog- ");
-		System.out.println(this.log);
-		System.out.println();
+		this.similar = new ArrayList<ErrorProneItem>();
 	}
 
 	public String generateComment() {
@@ -52,19 +39,19 @@ public class Analyzer {
 		return comment;
 	}
 
-	public ArrayList<Analyzer> getSimilarErrors() {
+	public ArrayList<ErrorProneItem> getSimilarErrors() {
 		return this.similar;
 	}
 	
 	public String getSimilarErrorsStr() {
 		String str = "";
-		for (Analyzer a: this.similar) {
-			str += this.log + "\n\n";
+		for (ErrorProneItem epi: this.similar) {
+			str += epi.log + "\n\n";
 		}
 		return str;
 	}
 
-	public void addSimilarError(Analyzer error) {
+	public void addSimilarError(ErrorProneItem error) {
 		this.similar.add(error);
 	}
 
@@ -131,20 +118,21 @@ public class Analyzer {
 		this.commit = hash;
 	}
 
-	private static void getSimilar(Analyzer error, ArrayList<Analyzer> list) {
-		for (Analyzer a: list) {
-			if (a.getError().equals(error.getError()) && !a.getKey().equals(error.getKey())) {
-				error.addSimilarError(a);
-				a.addSimilarError(error);
+	private static void checkSimilarError(ErrorProneItem error, ArrayList<ErrorProneItem> list) {
+		for (ErrorProneItem epi: list) {
+			if (epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey())) {
+				error.addSimilarError(epi);
+				epi.addSimilarError(error);
 			}
 		}
 	}
-	public static List<Analyzer> parseErrorProne(String file) {
+
+	public static List<ErrorProneItem> parseErrorProneOutput(String file) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = file.split("\n");
-		Analyzer temp = null;
-		ArrayList<Analyzer> list = new ArrayList<Analyzer>();
-		ArrayList<Analyzer> seen = new ArrayList<Analyzer>();
+		ErrorProneItem temp = null;
+		ArrayList<ErrorProneItem> list = new ArrayList<ErrorProneItem>();
+		ArrayList<ErrorProneItem> seen = new ArrayList<ErrorProneItem>();
 		for (String line: lines) {
 			if (line.matches(regex)) {
 				if (temp != null) {	list.add(temp); }
@@ -160,9 +148,9 @@ public class Analyzer {
 				}
 				String errorKey = String.join(":", errorFilePath, error[1], errorProne);
 				String errorMessage = error[3];
-				temp = new Analyzer(errorKey, errorFileName, errorFilePath, errorLine, errorProne, errorMessage, line);
+				temp = new ErrorProneItem(errorKey, errorFileName, errorFilePath, errorLine, errorProne, errorMessage, line);
 				seen.add(temp);
-				getSimilar(temp, seen);
+				checkSimilarError(temp, seen);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}
@@ -172,7 +160,7 @@ public class Analyzer {
 		return list;
 	}
 
-	public static String errorProne(String file) {
+	public static String analyzeCode(String file) {
 		String cmd = Utils.ERROR_PRONE_CMD.replace("{file}", file);
 		String output = "";
 		try {
@@ -191,8 +179,8 @@ public class Analyzer {
 
 	@Override
  	public boolean equals(Object o) {
-        if (o instanceof Analyzer){
-			Analyzer a = (Analyzer) o;
+        if (o instanceof ErrorProneItem){
+			ErrorProneItem a = (ErrorProneItem) o;
             return a.getKey() == this.key;
         }
 		return false;
@@ -200,7 +188,7 @@ public class Analyzer {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, filename, filepath, line, error, message, log);
+		return Objects.hash(key, filename, filepath, line, error, message, log, commit, similar);
 	}
 }
 

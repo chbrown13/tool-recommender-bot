@@ -10,17 +10,6 @@ public class Utils {
 
 	public static String ERROR_PRONE_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.1.jar com.google.errorprone.ErrorProneCompiler {file}";
 	
-	public static String COMMENT_CMD = "curl --user \"chbrown13:git_down1\" --data '{\"body\":\"java test\", \"commit_id\":\"7397eba35d2de962c00bafd2e734e32fa05f65eb\", \"path\":\"README.md\", \"position\":4}' -H \"Content-Type: application/json\" https://api.github.com/repos/chbrown13/RecommenderTest/pulls/20/comments -v";
-
-	public static void postComment() {
-		try {
-			Process p = Runtime.getRuntime().exec(COMMENT_CMD);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	}
-
 	public static void wgetFile(String fileUrl, String output) {
 		String s;
 
