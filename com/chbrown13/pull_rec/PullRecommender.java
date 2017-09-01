@@ -50,7 +50,7 @@ public class PullRecommender {
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
 				String filename = file.getString("filename");
-				System.out.println(tempFile);
+				System.out.println(filename);
 				if (filename.endsWith(".java")) {
 					ArrayList<String> recommended = new ArrayList<String>();
 					String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=") + 4);
