@@ -73,7 +73,6 @@ public class PullRecommender {
 
 	/**
 	 * Searches for new pull requests opened for a Github repository every 15 minutes.
-	 * TODO: Remove test condition for pull 23
 	 *
 	 * @return   List of new pull requests
 	 */
@@ -86,18 +85,10 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				/*if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
 					System.out.println(pull.url());
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				return null;
-			}*/
-			if (pull.number() >= 23) {
-				requests.add(pull);
-				System.out.println(pull.url());
-			}
 			} catch (IOException e) {
 				e.printStackTrace();
 				return null;
@@ -142,7 +133,7 @@ public class PullRecommender {
 				recommender.analyze(pull);
 			}
 		} else {
-			System.out.println("No new pull requests found.");
+			System.out.println("No new pull requests opened.");
 		}
     }
 }

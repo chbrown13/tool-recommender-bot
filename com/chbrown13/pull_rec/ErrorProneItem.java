@@ -245,7 +245,7 @@ public class ErrorProneItem {
 			}
 		}
 		if (temp != null) { list.add(temp); }
-		System.out.println(String.format("%d error(s) found", list.size()));	
+		System.out.println(String.format("%d error(s) found.", list.size()));	
 		return list;
 	}
 
