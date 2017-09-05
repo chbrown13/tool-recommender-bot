@@ -148,7 +148,7 @@ public class PullRecommender {
 	public static void main(String[] args) {
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
-        Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
+        Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
 		if (requests != null && !requests.isEmpty()) {
