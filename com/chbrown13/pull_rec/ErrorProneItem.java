@@ -39,12 +39,13 @@ public class ErrorProneItem {
 	 */
 	public String generateComment() {
 		String comment = Utils.BASE_COMMENT;
-		comment = comment.replace("{fixed}", "\n"+this.log+"\n");
+		comment = comment.replace("{fixed}", this.log);
 		if (this.similar.isEmpty()) {
 			comment = comment.replace("{similar}", "");
 		} else {
 			comment = comment.replace("{similar}", "Error Prone also found similar issues in " + this.getSimilarErrorsStr());
 		}
+		System.out.println(comment);
 		return comment;
 	}
 
@@ -204,7 +205,7 @@ public class ErrorProneItem {
 	 */
 	private static void checkSimilarError(ErrorProneItem error, ArrayList<ErrorProneItem> list) {
 		for (ErrorProneItem epi: list) {
-			if (epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey())) {
+			if (epi.getMessage().equals(error.getMessage()) && epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey())) {
 				error.addSimilarError(epi);
 				epi.addSimilarError(error);
 			}
@@ -222,9 +223,11 @@ public class ErrorProneItem {
 		String[] lines = file.split("\n");
 		ErrorProneItem temp = null;
 		ArrayList<ErrorProneItem> list = new ArrayList<ErrorProneItem>();
-		ArrayList<ErrorProneItem> seen = new ArrayList<ErrorProneItem>();
 		for (String line: lines) {
-			if (line.matches(regex)) {
+			if (line.matches("^\\d+\\serror[s]*$")) {
+				continue;
+			}
+			else if (line.matches(regex)) {
 				if (temp != null) {	list.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
@@ -238,14 +241,17 @@ public class ErrorProneItem {
 				}
 				String errorMessage = error[3];
 				temp = new ErrorProneItem(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, null, line);
-				seen.add(temp);
-				checkSimilarError(temp, seen);
+				checkSimilarError(temp, list);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}
 		}
 		if (temp != null) { list.add(temp); }
-		System.out.println(String.format("%d error(s) found.", list.size()));	
+		if (list.size() != 1) {
+			System.out.println("{n} errors found.".replace("{n}", Integer.toString(list.size())));
+		} else { 
+			System.out.println("1 error found.");
+		}
 		return list;
 	}
 
