@@ -23,10 +23,10 @@ public class PullRecommender {
 	}
 
 	/**
-	 * Gets the number of recommendations made/
+	 * Gets the number of recommendations made
 	 *
 	 * @return   count of recommendations
-     */
+         */
 	private int getRecommendationCount() {
 		return this.recs;
 	}
