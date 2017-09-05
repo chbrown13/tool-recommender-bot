@@ -14,7 +14,7 @@ public class PullRecommender {
 	private Repo repo;
 	private String project;
 	private List<ErrorProneItem> master;
-	private int recs;
+	private static int recs;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
