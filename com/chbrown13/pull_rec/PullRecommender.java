@@ -24,20 +24,14 @@ public class PullRecommender {
 	}
 	
 	/**
-	 * Post message recommending ErrorProne to Github on pull request fixing error.
+	 * Add to count of recommendations for repository.
 	 *
 	 * @param comment   Comment with recommendation
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
 	private void makeRecommendation(String comment, Pull.Smart pull, ErrorProneItem error) {
-		try {
-			PullComments pullComments = pull.comments();	
-			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, error.getCommit(), error.getFilePath(), error.getLineNumber()));	
-			this.recs += 1;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		this.recs += 1;
 	}
 
 	/**
@@ -76,7 +70,7 @@ public class PullRecommender {
 								epi.setCommit(commit);
 								epi.setFilePath(filename); //Relative path in project directory
 								String prComment = epi.generateComment();
-								//makeRecommendation(prComment, pull, epi);
+								makeRecommendation(prComment, pull, epi);
 								recommended.add(epi.getKey());
 							}
 						}
