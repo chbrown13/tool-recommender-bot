@@ -25,10 +25,19 @@ public class PullRecommender {
 	/**
 	 * Gets the number of recommendations made
 	 *
-	 * @return   count of recommendations
-         */
-	private int getRecommendationCount() {
+	 * @return   Count of recommendations
+     */
+	public int getRecommendationCount() {
 		return this.recs;
+	}
+
+	/**
+	 * Gets Error Prone errors found in master branch of repository.
+	 *
+	 * @return   List of errors in master branch
+	 */
+	public List<ErrorProneItem> getBaseAnalysis() {
+		return this.master;
 	}
 	
 	/**
@@ -68,19 +77,21 @@ public class PullRecommender {
 					}
 					Utils.wgetFile(file.getString("raw_url"), tempFile);
 					String log = ErrorProneItem.analyzeCode(tempFile);
+					List<ErrorProneItem> changes;
 					if(!log.isEmpty()) {
-						System.out.println(log);
-						List<ErrorProneItem> changes = ErrorProneItem.parseErrorProneOutput(log);
-						for (ErrorProneItem epi: this.master) {
-							if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
-								count++;
-								System.out.println("Fixed: "+epi.getKey());
-								epi.setCommit(commit);
-								epi.setFilePath(filename); //Relative path in project directory
-								String prComment = epi.generateComment();
-								makeRecommendation(prComment, pull, epi);
-								recommended.add(epi.getKey());
-							}
+						changes = ErrorProneItem.parseErrorProneOutput(log);
+					} else {
+						changes = new ArrayList<ErrorProneItem>();
+					}
+					for (ErrorProneItem epi: this.master) {
+						if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
+							count++;
+							System.out.println("Fixed: "+epi.getKey());
+							epi.setCommit(commit);
+							epi.setFilePath(filename); //Relative path in project directory
+							String prComment = epi.generateComment();
+							makeRecommendation(prComment, pull, epi);
+							recommended.add(epi.getKey());
 						}
 					}
 				}
@@ -148,13 +159,17 @@ public class PullRecommender {
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
-		if (requests != null && !requests.isEmpty()) {
-			for (Pull.Smart pull: requests) {
-				recommender.analyze(pull);
-			}
+		if (recommender.getBaseAnalysis().isEmpty()) {
+			System.out.println("No errors found in master branch.");
 		} else {
-			System.out.println("No new pull requests opened.");
+			ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
+			if (requests != null && !requests.isEmpty()) {
+				for (Pull.Smart pull: requests) {
+					recommender.analyze(pull);
+				}
+			} else {
+				System.out.println("No new pull requests opened.");
+			}
 		}
 		int recs = recommender.getRecommendationCount();
 		if (recs != 1) {
