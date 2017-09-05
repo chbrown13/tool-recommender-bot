@@ -14,13 +14,21 @@ public class PullRecommender {
 	private Repo repo;
 	private String project;
 	private List<ErrorProneItem> master;
-	private static int recs;
+	private int recs = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
 		this.project = repo.coordinates().repo();
 		this.master = analyzeBase();
-		this.recs = 0;
+	}
+
+	/**
+	 * Gets the number of recommendations made/
+	 *
+	 * @return   count of recommendations
+     */
+	private int getRecommendationCount() {
+		return this.recs;
 	}
 	
 	/**
@@ -148,8 +156,9 @@ public class PullRecommender {
 		} else {
 			System.out.println("No new pull requests opened.");
 		}
-		if (this.recs != 1) {
-			System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(this.recs)));
+		int recs = recommender.getRecommendationCount();
+		if (recs != 1) {
+			System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(recs)));
 		} else {
 			System.out.println("1 recommendation made.");
 		}
