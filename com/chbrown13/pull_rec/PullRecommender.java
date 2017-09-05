@@ -14,11 +14,13 @@ public class PullRecommender {
 	private Repo repo;
 	private String project;
 	private List<ErrorProneItem> master;
+	private int recs;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
 		this.project = repo.coordinates().repo();
 		this.master = analyzeBase();
+		this.recs = 0;
 	}
 	
 	/**
@@ -32,6 +34,7 @@ public class PullRecommender {
 		try {
 			PullComments pullComments = pull.comments();	
 			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, error.getCommit(), error.getFilePath(), error.getLineNumber()));	
+			this.recs += 1;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -138,50 +141,25 @@ public class PullRecommender {
 		return ErrorProneItem.parseErrorProneOutput(log);
 	}
 
-
-
 	public static void main(String[] args) {
-		String[][] testRepos = {
-			{"chbrown13", "RecommenderTest"},
-			{"jMonkeyEngine", "jmonkeyengine"},
-			{"libgdx", "libgdx"}
-		};
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
-		for (String[] project: testRepos) {
-			int recs = 0;
-			String recFile = "../"+project[1]+"_recs";
-			try {
-				try {
-					Scanner scanner = new Scanner(new File(recFile));
-					recs = scanner.nextInt();
-					scanner.close();
-				} catch (FileNotFoundException e) {
-					BufferedWriter bw = new BufferedWriter(new FileWriter(recFile));
-					bw.write("0");
-					bw.close();
-				}
-				Repo repo = github.repos().get(new Coordinates.Simple(project[0], project[1]));
-				PullRecommender recommender = new PullRecommender(repo);
-				ArrayList<Pull.Smart> requests = recommender.getPullRequests();
-			
-				if (requests != null && !requests.isEmpty()) {
-					for (Pull.Smart pull: requests) {
-						recs += recommender.analyze(pull);
-					}
-				} else {
-					System.out.println("No new pull requests opened.");
-				}
-				BufferedWriter writer = new BufferedWriter(new FileWriter(recFile));
-				writer.write(Integer.toString(recs));
-				writer.close();
-			} catch (IOException e) {e.printStackTrace(); }
-			if (recs != 1) {
-				System.out.println(Integer.toString(recs)+" recommendations made.");
-			} else {
-				System.out.println("1 recommendation made.");
+        Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
+		PullRecommender recommender = new PullRecommender(repo);
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		if (requests != null && !requests.isEmpty()) {
+			for (Pull.Smart pull: requests) {
+				recommender.analyze(pull);
 			}
+		} else {
+			System.out.println("No new pull requests opened.");
 		}
-    }
+		if (this.recs != 1) {
+			System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(this.recs)));
+		} else {
+			System.out.println("1 recommendation made.");
+		}
+	}	
+
 }
 
