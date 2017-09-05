@@ -3,4 +3,4 @@ Jenkins plugin to automatically recommend Google's Error Prone static analysis t
 
 Run from source code:
 * sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar com/chbrown13/pull_rec/Analyzer.java com/chbrown13/pull_rec/RepoManager.java com/chbrown13/pull_rec/Utils.java 
-* java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:slf4j-nop-1.7.25.jar com.chbrown13.pull_rec.RepoManager
+* java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:slf4j-nop-1.7.25.jar com.chbrown13.pull_rec.RepoManager <owner> <repo name> <min. pull request #>
