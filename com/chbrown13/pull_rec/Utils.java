@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class Utils {
 
-	public static String BASE_COMMENT = "You fixed the following error in this Pull Request:\n{fixed}\nGoogle's Error Prone static analysis tool can be used to find more issues similar to this{errors}Check out http://errorprone.info for more information.";
+	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported that the below error [1] used to be here, but you removed it. {similar}\nCheck out http://errorprone.info for more information.\n\n\n[1] {fixed}";
 
 	public static String ERROR_PRONE_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";
 	

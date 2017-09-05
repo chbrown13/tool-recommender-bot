@@ -41,9 +41,9 @@ public class ErrorProneItem {
 		String comment = Utils.BASE_COMMENT;
 		comment = comment.replace("{fixed}", "\n"+this.log+"\n");
 		if (this.similar.isEmpty()) {
-			comment = comment.replace("{errors}", ". ");
+			comment = comment.replace("{similar}", "");
 		} else {
-			comment = comment.replace("{errors}", " such as:\n\n" + this.getSimilarErrorsStr());
+			comment = comment.replace("{similar}", "Error Prone also found similar issues in " + this.getSimilarErrorsStr());
 		}
 		return comment;
 	}
