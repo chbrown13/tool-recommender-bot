@@ -68,8 +68,8 @@ public class PullRecommender {
 					}
 					Utils.wgetFile(file.getString("raw_url"), tempFile);
 					String log = ErrorProneItem.analyzeCode(tempFile);
-					System.out.println(log);
 					if(!log.isEmpty()) {
+						System.out.println(log);
 						List<ErrorProneItem> changes = ErrorProneItem.parseErrorProneOutput(log);
 						for (ErrorProneItem epi: this.master) {
 							if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
@@ -96,7 +96,7 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
+	private ArrayList<Pull.Smart> getPullRequests(int num) {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -105,7 +105,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (pull.number() >= num) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
@@ -146,9 +146,9 @@ public class PullRecommender {
 	public static void main(String[] args) {
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
-        Repo repo = github.repos().get(new Coordinates.Simple("chbrown13", "RecommenderTest"));
+        Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
 		if (requests != null && !requests.isEmpty()) {
 			for (Pull.Smart pull: requests) {
 				recommender.analyze(pull);
