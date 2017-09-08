@@ -41,12 +41,17 @@ public class ErrorProneItem {
 		String comment = Utils.BASE_COMMENT;
 		String simSentence = " Error Prone also found similar issues in {link}. ";
 		comment = comment.replace("{fixed}", "```" + this.log + "```");
-		if (this.similar.isEmpty()) {
+		Set<String> simSet = new HashSet<String>();
+		for (ErrorProneItem e: this.similar) {
+			simSet.add(e.getKey());
+		}
+		if (simSet.isEmpty()) {
 			comment = comment.replace("{similar}", " ");
-		} else if (this.similar.size() == 1) {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(this.similar.iterator().next())));
+		} else if (simSet.size() == 1) {
+			comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(simSet.iterator().next())));
 		} else {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(this.similar.get(0)), getErrorLink(this.similar.get(1)))));
+			Iterator<String> it = simSet.iterator();
+			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(it.next()), getErrorLink(it.next()))));
 		}
 		System.out.println(comment);
 		return comment;
@@ -67,7 +72,14 @@ public class ErrorProneItem {
 	 * @param epi   ErrorProneItem with error similar to fixed error
 	 * @return      Url to line with similar error
 	 */
-	private String getErrorLink(ErrorProneItem epi) {
+	private String getErrorLink(String key) {
+		ErrorProneItem epi = null;
+		for (ErrorProneItem e: this.similar) {
+			if (e.getKey().equals(key)) {
+				epi = e;
+				break;
+			}
+		}
 		String url = Utils.LINK_URL.replace("{line}", epi.getLineNumberStr()).replace("{path}", epi.getRelativeFilePath()).replace("{sha}", epi.getCommit()).replace("{repo}", Utils.getProjectName()).replace("{user}", Utils.getProjectOwner());
 		return Utils.MARKDOWN_LINK.replace("{src}", epi.getFileName()).replace("{url}", url);
 	}
@@ -80,7 +92,6 @@ public class ErrorProneItem {
 	public void addSimilarError(ErrorProneItem error) {
 		if (!this.similar.contains(error) && !this.filename.equals(error.getFileName())) {
 			this.similar.add(error);
-			System.out.print(error.getKey()+" ");
 		}
 	}
 	
@@ -223,12 +234,11 @@ public class ErrorProneItem {
 	 */
 	private static void checkSimilarError(ErrorProneItem error, ArrayList<ErrorProneItem> list) {
 		for (ErrorProneItem epi: list) {
-			if (epi.getMessage().equals(error.getMessage()) && epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey()) && !(error.getFileName().equals(epi.getFileName()) && error.getLineNumber() == epi.getLineNumber())) {
+			if (epi.getMessage().equals(error.getMessage()) && epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey()) ) {
 				error.addSimilarError(epi);
 				epi.addSimilarError(error);
 			}
 		}
-		System.out.println(error.getKey());
 	}
 
 	/**

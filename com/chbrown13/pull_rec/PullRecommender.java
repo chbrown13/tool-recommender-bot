@@ -26,7 +26,7 @@ public class PullRecommender {
 	 * Gets the number of recommendations made
 	 *
 	 * @return   Count of recommendations
-         */
+     */
 	public int getRecommendationCount() {
 		return this.recs;
 	}
@@ -76,7 +76,6 @@ public class PullRecommender {
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
-				//System.out.println(file);
 				String filename = file.getString("filename");
 				System.out.println(filename);
 				if (filename.endsWith(".java")) {
@@ -89,7 +88,6 @@ public class PullRecommender {
 					}
 					Utils.wgetFile(file.getString("raw_url"), tempFile);
 					String log = ErrorProneItem.analyzeCode(tempFile);
-//					System.out.println(log);
 					List<ErrorProneItem> changes;
 					if(!log.isEmpty()) {
 						changes = ErrorProneItem.parseErrorProneOutput(log, false);
@@ -99,10 +97,9 @@ public class PullRecommender {
 					ErrorProneItem temp = null;
 					for (ErrorProneItem epi: this.master) {
 						if (temp != null && temp.getSimilarErrors().contains(epi)) {
-							System.out.println(Integer.toString(temp.getSimilarErrors().size())+".......contains");
 							continue;
 						}
-						else if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
+						else if (!changes.contains(epi) && !recommended.contains(epi.getKey()) && epi.getFilePath().contains(filename)) {
 							System.out.println("Fixed: "+epi.getKey());
 							temp = epi;
 							temp.setFilePath(filename);
@@ -132,7 +129,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (pull.number() >= 36) {//new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
