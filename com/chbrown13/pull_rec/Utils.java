@@ -9,10 +9,54 @@ import java.util.*;
  */
 public class Utils {
 
-	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported that the below error [1] used to be here, but you removed it. {similar}Check out http://errorprone.info for more information.\n\n\n[1] {fixed}";
+	public static String MARKDOWN_LINK = "[{src}]({url})";
+
+	public static String LINK_URL = "https://github.com/{user}/{repo}/blob/{sha}/{path}#L{line}";
+
+	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported that the below error [1] used to be here, but you removed it.{similar}Check out http://errorprone.info for more information.\n\n\n[1] {fixed}";
 
 	public static String ERROR_PRONE_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";
 	
+	private static String projectName = "";
+
+	private static String projectOwner = "";
+
+	/**
+	 * Stores current project name.
+	 *
+	 * @param name   Github repository name
+	 */
+	public static void setProjectName(String name) {
+		projectName = name;
+	}
+
+	/**
+	 * Gets repository name for current project.
+	 *
+	 * @returns   Github project name
+	 */
+	public static String getProjectName() {
+		return projectName;
+	}
+
+	/**
+	 * Stores username of Github repository for current project.
+	 *
+	 * @param user   Username of repo owner
+	 */
+	public static void setProjectOwner(String user) {
+		projectOwner = user;
+	}
+	
+	/**
+	 * Gets owner of Github repository for current project.
+     *
+	 * @return   Username of repo owner
+	 */	
+	public static String getProjectOwner() {
+		return projectOwner;
+	}
+
 	/**
 	 * Download contents of a file from a web url, similar to wget command
 	 *
