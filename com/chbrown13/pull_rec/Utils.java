@@ -58,23 +58,36 @@ public class Utils {
 	}
 
 	/**
-	 * Download contents of a file from a web url, similar to wget command
+	 * Analyze updates to a file to determine if changes were actually a fix.
+	 * 
+	 * @param file1   File from master branch
+	 * @param file2   File from pull request
+	 * @return        True if change is considered a fix, otherwise false
+     */
+	public static boolean isFix(String file1, String file2) {
+		//gumtree analysis to determine fix
+		return true;
+	}
+
+	/**
+	 * Download contents of a file from a web url, similar to wget linux command
 	 *
 	 * @param fileUrl   String url of the file to download
 	 * @param output    Name of file to store contents
 	 */
-	public static void wgetFile(String fileUrl, String output) {
-		String s;
-
+	public static void wget(String fileUrl, String output) {
+		String s = "";
 		try {
 			URL url = new URL(fileUrl);
 			InputStream in = url.openStream();
+			File out = new File(output);
+			out.getParentFile().mkdirs();
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			BufferedWriter out = new BufferedWriter(new FileWriter(output));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(out));
 			while ((s = br.readLine()) != null) {
-				out.write(s+"\n");
+				bw.write(s+"\n");
 			}
-			out.close();
+			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

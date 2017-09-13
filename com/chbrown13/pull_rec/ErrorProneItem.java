@@ -247,7 +247,7 @@ public class ErrorProneItem {
 	 * @param file   Name of file containing ErrorProne output
 	 * @return       List of ErrrorProneItems
 	  */
-	public static List<ErrorProneItem> parseErrorProneOutput(String file, boolean master) {
+	public static List<ErrorProneItem> parseErrorProneOutput(String file) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = file.split("\n");
 		ErrorProneItem temp = null;
