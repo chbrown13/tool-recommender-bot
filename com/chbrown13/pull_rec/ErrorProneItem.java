@@ -53,7 +53,6 @@ public class ErrorProneItem {
 			Iterator<String> it = simSet.iterator();
 			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(it.next()), getErrorLink(it.next()))));
 		}
-		System.out.println(comment);
 		return comment;
 	}
 
@@ -302,9 +301,8 @@ public class ErrorProneItem {
 			    output += line + "\n";
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			return null;
 		}
-
 		return output;
 	}
 

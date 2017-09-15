@@ -79,7 +79,14 @@ public class Utils {
 		String s = "";
 		try {
 			URL url = new URL(fileUrl);
-			InputStream in = url.openStream();
+			InputStream in;
+			try {
+				in = url.openStream();
+			} catch (FileNotFoundException e) {
+				//File URL does not exist, possibly new file in PR
+				System.out.println("---newfile---");
+				in = new ByteArrayInputStream("".getBytes("UTF-8"));
+			}
 			File out = new File(output);
 			out.getParentFile().mkdirs();
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
