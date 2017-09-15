@@ -12,21 +12,11 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
-	private int recs = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
-	}
-
-	/**
-	 * Gets the number of recommendations made
-	 *
-	 * @return   Count of recommendations
-     */
-	public int getRecommendationCount() {
-		return this.recs;
 	}
 	
 	/**
@@ -43,7 +33,6 @@ public class PullRecommender {
 			//System.out.println(comment);
 			//PullComments pullComments = pull.comments();	
 			//PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, commit, error.getFilePath(), error.getLineNumber()));	
-			this.recs += 1;
 		/*} catch (IOException e) {
 			e.printStackTrace();
 		}*/
@@ -86,35 +75,6 @@ public class PullRecommender {
 							}
 						}
 					}
-					/*ArrayList<String> recommended = new ArrayList<String>();
-					String tempFile = "";
-					if (filename.contains("/")) {
-						tempFile = filename.substring(filename.lastIndexOf("/") + 1);
-					} else {
-						tempFile = filename; //file is in top directory
-					}
-					Utils.wgetFile(file.getString("raw_url"), tempFile);
-					String log = ErrorProneItem.analyzeCode(tempFile);
-					List<ErrorProneItem> changes;
-					if(!log.isEmpty()) {
-						changes = ErrorProneItem.parseErrorProneOutput(log, false);
-					} else {
-						changes = new ArrayList<ErrorProneItem>();
-					}
-					ErrorProneItem temp = null;
-					for (ErrorProneItem epi: this.master) {
-						if (temp != null && temp.getSimilarErrors().contains(epi)) {
-							continue;
-						}
-						else if (!changes.contains(epi) && !recommended.contains(epi.getKey()) && epi.getFilePath().contains(filename)) {
-							System.out.println("Fixed: "+epi.getKey());
-							temp = epi;
-							temp.setFilePath(filename);
-							String prComment = temp.generateComment();
-							makeRecommendation(prComment, pull, temp);
-							recommended.add(epi.getKey());
-						}
-					}*/
 				}
 			}
 		} catch (IOException e) {
@@ -136,7 +96,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (pull.number() >= 35) {//(new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
@@ -160,12 +120,6 @@ public class PullRecommender {
 			}
 		} else {
 			System.out.println("No pull requests recently opened.");
-		}
-		int recs = recommender.getRecommendationCount();
-		if (recs != 1) {
-			System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(recs)));
-		} else {
-			System.out.println("1 recommendation made.");
 		}
 	}
 }
