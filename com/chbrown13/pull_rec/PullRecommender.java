@@ -13,11 +13,13 @@ public class PullRecommender {
 
 	private Repo repo;
 	private int recs;
+	private Set<String> prs;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
+		prs = new HashSet<String>();
 	}
 
 	/**
@@ -27,6 +29,10 @@ public class PullRecommender {
      */
 	public int getRecommendationCount() {
 		return this.recs;
+	}
+
+	public int getPRCount() {
+		return this.prs.size();
 	}
 	
 	/**
@@ -38,7 +44,9 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
 		String comment = error.generateComment();
+		System.out.println(comment);
 		recs += 1;
+		prs.add(sha);
 	}
 
 	/**
@@ -100,7 +108,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (pull.number() >= 1) {
+				if (pull.number() >= 653) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
@@ -125,7 +133,7 @@ public class PullRecommender {
 		} else {
 			System.out.println("No pull requests recently opened.");
 		}
-		System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(recommender.getRecommendationCount())));
+		System.out.println("{num} recommendations made for {prs} prs.".replace("{num}", Integer.toString(recommender.getRecommendationCount())).replace("{prs}", Integer.toString(recommender.getPRCount())));
 	}
 }
 
