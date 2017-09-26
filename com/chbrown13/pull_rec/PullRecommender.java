@@ -44,6 +44,7 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
 		String comment = error.generateComment();
+		System.out.println("PR#: "+Integer.toString(pull.number()));
 		System.out.println(comment);
 		recs += 1;
 		prs.add(sha);
@@ -109,7 +110,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (pull.number() >= 653) {
+				if (pull.number() >= num) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
