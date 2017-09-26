@@ -12,14 +12,12 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
-	private String project;
-	private List<ErrorProneItem> master;
-	private int recs = 0;
+	private int recs;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
-		this.project = repo.coordinates().repo();
-		this.master = analyzeBase();
+		Utils.setProjectName(repo.coordinates().repo());
+		Utils.setProjectOwner(repo.coordinates().user());
 	}
 
 	/**
@@ -30,25 +28,17 @@ public class PullRecommender {
 	public int getRecommendationCount() {
 		return this.recs;
 	}
-
-	/**
-	 * Gets Error Prone errors found in master branch of repository.
-	 *
-	 * @return   List of errors in master branch
-	 */
-	public List<ErrorProneItem> getBaseAnalysis() {
-		return this.master;
-	}
 	
 	/**
-	 * Add to count of recommendations for repository.
+	 * Post message recommending ErrorProne to Github on pull request fixing error.
 	 *
 	 * @param comment   Comment with recommendation
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(String comment, Pull.Smart pull, ErrorProneItem error) {
-		this.recs += 1;
+	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
+		String comment = error.generateComment();
+		recs += 1;
 	}
 
 	/**
@@ -57,41 +47,37 @@ public class PullRecommender {
 	 * @param pull   Current pull request
 	 * @return       Number of recommendations made
 	 */
-	private int analyze(Pull.Smart pull) {
+	private void analyze(Pull.Smart pull) {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
-		int count = 0;
 		try {
+			String pullHash = pull.json().getJsonObject("head").getString("sha");
+			String baseHash = pull.json().getJsonObject("base").getString("sha");
 			Iterator<JsonObject> fileit = pull.files().iterator();
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
 				String filename = file.getString("filename");
 				System.out.println(filename);
 				if (filename.endsWith(".java")) {
-					ArrayList<String> recommended = new ArrayList<String>();
-					String commit = file.getString("contents_url").substring(file.getString("contents_url").indexOf("ref=") + 4);
-					String tempFile = "";
-					if (filename.contains("/")) {
-						tempFile = filename.substring(filename.lastIndexOf("/") + 1);
+					String pullURL = file.getString("raw_url");
+					String baseURL = pullURL.replace(pullHash, baseHash);
+					String baseTempFile = String.join("_", baseHash, filename);
+					String pullTempFile = String.join("_", pullHash, filename);
+					Utils.wget(baseURL, baseTempFile);
+					Utils.wget(pullURL, pullTempFile);
+					String baseLog = ErrorProneItem.analyzeCode(baseTempFile);
+					if (baseLog == null || baseLog == "") {
+						continue;
 					} else {
-						tempFile = filename; //file is in top directory
-					}
-					Utils.wgetFile(file.getString("raw_url"), tempFile);
-					String log = ErrorProneItem.analyzeCode(tempFile);
-					List<ErrorProneItem> changes;
-					if(!log.isEmpty()) {
-						changes = ErrorProneItem.parseErrorProneOutput(log);
-					} else {
-						changes = new ArrayList<ErrorProneItem>();
-					}
-					for (ErrorProneItem epi: this.master) {
-						if (!changes.contains(epi) && !recommended.contains(epi.getKey())) {
-							count++;
-							System.out.println("Fixed: "+epi.getKey());
-							epi.setCommit(commit);
-							epi.setFilePath(filename); //Relative path in project directory
-							String prComment = epi.generateComment();
-							makeRecommendation(prComment, pull, epi);
-							recommended.add(epi.getKey());
+						String pullLog = ErrorProneItem.analyzeCode(pullTempFile);
+						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
+						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
+						for (ErrorProneItem epi: baseEP) {
+							int fix = Utils.getFix(baseTempFile, pullTempFile);
+							if (!pullEP.contains(epi) && fix > 0) {
+								epi.setFilePath(filename);
+								System.out.println("Fixed: "+epi.getKey());
+								makeRecommendation(pull, epi, pullHash, fix);
+							}
 						}
 					}
 				}
@@ -99,7 +85,6 @@ public class PullRecommender {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
-		return count;
 	}
 
 	/**
@@ -111,12 +96,11 @@ public class PullRecommender {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("status","open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (pull.number() >= num) {
+				if (pull.number() >= 1) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
@@ -127,57 +111,22 @@ public class PullRecommender {
 		}
 		return requests;
 	}
-	
-	/**
-	 * Creates ErrorProneItems for master branch of the repository to compare with new pull requests
-	 *
-	 * @return   List of errors
-	 */
-	private List<ErrorProneItem> analyzeBase() {
-		System.out.println("Analyzing {project} master branch...".replace("{project}", this.project));
-		//Repo.Smart = new Repo.Smart(this.repo);
-		String log = null;
-		try{
-			BufferedReader br = new BufferedReader(new FileReader("master.txt"));
-			StringBuilder sb = new StringBuilder();
-		    String line = null;
-
-		    while ((line = br.readLine()) != null) {
-		        sb.append(line+"\n");
-			}
-	    	br.close();
-			log = sb.toString();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return ErrorProneItem.parseErrorProneOutput(log);
-	}
 
 	public static void main(String[] args) {
 		String[] acct = Utils.getCredentials(".github.creds");
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		if (recommender.getBaseAnalysis().isEmpty()) {
-			System.out.println("No errors found in master branch.");
-		} else {
-			ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
-			if (requests != null && !requests.isEmpty()) {
-				for (Pull.Smart pull: requests) {
-					recommender.analyze(pull);
-				}
-			} else {
-				System.out.println("No new pull requests opened.");
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
+		if (requests != null && !requests.isEmpty()) {
+			for (Pull.Smart pull: requests) {
+				recommender.analyze(pull);
 			}
-		}
-		int recs = recommender.getRecommendationCount();
-		if (recs != 1) {
-			System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(recs)));
 		} else {
-			System.out.println("1 recommendation made.");
+			System.out.println("No pull requests recently opened.");
 		}
-	}	
-
+		System.out.println("{num} recommendations made.".replace("{num}", Integer.toString(recommender.getRecommendationCount())));
+	}
 }
+
 
