@@ -8,6 +8,20 @@
       <projectUrl>https://github.com/chbrown13/PullRecommender/</projectUrl>
       <displayName></displayName>
     </com.coravy.hudson.plugins.github.GithubProjectProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>USER</name>
+          <description>Github user</description>
+          <defaultValue>chbrown13</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description>Github repository</description>
+          <defaultValue>RecommenderTest</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
   </properties>
   <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.1">
     <configVersion>2</configVersion>
@@ -38,13 +52,13 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>git clone https://github.com/chbrown13/RecommenderTest
+      <command>git clone https://github.com/$USER/$REPO
 wget http://repo1.maven.org/maven2/com/jcabi/jcabi-github/0.23/jcabi-github-0.23-jar-with-dependencies.jar
 wget https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.1.0/error_prone_ant-2.1.0.jar
+wget https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
 sudo cp /root/.github.creds .
-java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler $(find RecommenderTest -type f -name &apos;*.java&apos;) 2&gt;&amp;1 | tee master.txt
-sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar com/chbrown13/pull_rec/ErrorProneItem.java com/chbrown13/pull_rec/PullRecommender.java com/chbrown13/pull_rec/Utils.java
-java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:slf4j-nop-1.7.25.jar com.chbrown13.pull_rec.PullRecommender chbrown13 RecommenderTest
+sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:$GUMTREE_HOME com/chbrown13/pull_rec/ErrorProneItem.java com/chbrown13/pull_rec/PullRecommender.java com/chbrown13/pull_rec/Utils.java
+java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:slf4j-nop-1.7.25.jar:gumtree.jar com.chbrown13.pull_rec.PullRecommender $USER $REPO
 </command>
     </hudson.tasks.Shell>
   </builders>
