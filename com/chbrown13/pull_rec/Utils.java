@@ -1,5 +1,10 @@
 package com.chbrown13.pull_rec;
 
+import com.github.gumtreediff.client.Run;
+import com.github.gumtreediff.gen.Generators;
+import com.github.gumtreediff.matchers.*;
+import com.github.gumtreediff.matchers.heuristic.LcsMatcher;
+import com.github.gumtreediff.tree.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -58,15 +63,66 @@ public class Utils {
 	}
 
 	/**
+	 * Gets line number from offset of updated/inserted line
+	 * 
+	 * @param offset   Character position in the updated file
+	 * @param file     Path to changed file
+	 * @return         New line number
+	 */
+	private static int getDiffLineNumber(int offset, String file) {
+		int count = 0;
+		try {
+			InputStream in = new FileInputStream(file);
+			BufferedReader buf = new BufferedReader(new InputStreamReader(in));
+			String line = buf.readLine();
+			StringBuilder sb = new StringBuilder();				
+			while(line != null){
+				sb.append(line).append("\n");
+				line = buf.readLine();
+			}
+					
+			String code = sb.toString();
+			String[] lines = code.substring(offset).split("\n");
+			count = lines.length;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return count;
+	}
+
+	/**
 	 * Analyze updates to a file to determine if changes were actually a fix.
 	 * 
 	 * @param file1   File from master branch
 	 * @param file2   File from pull request
-	 * @return        True if change is considered a fix, otherwise false
+	 * @return        Line number of what is considered a fix, otherwise null
      */
-	public static boolean isFix(String file1, String file2) {
+	public static int getFix(String file1, String file2) {
 		//gumtree analysis to determine fix
-		return true;
+		Run.initGenerators();
+		try {
+			ITree src = Generators.getInstance().getTree(file1).getRoot();
+			ITree dst = Generators.getInstance().getTree(file2).getRoot();
+			
+			List<ITree> srcTrees = src.getTrees();
+			List<ITree> dstTrees = dst.getTrees();
+			LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
+			lcs.match();
+			for (ITree tree: dstTrees) { // node added/updated in destination
+				if (!tree.isMatched()) {
+					//System.out.print(tree.getShortLabel());
+					//System.out.print("    ");
+					//System.out.print(tree.getPos());
+					//System.out.print("    ");
+					//System.out.print(tree.getLabel());
+					//System.out.print("    ");
+					//System.out.println(tree.getType());
+					return getDiffLineNumber(tree.getPos(), file2);
+				}
+			}
+			return -1;
+		} catch (IOException e) { e.printStackTrace(); }
+		return -1;
 	}
 
 	/**
@@ -84,7 +140,6 @@ public class Utils {
 				in = url.openStream();
 			} catch (FileNotFoundException e) {
 				//File URL does not exist, possibly new file in PR
-				System.out.println("---newfile---");
 				in = new ByteArrayInputStream("".getBytes("UTF-8"));
 			}
 			File out = new File(output);

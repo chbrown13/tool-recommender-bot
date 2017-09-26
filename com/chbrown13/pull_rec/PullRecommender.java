@@ -26,16 +26,16 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String commit) {
-		//try {
-			//System.out.println(String.join(" ", "RECOMMEND:", error.getKey(), error.getFilePath(), pull.json().getJsonObject("head").getString("sha")));
+	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
+		try {
+			System.out.println(sha);
 			String comment = error.generateComment();
-			//System.out.println(comment);
-			//PullComments pullComments = pull.comments();	
-			//PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, commit, error.getFilePath(), error.getLineNumber()));	
-		/*} catch (IOException e) {
+			System.out.println(error.getLog());
+			PullComments pullComments = pull.comments();	
+			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, sha, error.getFilePath(), line));	
+		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 
 	/**
@@ -69,9 +69,11 @@ public class PullRecommender {
 						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
 						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
 						for (ErrorProneItem epi: baseEP) {
-							if (!pullEP.contains(epi) && Utils.isFix(baseTempFile, pullTempFile)) {
+							int fix = Utils.getFix(baseTempFile, pullTempFile);
+							if (!pullEP.contains(epi) && fix > 0) {
+								epi.setFilePath(filename);
 								System.out.println("Fixed: "+epi.getKey());
-								makeRecommendation(pull, epi, pullHash);
+								makeRecommendation(pull, epi, pullHash, fix);
 							}
 						}
 					}
@@ -96,7 +98,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (pull.number() >= 39) {//new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}

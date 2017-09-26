@@ -40,7 +40,7 @@ public class ErrorProneItem {
 	public String generateComment() {
 		String comment = Utils.BASE_COMMENT;
 		String simSentence = " Error Prone also found similar issues in {link}. ";
-		comment = comment.replace("{fixed}", "```" + this.log + "```");
+		comment = comment.replace("{fixed}", "```" + this.log.substring(this.log.indexOf("_")+1) + "```");
 		Set<String> simSet = new HashSet<String>();
 		for (ErrorProneItem e: this.similar) {
 			simSet.add(e.getKey());
