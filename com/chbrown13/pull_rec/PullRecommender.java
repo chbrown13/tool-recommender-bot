@@ -96,7 +96,7 @@ public class PullRecommender {
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (pull.number() >= 40) {//new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					requests.add(pull);
 					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
 				}
