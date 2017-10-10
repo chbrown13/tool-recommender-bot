@@ -28,9 +28,7 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
 		try {
-			System.out.println(sha);
 			String comment = error.generateComment();
-			System.out.println(error.getLog());
 			PullComments pullComments = pull.comments();	
 			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, sha, error.getFilePath(), line));	
 		} catch (IOException e) {
@@ -69,7 +67,7 @@ public class PullRecommender {
 						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
 						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
 						for (ErrorProneItem epi: baseEP) {
-							int fix = Utils.getFix(baseTempFile, pullTempFile);
+							int fix = Utils.getFix(baseTempFile, pullTempFile, epi);
 							if (!pullEP.contains(epi) && fix > 0) {
 								epi.setFilePath(filename);
 								System.out.println("Fixed: "+epi.getKey());
@@ -93,7 +91,7 @@ public class PullRecommender {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("status","open");
+		params.put("state","open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
