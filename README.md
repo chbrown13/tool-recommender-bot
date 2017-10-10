@@ -7,7 +7,8 @@ Set Up:
 	* gumtree.jar 
 	* jcabi-github-0.23-jar-with-dependencies.jar
 	* slf4j.jar (optional)
-* Create a .github.creds file with two lines, one that contains your github username and with your password.
+* Create a .github.creds file with two lines, one that contains your github username and one with your password.
+
 
 Run from source code:
 ```
