@@ -243,12 +243,12 @@ public class ErrorProneItem {
 	/**
 	 * Parses output from ErrorProne static analysis of code and creates objects.
 	 *
-	 * @param file   Name of file containing ErrorProne output
+	 * @param msg    ErrorProne output
 	 * @return       List of ErrrorProneItems
 	  */
-	public static List<ErrorProneItem> parseErrorProneOutput(String file) {
+	public static List<ErrorProneItem> parseErrorProneOutput(String msg) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
-		String[] lines = file.split("\n");
+		String[] lines = msg.split("\n");
 		ErrorProneItem temp = null;
 		ArrayList<ErrorProneItem> list = new ArrayList<ErrorProneItem>();
 		for (String line: lines) {

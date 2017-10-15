@@ -81,7 +81,7 @@ public class PullRecommender {
 						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
 						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
 						for (ErrorProneItem epi: baseEP) {
-							int fix = Utils.getFix(baseTempFile, pullTempFile);
+							int fix = Utils.getFix(baseTempFile, pullTempFile, epi);
 							if (!pullEP.contains(epi) && fix > 0) {
 								epi.setFilePath(filename);
 								System.out.println("Fixed: "+epi.getKey());
