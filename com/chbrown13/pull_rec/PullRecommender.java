@@ -44,7 +44,7 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
 		String comment = error.generateComment();
-		System.out.println("PR#: "+Integer.toString(pull.number()));
+		System.out.println("Recommend PR#: "+Integer.toString(pull.number()));
 		System.out.println(comment);
 		recs += 1;
 		prs.add(sha);
@@ -132,8 +132,6 @@ public class PullRecommender {
 			for (Pull.Smart pull: requests) {
 				recommender.analyze(pull);
 			}
-		} else {
-			System.out.println("No pull requests recently opened.");
 		}
 		System.out.println("{num} recommendations made for {prs} prs.".replace("{num}", Integer.toString(recommender.getRecommendationCount())).replace("{prs}", Integer.toString(recommender.getPRCount())));
 	}
