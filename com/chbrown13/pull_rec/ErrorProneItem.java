@@ -275,11 +275,6 @@ public class ErrorProneItem {
 			}
 		}
 		if (temp != null && !list.contains(temp)) { list.add(temp); }
-		if (list.size() != 1) {
-			System.out.println("{n} errors found.".replace("{n}", Integer.toString(list.size())));
-		} else { 
-			System.out.println("1 error found.");
-		}
 		return list;
 	}
 
