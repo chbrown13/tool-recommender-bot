@@ -240,7 +240,11 @@ public class Utils {
 		MappingStore store = m.getMappings();		
 		ITree errorNode = getErrorNode(tree1.getRoot(), errorPos);
 		List<Action> actions = g.getActions(); 
-		Action closestAction = actions.get(0);
+		try {
+			Action closestAction = actions.get(0);			
+		} catch (IndexOutOfBoundsException e) {
+			return -1;
+		}
 		for(Action a: actions) {
 			int pos = a.getNode().getPos();
 			if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
@@ -283,8 +287,8 @@ public class Utils {
 			
 			List<ITree> srcTrees = src.getTrees();
 			List<ITree> dstTrees = dst.getTrees();
-			LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
-			lcs.match();
+			//LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
+			//lcs.match();
 			for (ITree tree: dstTrees) { // node added/updated in destination
 				if (!tree.isMatched()) {
 					//Not all deletes
