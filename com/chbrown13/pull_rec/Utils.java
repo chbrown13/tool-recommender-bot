@@ -224,6 +224,7 @@ public class Utils {
 		TreeContext tree2 = null;
 		Matcher m = null;
 		ActionGenerator g = null;
+		Action closestAction = null;
 		try {
 			tree1 = jdt1.generateFromFile(file1);
 			tree2 = jdt2.generateFromFile(file2);
@@ -241,7 +242,7 @@ public class Utils {
 		ITree errorNode = getErrorNode(tree1.getRoot(), errorPos);
 		List<Action> actions = g.getActions(); 
 		try {
-			Action closestAction = actions.get(0);			
+			closestAction = actions.get(0);			
 		} catch (IndexOutOfBoundsException e) {
 			return -1;
 		}
