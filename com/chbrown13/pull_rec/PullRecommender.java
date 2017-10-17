@@ -65,7 +65,6 @@ public class PullRecommender {
 			while (fileit.hasNext()) {
 				JsonObject file = fileit.next();
 				String filename = file.getString("filename");
-				System.out.println(filename);
 				if (filename.endsWith(".java")) {
 					String pullURL = file.getString("raw_url");
 					String baseURL = pullURL.replace(pullHash, baseHash);
@@ -101,23 +100,20 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests(int num) {
+	private ArrayList<Pull.Smart> getPullRequests() {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "all");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
+		int i = 0;
 		while (pullit.hasNext()) {
-			Pull.Smart pull = new Pull.Smart(pullit.next());
-			try {
-				if (pull.number() >= num) {
-					requests.add(pull);
-					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				return null;
+			if (i > 100) {
+				break;
 			}
+			Pull.Smart pull = new Pull.Smart(pullit.next());
+			requests.add(pull);
+			i++;
 		}
 		return requests;
 	}
@@ -127,7 +123,7 @@ public class PullRecommender {
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
 		if (requests != null && !requests.isEmpty()) {
 			for (Pull.Smart pull: requests) {
 				recommender.analyze(pull);
