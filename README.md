@@ -6,6 +6,7 @@ Set Up:
 	* error_prone_ant-2.1.0.jar 
 	* gumtree.jar 
 	* jcabi-github-0.23-jar-with-dependencies.jar
+	* org.eclipse.jgit-4.9.0.201710071750-r.jar
 	* slf4j.jar (optional)
 * Create a .github.creds file with two lines, one that contains your github username and one with your password.
 
