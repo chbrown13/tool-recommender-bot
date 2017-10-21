@@ -98,7 +98,7 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
+	private ArrayList<Pull.Smart> getPullRequests(int num) {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -106,7 +106,7 @@ public class PullRecommender {
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		int i = 0;
 		while (pullit.hasNext()) {
-			if (i >= 10) {
+			if (i >= num) {
 				break;
 			}
 			Pull.Smart pull = new Pull.Smart(pullit.next());
@@ -121,7 +121,7 @@ public class PullRecommender {
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
 		if (requests != null && !requests.isEmpty()) {
 			for (Pull.Smart pull: requests) {
 				recommender.analyze(pull);

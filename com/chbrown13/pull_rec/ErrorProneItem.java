@@ -48,7 +48,6 @@ public class ErrorProneItem {
 			}
 		}
 		Iterator<ErrorProneItem> iter = similarSet.iterator();
-		System.out.println(similarSet.size());
 		if (similarSet.isEmpty()) {
 			comment = comment.replace("{similar}", " ");
 		} else if (similarSet.size() == 1) {
