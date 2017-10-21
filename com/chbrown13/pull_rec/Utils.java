@@ -12,6 +12,9 @@ import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.util.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 /**
  * The Utils class contains various helper methods and variables for the PullRecommender project.
@@ -22,13 +25,21 @@ public class Utils {
 
 	public static String LINK_URL = "https://github.com/{user}/{repo}/blob/{sha}/{path}#L{line}";
 
+	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
+
 	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported an error [1] used to be here, but you fixed it.{similar}Check out http://errorprone.info for more information.\n\n\n[1] {fixed}";
 
 	public static String ERROR_PRONE_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";
-	
-	private static String projectName = "";
 
+	private static String currentDir = System.getProperty("user.dir");
+
+	private static Map<String, String> errors = new HashMap<String, String>();
+
+	private static String projectName = "";
+	
 	private static String projectOwner = "";
+
+	private static int fixLine = -1;
 
 	/**
 	 * Stores current project name.
@@ -204,18 +215,19 @@ public class Utils {
 		catch (FileNotFoundException e) {
 		    e.printStackTrace();
 		}
+		fixLine = line - 1;
 		return line - 1;
 	}
 
 	/**
 	 * Parse changes in file to determine if a fix was made
 	 * 
-	 * @param file1    Name of source file
-	 * @param file2    Name of destination file
+	 * @param base    Name of source file
+	 * @param pull    Name of destination file
 	 * @param errorPos Character offset of error
 	 * @return		   Changed line number
 	 */
-	private static int analyzeDiff(String file1, String file2, int errorPos) {
+	private static int determineFix(String base, String pull, int errorPos) {
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
 		ITree src = null;
@@ -226,10 +238,10 @@ public class Utils {
 		ActionGenerator g = null;
 		Action closestAction = null;
 		try {
-			tree1 = jdt1.generateFromFile(file1);
-			tree2 = jdt2.generateFromFile(file2);
-			src = Generators.getInstance().getTree(file1).getRoot();
-			dst = Generators.getInstance().getTree(file2).getRoot();
+			tree1 = jdt1.generateFromFile(base);
+			tree2 = jdt2.generateFromFile(pull);
+			src = Generators.getInstance().getTree(base).getRoot();
+			dst = Generators.getInstance().getTree(pull).getRoot();
 			m = Matchers.getInstance().getMatcher(src, dst);
 			m.match();
 			g = new ActionGenerator(src, dst, m.getMappings());
@@ -259,8 +271,7 @@ public class Utils {
 				i -= 1;
 				temp = errorNode.getParent().getChildren().get(i);
 				if (searchNode(temp, dst)) {
-					System.out.println("1");
-					return posToLine(temp.getPos(), file2);
+					return posToLine(temp.getPos(), pull);
 				}
 			}
 		} //INS or UPD or other
@@ -268,39 +279,121 @@ public class Utils {
 			while (!searchNode(temp, dst)) {
 				temp = temp.getParent();
 			}
-			return posToLine(temp.getPos(), file2);
+			return posToLine(temp.getPos(), pull);
 	}
 
 	/**
-	 * Checks changes to see if there was actually a fix or just code removed.
+	 * Gets the local path of a file
 	 * 
-	 * @param file1   File from master branch
-	 * @param file2   File from pull request
-	 * @return        Line number of what is considered a fix, otherwise null
-     */
-	public static int getFix(String file1, String file2, ErrorProneItem error) {
-		//gumtree analysis to determine fix
-		Run.initGenerators();
-		int errorLocation = getErrorOffset(error, file1);
-		try {
-			ITree src = Generators.getInstance().getTree(file1).getRoot();
-			ITree dst = Generators.getInstance().getTree(file2).getRoot();
-			
-			List<ITree> srcTrees = src.getTrees();
-			List<ITree> dstTrees = dst.getTrees();
-			//LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
-			//lcs.match();
-			for (ITree tree: dstTrees) { // node added/updated in destination
-				if (!tree.isMatched()) {
-					//Not all deletes
-					return analyzeDiff(file1, file2, errorLocation);
-				}
-			}
-		} catch (IOException e) { 
-			e.printStackTrace(); 
+	 * @param path   Path to file in git repo
+	 * @return       Path to file in current working directory
+	 */
+	public static String getLocalPath(String path) {
+		String remove = currentDir;
+		if (!currentDir.endsWith(projectName)) {
+			remove += "/" + projectName;
 		}
-		System.out.println("Error code removed, but may not have been fixed.");
-		return -1;
+		return path.replace(remove, "");
+	}
+
+	/**
+	 * Checks if pull request changes only remove code without fix
+	 * 
+	 * @param base   Path to base file
+	 * @param pull   Path to pull request version of file
+	 * @param error  Current error to check
+	 * @return       False if code is updated or added, otherwise true
+	 */
+	private static boolean isDeleteOnly(String file1, String file2, ErrorProneItem error) {
+   		Run.initGenerators();
+   		try {
+   			ITree src = Generators.getInstance().getTree(file1).getRoot();
+   			ITree dst = Generators.getInstance().getTree(file2).getRoot();
+   			
+   			List<ITree> srcTrees = src.getTrees();
+   			List<ITree> dstTrees = dst.getTrees();
+   			LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
+   			lcs.match();
+			for (ITree tree: dst.getDescendants()) { // node added/updated in destination
+   				if (!tree.isMatched()) {
+   					return determineFix(file1, file2, getErrorOffset(error, file1)) > 0;
+   				}
+			}
+			System.out.println("Error removed but may not have been fixed");
+   			return true;
+		   } catch (IOException e) { e.printStackTrace(); }
+		   return true;
+	}
+
+	/**
+	 * Downloads files in questions and determines if bug was actually fixed
+	 * 
+	 * @param base   Hash for base commit
+	 * @param pull   Hash for PR commit
+	 * @param error  Error in question
+	 * @return       True if error prone bug was fixed, else false
+	 */
+	public static boolean isFix(String base, String pull, ErrorProneItem error) {
+		String file = getLocalPath(error.getFilePath());
+		String baseURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", base).replace("/{path}", file);
+		String pullURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", pull).replace("/{path}", file);
+		String baseFile = base + file;
+		String pullFile = pull + file;
+		wget(baseURL, baseFile);
+		wget(pullURL, pullFile);
+		return isDeleteOnly(baseFile, pullFile, error);
+	}
+
+	/**
+	 * Returns line number of code fix
+	 * 
+	 * @return   Line number of what is considered a fix or null if none
+     */
+	public static int getFix() {
+		if (fixLine > 0) {
+			return fixLine;
+		}
+		return (Integer)null;
+	}
+
+	/**
+	 * Method to recursively find all java files in repo
+	 * 
+	 * @param path   Path to git repository or folder inside
+	 */
+	private static void walk(String path) {
+		File root = new File(path);
+		File[] list = root.listFiles();
+		
+		if (list == null || root.getAbsolutePath().contains(".git")) { return; }
+		for (File f : list) {
+			String filename = f.getAbsolutePath();
+			if (f.isDirectory()) {
+				walk(filename);
+			} else if (filename.endsWith(".java")) {
+				errors.put(filename, ErrorProneItem.analyze(filename));
+			}
+		}
+	}
+
+	/**
+	 * Checkout specific version of a git repository for analysis.
+	 * 
+	 * @param hash   Git SHA value
+	 * @return       Map of filenames to errors
+	 */
+	public static Map<String, String> checkout(String hash) {
+		errors = new HashMap<String, String>();
+		try {
+			cd(projectName);
+			Git git = Git.open(new File(currentDir+"/.git"));
+			git.checkout().setName(hash).call();
+			walk(currentDir);
+			cd("..");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return errors;
 	}
 
 	/**
@@ -330,6 +423,33 @@ public class Utils {
 			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Changes the current working directory of the program
+	 * 
+	 * @param dir   Directory to change into
+	 */
+	public static void cd(String dir) throws FileNotFoundException {
+		String directory;
+		if (dir.equals("..")) {
+			if(currentDir.contains("/")) {
+				directory = currentDir.substring(0, currentDir.lastIndexOf("/"));
+				System.setProperty("user.dir", directory);
+			} else {
+				directory = currentDir;
+			}
+			currentDir = directory;		
+		} else {
+			directory = String.join("/", System.getProperty("user.dir"), dir);
+			File f = new File(directory);
+			if (f.exists() && f.isDirectory()) {
+				System.setProperty("user.dir", directory);	
+				currentDir = directory;				
+			} else {
+				throw new FileNotFoundException("Invalid directory name "+dir);
+			}
 		}
 	}
 

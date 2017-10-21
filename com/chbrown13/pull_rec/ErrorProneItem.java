@@ -17,8 +17,7 @@ public class ErrorProneItem {
 	private String error;
 	private String message;
 	private String log;
-	private String commit;
-	private List<ErrorProneItem> similar;
+	private String sha;
 
 	public ErrorProneItem(String name, String path, String line, String error, String msg, String hash, String log) {
 		this.key = String.join(":", path, line, error);
@@ -27,71 +26,49 @@ public class ErrorProneItem {
 		this.line = Integer.parseInt(line);
 		this.error = error;
 		this.message = msg;
-		this.commit = hash;
+		this.sha = hash;
 		this.log = log;
-		this.similar = new ArrayList<ErrorProneItem>();
 	}
 
 	/**
 	 * Creates comment to recommend ErrorProne for a Github pull request.
 	 *
-	 * @return   Message containing the fixed error and other similar errors found
+	 * @return   Message with fixed error and EP recommendation
 	 */
-	public String generateComment() {
+	public String generateComment(List<ErrorProneItem> other, String sha) {
 		String comment = Utils.BASE_COMMENT;
 		String simSentence = " Error Prone also found similar issues in {link}. ";
 		comment = comment.replace("{fixed}", "```" + this.log.substring(this.log.indexOf("_")+1) + "```");
-		Set<String> simSet = new HashSet<String>();
-		for (ErrorProneItem e: this.similar) {
-			simSet.add(e.getKey());
+		Set<ErrorProneItem> similarSet = new HashSet<ErrorProneItem>();
+		ErrorProneItem sim;
+		for (ErrorProneItem epi: other) {
+			if ((!epi.getKey().equals(this.getKey()) && !epi.getFileName().equals(this.getFileName())) && 
+				(epi.getError().equals(this.getError()) || epi.getMessage().equals(this.getMessage()))) {
+				similarSet.add(epi);
+			}
 		}
-		if (simSet.isEmpty()) {
+		Iterator<ErrorProneItem> iter = similarSet.iterator();
+		System.out.println(similarSet.size());
+		if (similarSet.isEmpty()) {
 			comment = comment.replace("{similar}", " ");
-		} else if (simSet.size() == 1) {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(simSet.iterator().next())));
+		} else if (similarSet.size() == 1) {
+				comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(iter.next(), sha)));
 		} else {
-			Iterator<String> it = simSet.iterator();
-			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(it.next()), getErrorLink(it.next()))));
+			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))));
 		}
 		return comment;
 	}
 
 	/**
-	 * Gets errors similar to the current error.
-	 *
-	 * @return   List of other ErrorProneItems with the same error
-	 */
-	public List<ErrorProneItem> getSimilarErrors() {
-		return this.similar;
-	}
-	
-	/**
 	 * Gets url to link to similar errors found by Error Prone in recommendation.
 	 *
 	 * @param epi   ErrorProneItem with error similar to fixed error
-	 * @return      Url to line with similar error
+	 * @param hash  Git commit hash
+	 * @return      Url to line with a similar error
 	 */
-	private String getErrorLink(String key) {
-		ErrorProneItem epi = null;
-		for (ErrorProneItem e: this.similar) {
-			if (e.getKey().equals(key)) {
-				epi = e;
-				break;
-			}
-		}
-		String url = Utils.LINK_URL.replace("{line}", epi.getLineNumberStr()).replace("{path}", epi.getRelativeFilePath()).replace("{sha}", epi.getCommit()).replace("{repo}", Utils.getProjectName()).replace("{user}", Utils.getProjectOwner());
+	private String getErrorLink(ErrorProneItem epi, String hash) {
+		String url = Utils.LINK_URL.replace("{line}", epi.getLineNumberStr()).replace("/{path}", Utils.getLocalPath(epi.getFilePath())).replace("{sha}", hash).replace("{repo}", Utils.getProjectName()).replace("{user}", Utils.getProjectOwner());
 		return Utils.MARKDOWN_LINK.replace("{src}", epi.getFileName()).replace("{url}", url);
-	}
-
-	/**
-	 * Adds an ErrorProneItem with a similar error to current item's list.
-	 *
-	 * @param error   ErrorProneItem with the same error message as current object
-	 */
-	public void addSimilarError(ErrorProneItem error) {
-		if (!this.similar.contains(error) && !this.filename.equals(error.getFileName())) {
-			this.similar.add(error);
-		}
 	}
 	
 	/**
@@ -208,36 +185,21 @@ public class ErrorProneItem {
 	}
 
 	/**
-	 * Gets hash of project commit where error was found.
+	 * Gets hash of project sha where error was found.
 	 *
-	 * @return   git commit hash
+	 * @return   git sha hash
 	 */
 	public String getCommit() {
-		return this.commit;
+		return this.sha;
 	}
 
 	/**
-	 * Sets Github commit hash for ErrorProne error output.
+	 * Sets Github sha hash for ErrorProne error output.
 	 *
-	 * @param hash   git commit hash
+	 * @param hash   git sha hash
 	 */
 	public void setCommit(String hash) {
-		this.commit = hash;
-	}
-
-	/**
-	 * Checks if ErrorProne reported multiple instances of the same error.
-	 *
-	 * @param error   Current ErrorProneItem
-	 * @param list    List of previous ErrorProneItems
-	 */
-	private static void checkSimilarError(ErrorProneItem error, ArrayList<ErrorProneItem> list) {
-		for (ErrorProneItem epi: list) {
-			if (epi.getMessage().equals(error.getMessage()) && epi.getError().equals(error.getError()) && !epi.getKey().equals(error.getKey()) ) {
-				error.addSimilarError(epi);
-				epi.addSimilarError(error);
-			}
-		}
+		this.sha = hash;
 	}
 
 	/**
@@ -246,17 +208,17 @@ public class ErrorProneItem {
 	 * @param msg    ErrorProne output
 	 * @return       List of ErrrorProneItems
 	  */
-	public static List<ErrorProneItem> parseErrorProneOutput(String msg) {
+	public static Set<ErrorProneItem> parseOutput(String msg) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = msg.split("\n");
 		ErrorProneItem temp = null;
-		ArrayList<ErrorProneItem> list = new ArrayList<ErrorProneItem>();
+		Set<ErrorProneItem> set = new HashSet<ErrorProneItem>();
 		for (String line: lines) {
 			if (line.matches("^\\d+\\serror[s]*$")) {
 				continue;
 			}
 			else if (line.matches(regex)) {
-				if (temp != null && !list.contains(temp)) {	list.add(temp); }
+				if (temp != null && !set.contains(temp)) {	set.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
 				String errorFileName = errorFilePath.substring(errorFilePath.lastIndexOf("/")+1);
@@ -269,13 +231,12 @@ public class ErrorProneItem {
 				}
 				String errorMessage = error[3];
 				temp = new ErrorProneItem(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, null, line);
-				checkSimilarError(temp, list);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}
 		}
-		if (temp != null && !list.contains(temp)) { list.add(temp); }
-		return list;
+		if (temp != null && !set.contains(temp)) { set.add(temp); }
+		return set;
 	}
 
 	/**
@@ -285,7 +246,7 @@ public class ErrorProneItem {
 	 * @param file   Name of file to analyze
 	 * @return       ErrorProne results
 	 */
-	public static String analyzeCode(String file) {
+	public static String analyze(String file) {
 		String cmd = Utils.ERROR_PRONE_CMD.replace("{file}", file);
 		String output = "";
 		try {
@@ -322,7 +283,7 @@ public class ErrorProneItem {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, filename, filepath, line, error, message, log, commit, similar);
+		return Objects.hash(key, filename, filepath, line, error, message, log, sha);
 	}
 }
 

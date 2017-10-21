@@ -42,12 +42,11 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
-		String comment = error.generateComment();
-		System.out.println("Recommend PR#: "+Integer.toString(pull.number()));
+	private void makeRecommendation(Pull.Smart pull, ErrorProneItem epi, String hash, int line, List<ErrorProneItem> errors) {
+		String comment = epi.generateComment(errors, hash);
 		System.out.println(comment);
 		recs += 1;
-		prs.add(sha);
+		prs.add(epi.getKey());
 	}
 
 	/**
@@ -57,37 +56,36 @@ public class PullRecommender {
 	 * @return       Number of recommendations made
 	 */
 	private void analyze(Pull.Smart pull) {
+		Map<String, String> errors = new HashMap<String, String>();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		try {
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Iterator<JsonObject> fileit = pull.files().iterator();
-			while (fileit.hasNext()) {
-				JsonObject file = fileit.next();
-				String filename = file.getString("filename");
-				if (filename.endsWith(".java")) {
-					String pullURL = file.getString("raw_url");
-					String baseURL = pullURL.replace(pullHash, baseHash);
-					String baseTempFile = String.join("_", baseHash, filename);
-					String pullTempFile = String.join("_", pullHash, filename);
-					Utils.wget(baseURL, baseTempFile);
-					Utils.wget(pullURL, pullTempFile);
-					String baseLog = ErrorProneItem.analyzeCode(baseTempFile);
-					if (baseLog == null || baseLog == "") {
-						continue;
-					} else {
-						String pullLog = ErrorProneItem.analyzeCode(pullTempFile);
-						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
-						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
-						for (ErrorProneItem epi: baseEP) {
-							int fix = Utils.getFix(baseTempFile, pullTempFile, epi);
-							if (!pullEP.contains(epi) && fix > 0) {
-								epi.setFilePath(filename);
-								System.out.println("Fixed: "+epi.getKey());
-								makeRecommendation(pull, epi, pullHash, fix);
-							}
+			Map<String, String> baseErrors = Utils.checkout(baseHash);
+			Map<String, String> pullErrors = Utils.checkout(pullHash);
+			List<ErrorProneItem> allErrors = new ArrayList<ErrorProneItem>();
+			List<ErrorProneItem> fixed = new ArrayList<ErrorProneItem>();
+			for (String file: baseErrors.keySet()) {
+				allErrors.addAll(ErrorProneItem.parseOutput(baseErrors.get(file)));
+				if (!pullErrors.containsKey(file)) {
+					//Deleted file
+					continue;
+				} else if (baseErrors.get(file).equals(pullErrors.get(file))) {
+					//No bugs fixed
+					continue;
+				} else {
+					Set<ErrorProneItem> baseEP = ErrorProneItem.parseOutput(baseErrors.get(file));
+					Set<ErrorProneItem> pullEP = ErrorProneItem.parseOutput(pullErrors.get(file));
+					for (ErrorProneItem e: baseEP) {
+						if (!pullEP.contains(e) && !fixed.contains(e)) {
+							fixed.add(e);
 						}
 					}
+				}
+			}
+			for (ErrorProneItem error: fixed) {
+				if (Utils.isFix(baseHash, pullHash, error)) {
+					makeRecommendation(pull, error, pullHash, Utils.getFix(), allErrors);
 				}
 			}
 		} catch (IOException e) {
@@ -108,7 +106,7 @@ public class PullRecommender {
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		int i = 0;
 		while (pullit.hasNext()) {
-			if (i > 100) {
+			if (i >= 10) {
 				break;
 			}
 			Pull.Smart pull = new Pull.Smart(pullit.next());
