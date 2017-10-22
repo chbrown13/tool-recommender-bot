@@ -78,34 +78,6 @@ public class Utils {
 	}
 
 	/**
-	 * Gets line number from offset of updated/inserted line
-	 * 
-	 * @param offset   Character position in the updated file
-	 * @param file     Path to changed file
-	 * @return         New line number
-	 */
-	private static int getDiffLineNumber(int offset, String file) {
-		int count = 0;
-		try {
-			InputStream in = new FileInputStream(file);
-			BufferedReader buf = new BufferedReader(new InputStreamReader(in));
-			String line = buf.readLine();
-			StringBuilder sb = new StringBuilder();				
-			while(line != null){
-				sb.append(line).append("\n");
-				line = buf.readLine();
-			}
-					
-			String code = sb.toString();
-			String[] lines = code.substring(offset).split("\n");
-			count = lines.length;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return count;
-	}
-
-	/**
 	 * Gets the Gumtree node of error reported by ErrorProne
 	 * 
 	 * @param root   root of the file AST tree

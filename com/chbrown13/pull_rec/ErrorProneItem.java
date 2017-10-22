@@ -17,16 +17,14 @@ public class ErrorProneItem {
 	private String error;
 	private String message;
 	private String log;
-	private String sha;
 
-	public ErrorProneItem(String name, String path, String line, String error, String msg, String hash, String log) {
+	public ErrorProneItem(String name, String path, String line, String error, String msg, String log) {
 		this.key = String.join(":", path, line, error);
 		this.filename = name;
 		this.filepath = path;
 		this.line = Integer.parseInt(line);
 		this.error = error;
 		this.message = msg;
-		this.sha = hash;
 		this.log = log;
 	}
 
@@ -38,7 +36,7 @@ public class ErrorProneItem {
 	public String generateComment(List<ErrorProneItem> other, String sha) {
 		String comment = Utils.BASE_COMMENT;
 		String simSentence = " Error Prone also found similar issues in {link}. ";
-		comment = comment.replace("{fixed}", "```" + this.log.substring(this.log.indexOf("_")+1) + "```");
+		comment = comment.replace("{fixed}", "```" + this.log + "```");
 		Set<ErrorProneItem> similarSet = new HashSet<ErrorProneItem>();
 		ErrorProneItem sim;
 		for (ErrorProneItem epi: other) {
@@ -116,20 +114,6 @@ public class ErrorProneItem {
 	}
 
 	/**
-	 * Gets the relative file path within the project folder.
-	 *
-	 * @param project   Project name
-	 * @return          Filepath in project directory
-	 */
-	public String getRelativeFilePath() {
-		String project = Utils.getProjectName();
-		if (this.filepath.startsWith(project+"/")) {
-			return this.filepath.replace(project+"/","");
-		}
-		return this.filepath;
-	}
-
-	/**
 	 * Gets filename of file containing ErrorProne error reported.
 	 *
  	 * @return   String filepath
@@ -184,24 +168,6 @@ public class ErrorProneItem {
 	}
 
 	/**
-	 * Gets hash of project sha where error was found.
-	 *
-	 * @return   git sha hash
-	 */
-	public String getCommit() {
-		return this.sha;
-	}
-
-	/**
-	 * Sets Github sha hash for ErrorProne error output.
-	 *
-	 * @param hash   git sha hash
-	 */
-	public void setCommit(String hash) {
-		this.sha = hash;
-	}
-
-	/**
 	 * Parses output from ErrorProne static analysis of code and creates objects.
 	 *
 	 * @param msg    ErrorProne output
@@ -229,7 +195,7 @@ public class ErrorProneItem {
 					errorProne = error[2].trim();
 				}
 				String errorMessage = error[3];
-				temp = new ErrorProneItem(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, null, line);
+				temp = new ErrorProneItem(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, "");
 			} else if (temp != null) {
 				temp.addLog(line);
 			}
@@ -282,7 +248,7 @@ public class ErrorProneItem {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, filename, filepath, line, error, message, log, sha);
+		return Objects.hash(key, filename, filepath, line, error, message, log);
 	}
 }
 
