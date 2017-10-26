@@ -29,8 +29,6 @@ public class Utils {
 
 	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported an error [1] used to be here, but you fixed it.{similar}Check out http://errorprone.info for more information.\n\n\n[1] {fixed}";
 
-	public static String ERROR_PRONE_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";
-
 	private static String currentDir = System.getProperty("user.dir");
 
 	private static Map<String, String> errors = new HashMap<String, String>();
@@ -102,7 +100,7 @@ public class Utils {
 	 * @param srcFile Filename of source code
 	 * @return        character offset where error begins
 	 */
-	private static int getErrorOffset(ErrorProneItem error, String srcFile) {
+	private static int getErrorOffset(Error error, String srcFile) {
 		String log = error.getLog();
 		String prev = null;
 		int loc;
@@ -276,7 +274,7 @@ public class Utils {
 	 * @param error  Current error to check
 	 * @return       False if code is updated or added, otherwise true
 	 */
-	private static boolean isDeleteOnly(String file1, String file2, ErrorProneItem error) {
+	private static boolean isDeleteOnly(String file1, String file2, Error error) {
    		Run.initGenerators();
    		try {
    			ITree src = Generators.getInstance().getTree(file1).getRoot();
@@ -288,7 +286,7 @@ public class Utils {
    			lcs.match();
 			for (ITree tree: dst.getDescendants()) { // node added/updated in destination
    				if (!tree.isMatched()) {
-   					return determineFix(file1, file2, getErrorOffset(error, file1)) > 0;
+   					return determineFix(file1, file2, getErrorOffset(error, file1)) < 0;
    				}
 			}
 			System.out.println("Error removed but may not have been fixed");
@@ -305,7 +303,7 @@ public class Utils {
 	 * @param error  Error in question
 	 * @return       True if error prone bug was fixed, else false
 	 */
-	public static boolean isFix(String base, String pull, ErrorProneItem error) {
+	public static boolean isFix(String base, String pull, Error error) {
 		String file = getLocalPath(error.getFilePath());
 		String baseURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", base).replace("/{path}", file);
 		String pullURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", pull).replace("/{path}", file);
@@ -313,7 +311,7 @@ public class Utils {
 		String pullFile = pull + file;
 		wget(baseURL, baseFile);
 		wget(pullURL, pullFile);
-		return isDeleteOnly(baseFile, pullFile, error);
+		return !isDeleteOnly(baseFile, pullFile, error);
 	}
 
 	/**
@@ -324,8 +322,11 @@ public class Utils {
 	public static int getFix() {
 		if (fixLine > 0) {
 			return fixLine;
+		} else if (fixLine == 0) {
+			return 1;
+		} else { // Shouldn't have been considered a fix
+			return (Integer)null;
 		}
-		return (Integer)null;
 	}
 
 	/**
@@ -343,7 +344,7 @@ public class Utils {
 			if (f.isDirectory()) {
 				walk(filename);
 			} else if (filename.endsWith(".java")) {
-				errors.put(filename, ErrorProneItem.analyze(filename));
+				errors.put(filename, ErrorProne.analyze(filename));
 			}
 		}
 	}

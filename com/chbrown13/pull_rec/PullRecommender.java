@@ -42,11 +42,11 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Pull.Smart pull, ErrorProneItem epi, String hash, int line, List<ErrorProneItem> errors) {
-		String comment = epi.generateComment(errors, hash);
+	private void makeRecommendation(Pull.Smart pull, Error err, String hash, int line, List<Error> errors) {
+		String comment = err.generateComment(errors, hash);
 		System.out.println(comment);
 		recs += 1;
-		prs.add(epi.getKey());
+		prs.add(err.getKey());
 	}
 
 	/**
@@ -63,10 +63,10 @@ public class PullRecommender {
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
 			Map<String, String> baseErrors = Utils.checkout(baseHash);
 			Map<String, String> pullErrors = Utils.checkout(pullHash);
-			List<ErrorProneItem> allErrors = new ArrayList<ErrorProneItem>();
-			List<ErrorProneItem> fixed = new ArrayList<ErrorProneItem>();
+			List<Error> allErrors = new ArrayList<Error>();
+			List<Error> fixed = new ArrayList<Error>();
 			for (String file: baseErrors.keySet()) {
-				allErrors.addAll(ErrorProneItem.parseOutput(baseErrors.get(file)));
+				allErrors.addAll(ErrorProne.parseOutput(baseErrors.get(file)));
 				if (!pullErrors.containsKey(file)) {
 					//Deleted file
 					continue;
@@ -74,16 +74,16 @@ public class PullRecommender {
 					//No bugs fixed
 					continue;
 				} else {
-					Set<ErrorProneItem> baseEP = ErrorProneItem.parseOutput(baseErrors.get(file));
-					Set<ErrorProneItem> pullEP = ErrorProneItem.parseOutput(pullErrors.get(file));
-					for (ErrorProneItem e: baseEP) {
+					Set<Error> baseEP = ErrorProne.parseOutput(baseErrors.get(file));
+					Set<Error> pullEP = ErrorProne.parseOutput(pullErrors.get(file));
+					for (Error e: baseEP) {
 						if (!pullEP.contains(e) && !fixed.contains(e)) {
 							fixed.add(e);
 						}
 					}
 				}
 			}
-			for (ErrorProneItem error: fixed) {
+			for (Error error: fixed) {
 				if (Utils.isFix(baseHash, pullHash, error)) {
 					makeRecommendation(pull, error, pullHash, Utils.getFix(), allErrors);
 				}
