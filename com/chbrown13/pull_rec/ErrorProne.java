@@ -11,10 +11,9 @@ import java.util.*;
 public class ErrorProne extends Tool {
 	
 	private static String RUN_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";	
-	private String name = "Error Prone";
 
-	public String getName()  {
-		return this.name;
+	public ErrorProne() {
+		super("Error Prone", "static analysis tool", "http://errorprone.info");
 	}
 	
 	/**
@@ -23,7 +22,8 @@ public class ErrorProne extends Tool {
 	 * @param msg    ErrorProne output
 	 * @return       List of ErrrorProne
 	  */
-	public static Set<Error> parseOutput(String msg) {
+	@Override
+	public Set<Error> parseOutput(String msg) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = msg.split("\n");
 		Error temp = null;
@@ -61,7 +61,8 @@ public class ErrorProne extends Tool {
 	 * @param file   Name of file to analyze
 	 * @return       ErrorProne results
 	 */
-	public static String analyze(String file) {
+	@Override
+	public String analyze(String file) {
 		String cmd = RUN_CMD.replace("{file}", file);
 		String output = "";
 		try {

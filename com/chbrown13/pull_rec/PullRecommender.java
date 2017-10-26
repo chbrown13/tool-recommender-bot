@@ -36,14 +36,14 @@ public class PullRecommender {
 	}
 	
 	/**
-	 * Post message recommending ErrorProne to Github on pull request fixing error.
+	 * Post message recommending tool to Github on pull request fixing error.
 	 *
 	 * @param comment   Comment with recommendation
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Pull.Smart pull, Error err, String hash, int line, List<Error> errors) {
-		String comment = err.generateComment(errors, hash);
+	private void makeRecommendation(Tool tool, Pull.Smart pull, Error err, String hash, int line, List<Error> errors) {
+		String comment = err.generateComment(tool, errors, hash);
 		System.out.println(comment);
 		recs += 1;
 		prs.add(err.getKey());
@@ -57,16 +57,17 @@ public class PullRecommender {
 	 */
 	private void analyze(Pull.Smart pull) {
 		Map<String, String> errors = new HashMap<String, String>();
+		Tool tool = new ErrorProne();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		try {
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Map<String, String> baseErrors = Utils.checkout(baseHash);
-			Map<String, String> pullErrors = Utils.checkout(pullHash);
+			Map<String, String> baseErrors = Utils.checkout(baseHash, tool);
+			Map<String, String> pullErrors = Utils.checkout(pullHash, tool);
 			List<Error> allErrors = new ArrayList<Error>();
 			List<Error> fixed = new ArrayList<Error>();
 			for (String file: baseErrors.keySet()) {
-				allErrors.addAll(ErrorProne.parseOutput(baseErrors.get(file)));
+				allErrors.addAll(tool.parseOutput(baseErrors.get(file)));
 				if (!pullErrors.containsKey(file)) {
 					//Deleted file
 					continue;
@@ -74,8 +75,8 @@ public class PullRecommender {
 					//No bugs fixed
 					continue;
 				} else {
-					Set<Error> baseEP = ErrorProne.parseOutput(baseErrors.get(file));
-					Set<Error> pullEP = ErrorProne.parseOutput(pullErrors.get(file));
+					Set<Error> baseEP = tool.parseOutput(baseErrors.get(file));
+					Set<Error> pullEP = tool.parseOutput(pullErrors.get(file));
 					for (Error e: baseEP) {
 						if (!pullEP.contains(e) && !fixed.contains(e)) {
 							fixed.add(e);
@@ -85,7 +86,7 @@ public class PullRecommender {
 			}
 			for (Error error: fixed) {
 				if (Utils.isFix(baseHash, pullHash, error)) {
-					makeRecommendation(pull, error, pullHash, Utils.getFix(), allErrors);
+					makeRecommendation(tool, pull, error, pullHash, Utils.getFix(), allErrors);
 				}
 			}
 		} catch (IOException e) {

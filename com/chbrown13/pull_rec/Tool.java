@@ -1,8 +1,42 @@
 package com.chbrown13.pull_rec;
 
-public class Tool {
+import java.util.*;
 
-    public static String analyze(String file) { return null; }
+public abstract class Tool {
+
+    private final String MVN = "";
+    private String name;
+    private String desc;
+    private String link;
+
+    public Tool (String name, String desc, String link) {
+        this.name = name;
+        this.desc = desc;
+        this.link = link;
+    }
+
+    /**
+	 * Returns the name of the current tool.
+	 */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+	 * Returns the description of the current tool.
+	 */
+    public String getDescription() {
+        return this.desc;
+    }
+
+    /**
+	 * Returns the URL for the current tool.
+	 */
+    public String getLink() {
+        return this.link;
+    }
+
+    public abstract String analyze(String filename);
     
-    public static String generateComment() { return null; }
+    public abstract Set<Error> parseOutput(String log);
 }

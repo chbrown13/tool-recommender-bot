@@ -27,7 +27,7 @@ public class Utils {
 
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 
-	public static String BASE_COMMENT = "Good job! The static analysis tool Error Prone reported an error [1] used to be here, but you fixed it.{similar}Check out http://errorprone.info for more information.\n\n\n[1] {fixed}";
+	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
 	private static String currentDir = System.getProperty("user.dir");
 
@@ -334,7 +334,7 @@ public class Utils {
 	 * 
 	 * @param path   Path to git repository or folder inside
 	 */
-	private static void walk(String path) {
+	private static void walk(String path, Tool tool) {
 		File root = new File(path);
 		File[] list = root.listFiles();
 		
@@ -342,9 +342,9 @@ public class Utils {
 		for (File f : list) {
 			String filename = f.getAbsolutePath();
 			if (f.isDirectory()) {
-				walk(filename);
+				walk(filename, tool);
 			} else if (filename.endsWith(".java")) {
-				errors.put(filename, ErrorProne.analyze(filename));
+				errors.put(filename, tool.analyze(filename));
 			}
 		}
 	}
@@ -355,13 +355,13 @@ public class Utils {
 	 * @param hash   Git SHA value
 	 * @return       Map of filenames to errors
 	 */
-	public static Map<String, String> checkout(String hash) {
+	public static Map<String, String> checkout(String hash, Tool tool) {
 		errors = new HashMap<String, String>();
 		try {
 			cd(projectName);
 			Git git = Git.open(new File(currentDir+"/.git"));
 			git.checkout().setName(hash).call();
-			walk(currentDir);
+			walk(currentDir, tool);
 			cd("..");
 		} catch (Exception e) {
 			e.printStackTrace();
