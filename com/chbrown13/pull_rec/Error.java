@@ -143,7 +143,7 @@ public class Error {
 		} else if (similarSet.size() == 1) {
 				comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(iter.next(), sha)).replace("{issue}", "a similar issue"));
 		} else {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha)).replace("{issue}", "similar issues")));
+			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
 		}
 		return comment;
 	}
