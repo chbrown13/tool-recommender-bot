@@ -411,15 +411,19 @@ public class Utils {
 	 */
 	public static Map<String, String> checkout(String hash, Tool tool) {
 		errors = new HashMap<String, String>();
+		System.out.println("checkout "+hash);
 		try {
 			cd(projectName);
 			Git git = Git.open(new File(currentDir+"/.git"));
 			git.checkout().setName(hash).call();
 			try {
-				File pom = new File(currentDir+"/pom.temp");
-				FileWriter outStream = new FileWriter(pom, false);
+				File newPom = new File(currentDir+"/pom.temp");
+				File pom = new File(currentDir+"/pom.xml");
+				FileWriter outStream = new FileWriter(newPom, false);
 				parseXML(tool, outStream);
 				outStream.close();
+				boolean rename = newPom.renameTo(pom);
+				System.out.println("rename= "+rename);
 				//TODO: 
 				//rename file to pom.xml
 				//mvn compile
@@ -428,8 +432,10 @@ public class Utils {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			git.checkout().setName("master").call();
 			cd("..");
 		} catch (Exception e) {
+			e.printStackTrace();
 			try {
 				cd("..");
 			} catch (IOException io) { io.printStackTrace(); }
