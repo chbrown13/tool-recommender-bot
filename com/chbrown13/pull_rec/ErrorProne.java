@@ -10,10 +10,41 @@ import java.util.*;
  */
 public class ErrorProne extends Tool {
 	
-	private static String RUN_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";	
+	private final String RUN_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";	
+	private final String MAVEN = "<plugin>"+
+	"<groupId>org.apache.maven.plugins</groupId>" +
+	"<artifactId>maven-compiler-plugin</artifactId>" +
+	"<version>3.3</version>" +
+	"<configuration>" +
+	  "<compilerId>javac-with-errorprone</compilerId>" +
+	  "<forceJavacCompilerUse>true</forceJavacCompilerUse>" +
+	  "<source>8</source>" +
+	  "<target>8</target>" +
+	"</configuration>" +
+	"<dependencies>" +
+	  "<dependency>" +
+		"<groupId>org.codehaus.plexus</groupId>" +
+		"<artifactId>plexus-compiler-javac-errorprone</artifactId>" +
+		"<version>2.8</version>" +
+	  "</dependency>" +
+	  "<dependency>" +
+		"<groupId>com.google.errorprone</groupId>" +
+		"<artifactId>error_prone_core</artifactId>" +
+		"<version>2.1.1</version>" +
+	  "</dependency>" +
+	"</dependencies>" +
+  "</plugin>";
 
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
+	}
+
+	/**
+	 * Returns the Error Prone maven plugin for build
+	 */
+	@Override
+	public String getPlugin() {
+		return this.MAVEN;
 	}
 	
 	/**

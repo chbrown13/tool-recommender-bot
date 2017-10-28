@@ -12,9 +12,12 @@ import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.util.*;
+import javax.xml.parsers.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.xml.sax.*;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * The Utils class contains various helper methods and variables for the PullRecommender project.
@@ -28,6 +31,8 @@ public class Utils {
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
+
+	private static String MVN_COMPILE = "mvn -q compile";
 
 	private static String currentDir = System.getProperty("user.dir");
 
@@ -73,6 +78,20 @@ public class Utils {
 	 */	
 	public static String getProjectOwner() {
 		return projectOwner;
+	}
+
+	/**
+	 * Gets the local path of a file
+	 * 
+	 * @param path   Path to file in git repo
+	 * @return       Path to file in current working directory
+	 */
+	public static String getLocalPath(String path) {
+		String remove = currentDir;
+		if (!currentDir.endsWith(projectName)) {
+			remove += "/" + projectName;
+		}
+		return path.replace(remove, "");
 	}
 
 	/**
@@ -253,20 +272,6 @@ public class Utils {
 	}
 
 	/**
-	 * Gets the local path of a file
-	 * 
-	 * @param path   Path to file in git repo
-	 * @return       Path to file in current working directory
-	 */
-	public static String getLocalPath(String path) {
-		String remove = currentDir;
-		if (!currentDir.endsWith(projectName)) {
-			remove += "/" + projectName;
-		}
-		return path.replace(remove, "");
-	}
-
-	/**
 	 * Checks if pull request changes only remove code without fix
 	 * 
 	 * @param base   Path to base file
@@ -330,22 +335,71 @@ public class Utils {
 	}
 
 	/**
-	 * Method to recursively find all java files in repo
+	 * Compiles the project to analyze code in the repository
 	 * 
-	 * @param path   Path to git repository or folder inside
+	 * @return   Output from the maven build
 	 */
-	private static void walk(String path, Tool tool) {
-		File root = new File(path);
-		File[] list = root.listFiles();
-		
-		if (list == null || root.getAbsolutePath().contains(".git")) { return; }
-		for (File f : list) {
-			String filename = f.getAbsolutePath();
-			if (f.isDirectory()) {
-				walk(filename, tool);
-			} else if (filename.endsWith(".java")) {
-				errors.put(filename, tool.analyze(filename));
+	public static String compile() {
+		String output = "";
+		try {
+			Process p = Runtime.getRuntime().exec(MVN_COMPILE);	
+			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			String line;
+			while ((line = br.readLine()) != null) {
+			    output += line + "\n";
 			}
+		} catch (IOException e) {
+			return null;
+		}
+		return output;
+	}
+
+	/**
+	 * Modifies pom.xml file to add current tool plugin for maven build
+	 * 
+	 * @param tool   Tool to analyze code
+	 * @param file   New pom.xml file to write to
+	 */
+	public static void parseXML(Tool tool, FileWriter file) {
+		try {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			SAXParser saxParser = factory.newSAXParser();
+			DefaultHandler handler = new DefaultHandler() {
+					public void startElement(String uri, String localName, String qName,
+								Attributes attributes) throws SAXException {
+						try {
+									file.write("<" + qName + ">");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+
+					public void endElement(String uri, String localName,
+						String qName) throws SAXException {
+						try {
+							if(qName.equals("plugins")) {
+								file.write(tool.getPlugin()+"\n");
+								file.write("</plugins>");								
+							} else {
+								file.write("</" + qName + ">");
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+
+					@Override
+					public void characters(char ch[], int start, int length) throws SAXException {
+						try {
+							file.write(new String(ch, start, length));
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+			};
+			saxParser.parse("pom.xml", handler);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -361,12 +415,54 @@ public class Utils {
 			cd(projectName);
 			Git git = Git.open(new File(currentDir+"/.git"));
 			git.checkout().setName(hash).call();
-			walk(currentDir, tool);
+			try {
+				File pom = new File(currentDir+"/pom.temp");
+				FileWriter outStream = new FileWriter(pom, false);
+				parseXML(tool, outStream);
+				outStream.close();
+				//TODO: 
+				//rename file to pom.xml
+				//mvn compile
+				//parse error output
+				//return set of errors
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			cd("..");
 		} catch (Exception e) {
-			e.printStackTrace();
+			try {
+				cd("..");
+			} catch (IOException io) { io.printStackTrace(); }
+			return null;
 		}
 		return errors;
+	}
+
+	/**
+	 * Changes the current working directory of the program
+	 * 
+	 * @param dir   Directory to change into
+	 */
+	public static void cd(String dir) throws FileNotFoundException {
+		String directory;
+		if (dir.equals("..")) {
+			if(currentDir.contains("/")) {
+				directory = currentDir.substring(0, currentDir.lastIndexOf("/"));
+				System.setProperty("user.dir", directory);
+			} else {
+				directory = currentDir;
+			}
+			currentDir = directory;		
+		} else {
+			directory = String.join("/", System.getProperty("user.dir"), dir);
+			File f = new File(directory);
+			if (f.exists() && f.isDirectory()) {
+				System.setProperty("user.dir", directory);	
+				currentDir = directory;				
+			} else {
+				throw new FileNotFoundException("Invalid directory name "+dir);
+			}
+		}
 	}
 
 	/**
@@ -396,33 +492,6 @@ public class Utils {
 			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Changes the current working directory of the program
-	 * 
-	 * @param dir   Directory to change into
-	 */
-	public static void cd(String dir) throws FileNotFoundException {
-		String directory;
-		if (dir.equals("..")) {
-			if(currentDir.contains("/")) {
-				directory = currentDir.substring(0, currentDir.lastIndexOf("/"));
-				System.setProperty("user.dir", directory);
-			} else {
-				directory = currentDir;
-			}
-			currentDir = directory;		
-		} else {
-			directory = String.join("/", System.getProperty("user.dir"), dir);
-			File f = new File(directory);
-			if (f.exists() && f.isDirectory()) {
-				System.setProperty("user.dir", directory);	
-				currentDir = directory;				
-			} else {
-				throw new FileNotFoundException("Invalid directory name "+dir);
-			}
 		}
 	}
 

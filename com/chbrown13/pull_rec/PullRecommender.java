@@ -64,7 +64,7 @@ public class PullRecommender {
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
 			Map<String, String> baseErrors = Utils.checkout(baseHash, tool);
 			Map<String, String> pullErrors = Utils.checkout(pullHash, tool);
-			List<Error> allErrors = new ArrayList<Error>();
+			/*List<Error> allErrors = new ArrayList<Error>();
 			List<Error> fixed = new ArrayList<Error>();
 			for (String file: baseErrors.keySet()) {
 				allErrors.addAll(tool.parseOutput(baseErrors.get(file)));
@@ -88,7 +88,7 @@ public class PullRecommender {
 				if (Utils.isFix(baseHash, pullHash, error)) {
 					makeRecommendation(tool, pull, error, pullHash, Utils.getFix(), allErrors);
 				}
-			}
+			}*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	

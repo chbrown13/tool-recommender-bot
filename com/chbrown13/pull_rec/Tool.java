@@ -4,7 +4,7 @@ import java.util.*;
 
 public abstract class Tool {
 
-    private final String MVN = "";
+    private final String MAVEN = "";
     private String name;
     private String desc;
     private String link;
@@ -35,6 +35,8 @@ public abstract class Tool {
     public String getLink() {
         return this.link;
     }
+
+    public abstract String getPlugin();
 
     public abstract String analyze(String filename);
     
