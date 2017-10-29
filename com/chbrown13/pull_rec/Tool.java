@@ -37,8 +37,6 @@ public abstract class Tool {
     }
 
     public abstract String getPlugin();
-
-    public abstract String analyze(String filename);
     
     public abstract Set<Error> parseOutput(String log);
 }

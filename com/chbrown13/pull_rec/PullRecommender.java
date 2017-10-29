@@ -42,11 +42,11 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Tool tool, Pull.Smart pull, Error err, String hash, int line, List<Error> errors) {
-		String comment = err.generateComment(tool, errors, hash);
+	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, String hash, int line, Set<Error> errors) {
+		String comment = error.generateComment(tool, errors, hash);
 		System.out.println(comment);
 		recs += 1;
-		prs.add(err.getKey());
+		prs.add(error.getKey());
 	}
 
 	/**
@@ -56,14 +56,25 @@ public class PullRecommender {
 	 * @return       Number of recommendations made
 	 */
 	private void analyze(Pull.Smart pull) {
-		Map<String, String> errors = new HashMap<String, String>();
 		Tool tool = new ErrorProne();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		try {
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Map<String, String> baseErrors = Utils.checkout(baseHash, tool);
-			Map<String, String> pullErrors = Utils.checkout(pullHash, tool);
+			Set<Error> baseErrors = Utils.checkout(baseHash, tool);
+			Set<Error> pullErrors = Utils.checkout(pullHash, tool);
+			Set<Error> fixed = new HashSet<Error>();
+			fixed.addAll(baseErrors);
+			if(baseErrors != null && pullErrors != null) {
+				System.out.println("LET'S GO!!!!!!!!!!!!!");
+				fixed.removeAll(pullErrors);
+				for (Error e: fixed) {
+					if (Utils.isFix(baseHash, pullHash, e)) {
+						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
+					}
+				}
+
+			}
 			/*List<Error> allErrors = new ArrayList<Error>();
 			List<Error> fixed = new ArrayList<Error>();
 			for (String file: baseErrors.keySet()) {

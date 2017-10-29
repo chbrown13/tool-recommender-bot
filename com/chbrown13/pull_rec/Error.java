@@ -125,7 +125,7 @@ public class Error {
 	 *
 	 * @return   Message with fixed error and tool recommendation
 	 */
-	public String generateComment(Tool tool, List<Error> similar, String sha) {
+	public String generateComment(Tool tool, Set<Error> similar, String sha) {
 		String comment = Utils.BASE_COMMENT.replace("{desc}", tool.getDescription()).replace("{tool}", tool.getName()).replace("{link}", tool.getLink());
 		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName()); //TODO replace with tool
 		comment = comment.replace("{fixed}", "```" + this.log + "```");

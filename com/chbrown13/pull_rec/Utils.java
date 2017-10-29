@@ -32,11 +32,9 @@ public class Utils {
 
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
-	private static String MVN_COMPILE = "mvn -q compile";
+	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
 	private static String currentDir = System.getProperty("user.dir");
-
-	private static Map<String, String> errors = new HashMap<String, String>();
 
 	private static String projectName = "";
 	
@@ -341,14 +339,16 @@ public class Utils {
 	 */
 	public static String compile() {
 		String output = "";
+		String cmd = MVN_COMPILE.replace("{dir}", currentDir);
 		try {
-			Process p = Runtime.getRuntime().exec(MVN_COMPILE);	
+			Process p = Runtime.getRuntime().exec(cmd);	
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			String line;
 			while ((line = br.readLine()) != null) {
 			    output += line + "\n";
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
 			return null;
 		}
 		return output;
@@ -365,39 +365,39 @@ public class Utils {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser saxParser = factory.newSAXParser();
 			DefaultHandler handler = new DefaultHandler() {
-					public void startElement(String uri, String localName, String qName,
-								Attributes attributes) throws SAXException {
-						try {
-									file.write("<" + qName + ">");
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+				public void startElement(String uri, String localName, String qName,
+							Attributes attributes) throws SAXException {
+					try {
+								file.write("<" + qName + ">");
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
+				}
 
-					public void endElement(String uri, String localName,
-						String qName) throws SAXException {
-						try {
-							if(qName.equals("plugins")) {
-								file.write(tool.getPlugin()+"\n");
-								file.write("</plugins>");								
-							} else {
-								file.write("</" + qName + ">");
-							}
-						} catch (IOException e) {
-							e.printStackTrace();
+				public void endElement(String uri, String localName,
+					String qName) throws SAXException {
+					try {
+						if(qName.equals("plugins")) {
+							file.write(tool.getPlugin()+"\n");
+							file.write("</plugins>");								
+						} else {
+							file.write("</" + qName + ">");
 						}
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
+				}
 
-					@Override
-					public void characters(char ch[], int start, int length) throws SAXException {
-						try {
-							file.write(new String(ch, start, length));
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+				@Override
+				public void characters(char ch[], int start, int length) throws SAXException {
+					try {
+						file.write(new String(ch, start, length));
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
+				}
 			};
-			saxParser.parse("pom.xml", handler);
+			saxParser.parse(currentDir + "/pom.xml", handler);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -409,26 +409,20 @@ public class Utils {
 	 * @param hash   Git SHA value
 	 * @return       Map of filenames to errors
 	 */
-	public static Map<String, String> checkout(String hash, Tool tool) {
-		errors = new HashMap<String, String>();
-		System.out.println("checkout "+hash);
+	public static Set<Error> checkout(String hash, Tool tool) {
+		Set<Error> errors = new HashSet<Error>();
 		try {
 			cd(projectName);
 			Git git = Git.open(new File(currentDir+"/.git"));
 			git.checkout().setName(hash).call();
 			try {
-				File newPom = new File(currentDir+"/pom.temp");
-				File pom = new File(currentDir+"/pom.xml");
+				File newPom = new File(currentDir + "/pom.temp");
+				File pom = new File(currentDir + "/pom.xml");
 				FileWriter outStream = new FileWriter(newPom, false);
 				parseXML(tool, outStream);
 				outStream.close();
-				boolean rename = newPom.renameTo(pom);
-				System.out.println("rename= "+rename);
-				//TODO: 
-				//rename file to pom.xml
-				//mvn compile
-				//parse error output
-				//return set of errors
+				String log = compile();
+				errors = tool.parseOutput(log);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -441,6 +435,7 @@ public class Utils {
 			} catch (IOException io) { io.printStackTrace(); }
 			return null;
 		}
+		System.out.println(hash);
 		return errors;
 	}
 
@@ -450,8 +445,18 @@ public class Utils {
 	 * @param dir   Directory to change into
 	 */
 	public static void cd(String dir) throws FileNotFoundException {
-		String directory;
-		if (dir.equals("..")) {
+		String cmd = "cd " + dir;
+		try {
+			Process p = Runtime.getRuntime().exec(cmd);		
+			if(!dir.equals("..")) {
+				currentDir += "/" + dir;
+			} else {
+				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
+			}
+		} catch (IOException e) {
+			throw new FileNotFoundException("Invalid directory name "+dir);			
+		}
+		/*if (dir.equals("..")) {
 			if(currentDir.contains("/")) {
 				directory = currentDir.substring(0, currentDir.lastIndexOf("/"));
 				System.setProperty("user.dir", directory);
@@ -468,7 +473,7 @@ public class Utils {
 			} else {
 				throw new FileNotFoundException("Invalid directory name "+dir);
 			}
-		}
+		}*/
 	}
 
 	/**
