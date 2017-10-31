@@ -34,6 +34,8 @@ public class Utils {
 
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
+	private static String CHECKOUT = "git --git-dir=_project/.git fetch origin pull/{num}/head:_name && git --git-dir=_project/.git checkout -f _name";
+
 	private static String currentDir = System.getProperty("user.dir");
 
 	private static String projectName = "";
@@ -404,38 +406,77 @@ public class Utils {
 	}
 
 	/**
-	 * Checkout specific version of a git repository for analysis.
+	 * Updates to pom.xml file to include tool plugin
+	 * 
+	 * @param tool   Static analysis tool to analyze code
+	 */
+	private static void addToolPlugin(Tool tool) {
+		try{
+			File newPom = new File(currentDir + "/pom.temp");
+			File pom = new File(currentDir + "/pom.xml");
+			FileWriter outStream = new FileWriter(newPom, false);
+			parseXML(tool, outStream);
+			outStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Checkout pull request version of a git repository to analyze
+	 * 
+	 * @param pull   Pull Request number
+	 * @param label  Pull Request branch name
+	 * @param tool   Tool to perform analysis and recommend
+	 * @return       Set of errors reported from tool
+	 */
+	public static Set<Error> checkout(int pull, String label, Tool tool) {
+		Set<Error> errors = new HashSet<Error>();
+		String cmds = CHECKOUT.replace("{num}", Integer.toString(pull)).replaceAll("_name", label).replaceAll("_project", projectName);
+		try {
+			File checkout = new File("checkout.sh");
+			FileWriter fw = new FileWriter(checkout, false);
+			fw.write(cmds);
+			fw.close();
+			Process p = Runtime.getRuntime().exec("sh checkout.sh");
+			addToolPlugin(tool);
+			String log = compile();
+			System.out.println("2. "+log);
+			errors = tool.parseOutput(log);		
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		return errors;
+	}
+
+	/**
+	 * Checkout specific version of a git repository to analyze
 	 * 
 	 * @param hash   Git SHA value
-	 * @return       Map of filenames to errors
+	 * @param tool   Tool to perform analysis and recommend
+	 * @return       Set errors reported from tool
 	 */
 	public static Set<Error> checkout(String hash, Tool tool) {
 		Set<Error> errors = new HashSet<Error>();
 		try {
 			cd(projectName);
 			Git git = Git.open(new File(currentDir+"/.git"));
-			git.checkout().setName(hash).call();
-			try {
-				File newPom = new File(currentDir + "/pom.temp");
-				File pom = new File(currentDir + "/pom.xml");
-				FileWriter outStream = new FileWriter(newPom, false);
-				parseXML(tool, outStream);
-				outStream.close();
-				String log = compile();
-				errors = tool.parseOutput(log);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			git.checkout().setName("master").call();
+			git.checkout().setName(hash).setForce(true).call();
+			addToolPlugin(tool);
+			String log = compile();
+			System.out.println("1. "+log);
+			errors = tool.parseOutput(log);
+			//git.checkout().setName("master").call();
 			cd("..");
 		} catch (Exception e) {
 			e.printStackTrace();
 			try {
 				cd("..");
+				e.printStackTrace();
 			} catch (IOException io) { io.printStackTrace(); }
 			return null;
 		}
-		System.out.println(hash);
 		return errors;
 	}
 

@@ -62,13 +62,15 @@ public class PullRecommender {
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
 			Set<Error> baseErrors = Utils.checkout(baseHash, tool);
-			Set<Error> pullErrors = Utils.checkout(pullHash, tool);
-			Set<Error> fixed = new HashSet<Error>();
-			fixed.addAll(baseErrors);
+			Set<Error> pullErrors = Utils.checkout(pull.number(), 
+				pull.json().getJsonObject("head").getString("ref"), tool);
 			if(baseErrors != null && pullErrors != null) {
+				Set<Error> fixed = new HashSet<Error>();				
+				fixed.addAll(baseErrors);				
 				System.out.println("LET'S GO!!!!!!!!!!!!!");
 				fixed.removeAll(pullErrors);
 				for (Error e: fixed) {
+					System.out.println(e.getKey());
 					if (Utils.isFix(baseHash, pullHash, e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					}
@@ -140,6 +142,20 @@ public class PullRecommender {
 			}
 		}
 		System.out.println("{num} recommendations made for {prs} prs.".replace("{num}", Integer.toString(recommender.getRecommendationCount())).replace("{prs}", Integer.toString(recommender.getPRCount())));
+		
+		/*try {
+			Utils.cd("RecommenderTest");
+			Process p = Runtime.getRuntime().exec("sh RecommenderTest/checkout.sh");
+			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			String line;
+			String output = "";
+			while ((line = br.readLine()) != null) {
+			    output += line + "\n";
+			}
+			System.out.println(output);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	*/
 	}
 }
 
