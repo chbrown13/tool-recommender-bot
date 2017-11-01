@@ -1,0 +1,142 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{pdftexcmds}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usepackage{balance}
+\usepackage{amssymb, marvosym}
+\usepackage{threeparttable}
+\usepackage[bookmarks=false]{hyperref}
+\usepackage{url}
+\PassOptionsToPackage{hyphens}{url}
+\hypersetup{colorlinks=true,breaklinks=true}
+\usetikzlibrary{patterns,shapes,arrows}
+\newcommand\tab[1][.5cm]{\hspace*{#1}}
+\hyphenation{op-tical net-works semi-conduc-tor}
+\IEEEoverridecommandlockouts
+\raggedbottom
+\newcommand{\tool}{tool-recommender-bot }
+\begin{document}
+
+% Copyright
+%\setcopyright{acmlicensed}
+
+\title{\tool}
+
+\author{\IEEEauthorblockN{Chris Brown and Emerson Murphy-Hill}
+\IEEEauthorblockA{Department of Computer Science\\
+North Carolina State University\\
+Raleigh, NC\\
+Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
+}
+
+\maketitle
+\begin{abstract}
+Automated recommendation systems are important for improving tool discovery and increasing user productivity. Here's ours...
+\end{abstract}
+
+\begin{IEEEkeywords}
+Software Engineering; Tool Recommendation; Tool Discovery; Open Source
+\end{IEEEkeywords}
+
+\section{Introduction}
+%Importance
+Tool discovery is a problem... \\
+
+Automated recommendation systems can help solve this problem... \\
+
+But existing recommendations systems are ineffective... \\
+
+Peer interactions and receptiveness are effective\cite{vlhcc17}... \\
+
+We created \tool to solve this... \\
+
+\noindent
+\textbf{RQ1:} How often can we expect \tool to make recommendations?  \\
+\textbf{RQ2:} How useful are recommendations from \tool to developers?  \\
+
+Contributions...\\
+
+\section{Related Work}
+
+Existing automated tool recommendation systems...
+
+\section{Tool}
+\tool is awesome. Here's how...
+
+\subsection{Implementation}
+Technical details...
+
+\subsection{Receptiveness}
+How we integrated receptiveness...
+
+\paragraph{Desire}
+
+\paragraph{Familiarity}
+
+\section{Methodology}
+
+\subsection{Projects}
+
+Trending open source java projects on Github that build with maven used for evaluation...
+
+\subsection{Study Design}
+
+We divided our study into two segments to address each research question:
+
+\subsubsection{RQ1}
+
+Last n pull requests on repositories...
+
+\subsubsection{RQ2}
+
+Followed up with developers to gather responses...
+
+\section{Results}
+
+\subsection{How often can we expect \tool to make recommendations?}
+
+Number of recommendations... \\
+
+0 false positives... \\
+
+\subsection{How useful are recommendations from \tool to developers?}
+
+Response rate...\\
+
+Qualitative responses... \\
+
+\section{Discussion}
+
+\subsection{Implications}
+
+What do results say about ways to improve tool recommendation systems...
+
+\subsection{Threats to Validity}
+
+\subsection{Future Work}
+
+\section{Conclusion}
+
+
+
+%\balance
+%\section{Acknowledgments}
+
+%Thanks to all of the student and professional data analysts who volunteered for this study.
+
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+\bibliographystyle{abbrv}
+\bibliography{paper}  
+% You must have a proper ''.bib'' file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+
+%% That's all folks!
+\end{document}
