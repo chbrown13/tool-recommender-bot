@@ -30,10 +30,10 @@ public class ErrorProne extends Tool {
 	  		"<dependency>\n" +
 			"<groupId>com.google.errorprone</groupId>\n" +
 			"<artifactId>error_prone_core</artifactId>\n" +
-			"<version>2.1.1</version>\n" +
+			"<version>2.1.2</version>\n" +
 	  		"</dependency>\n" +
 			"</dependencies>\n" +
-  			"</plugin>\n";
+  			"</plugin>";
 
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
@@ -55,13 +55,17 @@ public class ErrorProne extends Tool {
 	  */
 	@Override
 	public Set<Error> parseOutput(String msg) {
+		//System.out.println(msg+"...");
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String[] lines = msg.split("\n");
 		Error temp = null;
 		Set<Error> set = new HashSet<Error>();
 		for (String line: lines) {
-			if (line.matches("^\\d+\\serror[s]*$")) {
-				break;
+			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
+				continue;
+			}
+			else if (line.startsWith("[ERROR] ")) { //Maven build error
+				continue;
 			}
 			else if (line.matches(regex)) {
 				if (temp != null && !set.contains(temp)) {	set.add(temp); }
@@ -82,6 +86,7 @@ public class ErrorProne extends Tool {
 			}
 		}
 		if (temp != null && !set.contains(temp)) { set.add(temp); }
+		System.out.println(set.size());
 		return set;
 	}
 

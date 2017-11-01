@@ -34,9 +34,15 @@ public class Utils {
 
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
+	private static String REMOVE = "rm -rf {project}*";
+
 	private static String CHECKOUT = "git --git-dir=_project/.git fetch origin pull/{num}/head:_name && git --git-dir=_project/.git checkout -f _name";
 
 	private static String currentDir = System.getProperty("user.dir");
+
+	private static List<String> created = new ArrayList<String>();
+
+	private static boolean myTool = false;
 
 	private static String projectName = "";
 	
@@ -284,7 +290,6 @@ public class Utils {
    		try {
    			ITree src = Generators.getInstance().getTree(file1).getRoot();
    			ITree dst = Generators.getInstance().getTree(file2).getRoot();
-   			
    			List<ITree> srcTrees = src.getTrees();
    			List<ITree> dstTrees = dst.getTrees();
    			LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
@@ -309,14 +314,10 @@ public class Utils {
 	 * @return       True if error prone bug was fixed, else false
 	 */
 	public static boolean isFix(String base, String pull, Error error) {
-		String file = getLocalPath(error.getFilePath());
-		String baseURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", base).replace("/{path}", file);
-		String pullURL = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{sha}", pull).replace("/{path}", file);
-		String baseFile = base + file;
-		String pullFile = pull + file;
-		wget(baseURL, baseFile);
-		wget(pullURL, pullFile);
-		return !isDeleteOnly(baseFile, pullFile, error);
+		String file1 = error.getFilePath();
+		String file2 = file1.replace(projectName + "1", projectName+"2");
+		//return false;
+		return !isDeleteOnly(file1, file2, error);
 	}
 
 	/**
@@ -339,9 +340,9 @@ public class Utils {
 	 * 
 	 * @return   Output from the maven build
 	 */
-	public static String compile() {
+	public static String compile(String path) {
 		String output = "";
-		String cmd = MVN_COMPILE.replace("{dir}", currentDir);
+		String cmd = MVN_COMPILE.replace("{dir}", path);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);	
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -359,31 +360,39 @@ public class Utils {
 	/**
 	 * Modifies pom.xml file to add current tool plugin for maven build
 	 * 
+	 * @param file   Path to pom.xml file
 	 * @param tool   Tool to analyze code
 	 * @param file   New pom.xml file to write to
 	 */
-	public static void parseXML(Tool tool, FileWriter file) {
+	public static void parseXML(String file, Tool tool, FileWriter writer) {
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser saxParser = factory.newSAXParser();
 			DefaultHandler handler = new DefaultHandler() {
+				@Override
 				public void startElement(String uri, String localName, String qName,
 							Attributes attributes) throws SAXException {
 					try {
-								file.write("<" + qName + ">");
+						writer.write("<" + qName + ">");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 
+				@Override
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
 						if(qName.equals("plugins")) {
-							file.write(tool.getPlugin()+"\n");
-							file.write("</plugins>");								
+							writer.write(tool.getPlugin());
+							writer.write("\n</plugins>");	
+							myTool = true;							
+						} else if (qName.equals("project") && !myTool) {
+							writer.write(String.join("\n", "<build>", "<plugins>", 
+								tool.getPlugin(), "</plugins>", "</build>", "</project>"));
+							myTool = true;
 						} else {
-							file.write("</" + qName + ">");
+							writer.write("</" + qName + ">");
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -393,13 +402,13 @@ public class Utils {
 				@Override
 				public void characters(char ch[], int start, int length) throws SAXException {
 					try {
-						file.write(new String(ch, start, length));
+						writer.write(new String(ch, start, length));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 			};
-			saxParser.parse(currentDir + "/pom.xml", handler);
+			saxParser.parse(file, handler);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -408,15 +417,18 @@ public class Utils {
 	/**
 	 * Updates to pom.xml file to include tool plugin
 	 * 
-	 * @param tool   Static analysis tool to analyze code
+	 * @param dir   Current directory of the project
+	 * @param tool  Static analysis tool to analyze code
 	 */
-	private static void addToolPlugin(Tool tool) {
+	private static void addToolPomPlugin(String dir, Tool tool) {
 		try{
-			File newPom = new File(currentDir + "/pom.temp");
-			File pom = new File(currentDir + "/pom.xml");
-			FileWriter outStream = new FileWriter(newPom, false);
-			parseXML(tool, outStream);
-			outStream.close();
+			String pom = String.join("/",currentDir, dir, "pom.xml");
+			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
+			FileWriter writer = new FileWriter(tempPom, false);
+			myTool = false;
+			parseXML(pom, tool, writer);
+			tempPom.renameTo(new File(pom));			
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -431,9 +443,11 @@ public class Utils {
 	 * @return       Set of errors reported from tool
 	 */
 	public static Set<Error> checkout(int pull, String label, Tool tool) {
-		Set<Error> errors = new HashSet<Error>();
+		/*Set<Error> errors = new HashSet<Error>();
 		String cmds = CHECKOUT.replace("{num}", Integer.toString(pull)).replaceAll("_name", label).replaceAll("_project", projectName);
 		try {
+			cd(projectName);
+			Git git = Git.open(new File(currentDir+"/.git"));
 			File checkout = new File("checkout.sh");
 			FileWriter fw = new FileWriter(checkout, false);
 			fw.write(cmds);
@@ -442,42 +456,54 @@ public class Utils {
 			addToolPlugin(tool);
 			String log = compile();
 			System.out.println("2. "+log);
-			errors = tool.parseOutput(log);		
+			errors = tool.parseOutput(log);
+			//git.checkout().setName("master").call();			
+			cd("..");		
 		} catch (Exception e) {
-			e.printStackTrace();
+			try {
+				cd("..");
+				e.printStackTrace();
+			} catch (IOException io) { io.printStackTrace(); }
 			return null;
-		}
-		return errors;
+		}*/
+		return null;
 	}
 
 	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
 	 * @param hash   Git SHA value
+	 * @param author Creator of pull request
 	 * @param tool   Tool to perform analysis and recommend
+	 * @param base   True if checking base repo, false if PR version
 	 * @return       Set errors reported from tool
 	 */
-	public static Set<Error> checkout(String hash, Tool tool) {
-		Set<Error> errors = new HashSet<Error>();
+	public static Set<Error> checkout(String hash, String author, Tool tool, boolean base) {
+		String dirName = projectName;
+		if(base) {
+			dirName += "1";
+		} else {
+			dirName += "2";
+		}
 		try {
-			cd(projectName);
-			Git git = Git.open(new File(currentDir+"/.git"));
-			git.checkout().setName(hash).setForce(true).call();
-			addToolPlugin(tool);
-			String log = compile();
-			System.out.println("1. "+log);
-			errors = tool.parseOutput(log);
-			//git.checkout().setName("master").call();
-			cd("..");
+			Git git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", author)
+				.replace("{repo}", projectName))
+			.setDirectory(new File(dirName)).call();
+			git.checkout().setName(hash).call();
+			System.out.println(hash);
 		} catch (Exception e) {
 			e.printStackTrace();
-			try {
-				cd("..");
-				e.printStackTrace();
-			} catch (IOException io) { io.printStackTrace(); }
 			return null;
 		}
-		return errors;
+		addToolPomPlugin(dirName, tool);
+		String log = compile(dirName);
+		//System.out.println(dirName+". "+log);
+		return tool.parseOutput(log);
+	}
+
+	public static void cleanup() {
+		//Process p = Runtime.getRuntime().exec(REMOVE.replace("{project}", projectName));
 	}
 
 	/**
@@ -548,8 +574,8 @@ public class Utils {
 	}
 
 	/**
-	 * Retrieve Github username and password from a file. Expects file to contain the username on 
-	 * the first line and password on the second line.
+	 * Retrieve Github username and password. 
+	 * Requires .github.creds file with username on the first line and password on the second line.
 	 *
 	 * @param filename   Name of credentials file
 	 * @return           Array containing the Github username and password

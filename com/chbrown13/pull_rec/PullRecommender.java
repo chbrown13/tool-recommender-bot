@@ -59,49 +59,24 @@ public class PullRecommender {
 		Tool tool = new ErrorProne();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		try {
+			String author = pull.json().getJsonObject("user").getString("login");
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Set<Error> baseErrors = Utils.checkout(baseHash, tool);
-			Set<Error> pullErrors = Utils.checkout(pull.number(), 
-				pull.json().getJsonObject("head").getString("ref"), tool);
+			Set<Error> baseErrors = Utils.checkout(baseHash, author, tool, true);
+			Set<Error> pullErrors = Utils.checkout(pullHash, author, tool, false);
 			if(baseErrors != null && pullErrors != null) {
 				Set<Error> fixed = new HashSet<Error>();				
 				fixed.addAll(baseErrors);				
-				System.out.println("LET'S GO!!!!!!!!!!!!!");
+				//System.out.println("LET'S GO!!!!!!!!!!!!!");
 				fixed.removeAll(pullErrors);
 				for (Error e: fixed) {
-					System.out.println(e.getKey());
+					System.out.println(e.getKey() + " " + pullErrors.contains(e));
 					if (Utils.isFix(baseHash, pullHash, e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					}
 				}
 
 			}
-			/*List<Error> allErrors = new ArrayList<Error>();
-			List<Error> fixed = new ArrayList<Error>();
-			for (String file: baseErrors.keySet()) {
-				allErrors.addAll(tool.parseOutput(baseErrors.get(file)));
-				if (!pullErrors.containsKey(file)) {
-					//Deleted file
-					continue;
-				} else if (baseErrors.get(file).equals(pullErrors.get(file))) {
-					//No bugs fixed
-					continue;
-				} else {
-					Set<Error> baseEP = tool.parseOutput(baseErrors.get(file));
-					Set<Error> pullEP = tool.parseOutput(pullErrors.get(file));
-					for (Error e: baseEP) {
-						if (!pullEP.contains(e) && !fixed.contains(e)) {
-							fixed.add(e);
-						}
-					}
-				}
-			}
-			for (Error error: fixed) {
-				if (Utils.isFix(baseHash, pullHash, error)) {
-					makeRecommendation(tool, pull, error, pullHash, Utils.getFix(), allErrors);
-				}
-			}*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	

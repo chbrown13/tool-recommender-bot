@@ -156,7 +156,34 @@ public class Error {
 	 * @return      Url to line with a similar error
 	 */
 	private String getErrorLink(Error err, String hash) {
-		String url = Utils.LINK_URL.replace("{line}", err.getLineNumberStr()).replace("/{path}", Utils.getLocalPath(err.getFilePath())).replace("{sha}", hash).replace("{repo}", Utils.getProjectName()).replace("{user}", Utils.getProjectOwner());
+		String url = Utils.LINK_URL.replace("{line}", err.getLineNumberStr())
+			.replace("/{path}", Utils.getLocalPath(err.getFilePath()))
+			.replace("{sha}", hash).replace("{repo}", Utils.getProjectName())
+			.replace("{user}", Utils.getProjectOwner());
 		return Utils.MARKDOWN_LINK.replace("{src}", err.getFileName()).replace("{url}", url);
+	}
+
+	/**
+	 * Compare Error objects based on key
+	 *
+	 * @param o   Error
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Error) {
+			Error e = (Error) o;
+			return e.getKey() == this.key;
+		}
+	    return false;
+	}
+
+    /**
+	 * Hash Error objects based on class variables.
+	 *
+	 * @return   Hash value
+	 */
+    @Override
+    public int hashCode() {
+		return Objects.hash(key, filename, filepath, line, error, message, log);
 	}
 }
