@@ -14,6 +14,8 @@ import java.net.*;
 import java.util.*;
 import javax.xml.parsers.*;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.xml.sax.*;
@@ -34,13 +36,7 @@ public class Utils {
 
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
-	private static String REMOVE = "rm -rf {project}*";
-
-	private static String CHECKOUT = "git --git-dir=_project/.git fetch origin pull/{num}/head:_name && git --git-dir=_project/.git checkout -f _name";
-
 	private static String currentDir = System.getProperty("user.dir");
-
-	private static List<String> created = new ArrayList<String>();
 
 	private static boolean myTool = false;
 
@@ -139,7 +135,6 @@ public class Utils {
 			}
 			prev = line;
 		}
-
 		File file = new File(srcFile);
 		try {
 			int i = 0;
@@ -168,7 +163,7 @@ public class Utils {
 	 * Check if a node exists in the updated file
 	 * 
 	 * @param node   ITree to search for in destination file
-	 * @param map    Mapping between file versions
+	 * @param tree   Mapping between file versions
 	 * @return       True if node is in new file, else false
 	 */
 	private static boolean searchNode(ITree node, ITree tree) {
@@ -244,7 +239,6 @@ public class Utils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		MappingStore store = m.getMappings();		
 		ITree errorNode = getErrorNode(tree1.getRoot(), errorPos);
 		List<Action> actions = g.getActions(); 
@@ -280,8 +274,8 @@ public class Utils {
 	/**
 	 * Checks if pull request changes only remove code without fix
 	 * 
-	 * @param base   Path to base file
-	 * @param pull   Path to pull request version of file
+	 * @param file1   Path to base file
+	 * @param file2   Path to pull request version of file
 	 * @param error  Current error to check
 	 * @return       False if code is updated or added, otherwise true
 	 */
@@ -300,7 +294,6 @@ public class Utils {
    				}
 			}
 			System.out.println("Error removed but may not have been fixed");
-   			return true;
 		   } catch (IOException e) { e.printStackTrace(); }
 		   return true;
 	}
@@ -308,15 +301,12 @@ public class Utils {
 	/**
 	 * Downloads files in questions and determines if bug was actually fixed
 	 * 
-	 * @param base   Hash for base commit
-	 * @param pull   Hash for PR commit
 	 * @param error  Error in question
 	 * @return       True if error prone bug was fixed, else false
 	 */
-	public static boolean isFix(String base, String pull, Error error) {
+	public static boolean isFix(Error error) {
 		String file1 = error.getFilePath();
 		String file2 = file1.replace(projectName + "1", projectName+"2");
-		//return false;
 		return !isDeleteOnly(file1, file2, error);
 	}
 
@@ -338,7 +328,8 @@ public class Utils {
 	/**
 	 * Compiles the project to analyze code in the repository
 	 * 
-	 * @return   Output from the maven build
+	 * @param path   Local path to current version of repo
+	 * @return       Output from the maven build
 	 */
 	public static String compile(String path) {
 		String output = "";
@@ -362,7 +353,7 @@ public class Utils {
 	 * 
 	 * @param file   Path to pom.xml file
 	 * @param tool   Tool to analyze code
-	 * @param file   New pom.xml file to write to
+	 * @param writer New pom.xml file to write to
 	 */
 	public static void parseXML(String file, Tool tool, FileWriter writer) {
 		try {
@@ -435,41 +426,6 @@ public class Utils {
 	}
 
 	/**
-	 * Checkout pull request version of a git repository to analyze
-	 * 
-	 * @param pull   Pull Request number
-	 * @param label  Pull Request branch name
-	 * @param tool   Tool to perform analysis and recommend
-	 * @return       Set of errors reported from tool
-	 */
-	public static Set<Error> checkout(int pull, String label, Tool tool) {
-		/*Set<Error> errors = new HashSet<Error>();
-		String cmds = CHECKOUT.replace("{num}", Integer.toString(pull)).replaceAll("_name", label).replaceAll("_project", projectName);
-		try {
-			cd(projectName);
-			Git git = Git.open(new File(currentDir+"/.git"));
-			File checkout = new File("checkout.sh");
-			FileWriter fw = new FileWriter(checkout, false);
-			fw.write(cmds);
-			fw.close();
-			Process p = Runtime.getRuntime().exec("sh checkout.sh");
-			addToolPlugin(tool);
-			String log = compile();
-			System.out.println("2. "+log);
-			errors = tool.parseOutput(log);
-			//git.checkout().setName("master").call();			
-			cd("..");		
-		} catch (Exception e) {
-			try {
-				cd("..");
-				e.printStackTrace();
-			} catch (IOException io) { io.printStackTrace(); }
-			return null;
-		}*/
-		return null;
-	}
-
-	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
 	 * @param hash   Git SHA value
@@ -491,29 +447,23 @@ public class Utils {
 				.replace("{repo}", projectName))
 			.setDirectory(new File(dirName)).call();
 			git.checkout().setName(hash).call();
-			System.out.println(hash);
+		} catch (JGitInternalException jgie) {
+			try {
+				Git git = Git.open(new File(String.join("/", currentDir, dirName, ".git")));
+				git.reset().setMode(ResetType.HARD).setRef( "master" ).call();
+				git.checkout().setName(hash).setForce(true).call();
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
+		System.out.println(hash);		
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
-		//System.out.println(dirName+". "+log);
 		return tool.parseOutput(log);
-	}
-
-	/**
-	 * Remove temp repositories in directory
-	 */
-	public static void cleanup() {
-		try {
-			String[] dirs = {projectName+"1", projectName+"2"};
-			for (String d: dirs) {
-				Process p = Runtime.getRuntime().exec("rm -rf " + d);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
 	}
 
 	/**
@@ -532,54 +482,6 @@ public class Utils {
 			}
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			
-		}
-		/*if (dir.equals("..")) {
-			if(currentDir.contains("/")) {
-				directory = currentDir.substring(0, currentDir.lastIndexOf("/"));
-				System.setProperty("user.dir", directory);
-			} else {
-				directory = currentDir;
-			}
-			currentDir = directory;		
-		} else {
-			directory = String.join("/", System.getProperty("user.dir"), dir);
-			File f = new File(directory);
-			if (f.exists() && f.isDirectory()) {
-				System.setProperty("user.dir", directory);	
-				currentDir = directory;				
-			} else {
-				throw new FileNotFoundException("Invalid directory name "+dir);
-			}
-		}*/
-	}
-
-	/**
-	 * Download contents of a file from a web url, similar to wget linux command
-	 *
-	 * @param fileUrl   String url of the file to download
-	 * @param output    Name of file to store contents
-	 */
-	public static void wget(String fileUrl, String output) {
-		String s = "";
-		try {
-			URL url = new URL(fileUrl);
-			InputStream in;
-			try {
-				in = url.openStream();
-			} catch (FileNotFoundException e) {
-				//File URL does not exist, possibly new file in PR
-				in = new ByteArrayInputStream("".getBytes("UTF-8"));
-			}
-			File out = new File(output);
-			out.getParentFile().mkdirs();
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			BufferedWriter bw = new BufferedWriter(new FileWriter(out));
-			while ((s = br.readLine()) != null) {
-				bw.write(s+"\n");
-			}
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 

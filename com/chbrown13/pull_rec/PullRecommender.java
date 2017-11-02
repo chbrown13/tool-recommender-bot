@@ -71,7 +71,7 @@ public class PullRecommender {
 				fixed.removeAll(pullErrors);
 				for (Error e: fixed) {
 					System.out.println(e.getKey() + " " + pullErrors.contains(e));
-					if (Utils.isFix(baseHash, pullHash, e)) {
+					if (Utils.isFix(e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					}
 				}
@@ -80,7 +80,6 @@ public class PullRecommender {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
-		Utils.cleanup();
 	}
 
 	/**
