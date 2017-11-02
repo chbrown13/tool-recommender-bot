@@ -412,7 +412,7 @@ public class Utils {
 	 * @param tool  Static analysis tool to analyze code
 	 */
 	private static void addToolPomPlugin(String dir, Tool tool) {
-		try{
+		try {
 			String pom = String.join("/",currentDir, dir, "pom.xml");
 			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
 			FileWriter writer = new FileWriter(tempPom, false);
@@ -436,26 +436,20 @@ public class Utils {
 	 */
 	public static Set<Error> checkout(String hash, String author, Tool tool, boolean base) {
 		String dirName = projectName;
+		String owner = "";
 		if(base) {
 			dirName += "1";
+			owner = projectOwner;
 		} else {
 			dirName += "2";
+			owner = author;
 		}
 		try {
 			Git git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", author)
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", owner)
 				.replace("{repo}", projectName))
 			.setDirectory(new File(dirName)).call();
 			git.checkout().setName(hash).call();
-		} catch (JGitInternalException jgie) {
-			try {
-				Git git = Git.open(new File(String.join("/", currentDir, dirName, ".git")));
-				git.reset().setMode(ResetType.HARD).setRef( "master" ).call();
-				git.checkout().setName(hash).setForce(true).call();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -464,6 +458,20 @@ public class Utils {
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
 		return tool.parseOutput(log);
+	}
+
+	/**
+	 * Remove temp repo directories
+	 */
+	public static void cleanup() {
+		try {
+			String[] dirs = {projectName+"1", projectName+"2"};
+			for (String d: dirs) {
+				Process p = Runtime.getRuntime().exec("rm -rf " + d);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
 
 	/**
