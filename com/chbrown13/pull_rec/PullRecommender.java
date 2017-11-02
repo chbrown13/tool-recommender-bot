@@ -80,6 +80,7 @@ public class PullRecommender {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
+		Utils.cleanup();
 	}
 
 	/**
@@ -117,20 +118,6 @@ public class PullRecommender {
 			}
 		}
 		System.out.println("{num} recommendations made for {prs} prs.".replace("{num}", Integer.toString(recommender.getRecommendationCount())).replace("{prs}", Integer.toString(recommender.getPRCount())));
-		
-		/*try {
-			Utils.cd("RecommenderTest");
-			Process p = Runtime.getRuntime().exec("sh RecommenderTest/checkout.sh");
-			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			String line;
-			String output = "";
-			while ((line = br.readLine()) != null) {
-			    output += line + "\n";
-			}
-			System.out.println(output);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	*/
 	}
 }
 

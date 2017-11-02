@@ -502,8 +502,18 @@ public class Utils {
 		return tool.parseOutput(log);
 	}
 
+	/**
+	 * Remove temp repositories in directory
+	 */
 	public static void cleanup() {
-		//Process p = Runtime.getRuntime().exec(REMOVE.replace("{project}", projectName));
+		try {
+			String[] dirs = {projectName+"1", projectName+"2"};
+			for (String d: dirs) {
+				Process p = Runtime.getRuntime().exec("rm -rf " + d);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
 
 	/**
