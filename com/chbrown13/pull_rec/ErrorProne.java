@@ -18,10 +18,10 @@ public class ErrorProne extends Tool {
 			"<configuration>\n" +
 	  		"<compilerId>javac-with-errorprone</compilerId>\n" +
 			"<forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
-			"<showWarnings>true</showWarnings>" +
-			"<compilerArgs>" +
-			"<arg>-XepAllErrorsAsWarnings</arg>" +
-			"</compilerArgs>" +
+			"<showWarnings>true</showWarnings>\n" +
+			"<compilerArgs>\n" +
+			"<arg>-XepAllErrorsAsWarnings</arg>\n" +
+			"</compilerArgs>\n" +
 	  		"<source>8</source>\n" +
 	  		"<target>8</target>\n" +
 			"</configuration>\n" +
@@ -61,6 +61,7 @@ public class ErrorProne extends Tool {
 	public Set<Error> parseOutput(String msg) {
 		//System.out.println(msg+"...");
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
+		String dir = Utils.getCurrentDir();
 		String[] lines = msg.split("\n");
 		Error temp = null;
 		Set<Error> set = new HashSet<Error>();
@@ -71,7 +72,7 @@ public class ErrorProne extends Tool {
 			else if (line.startsWith("[ERROR] ")) { //Maven build error
 				continue;
 			}
-			else if (line.matches(regex)) {
+			else if (line.matches(regex) || line.startsWith(dir)) {
 				if (temp != null && !set.contains(temp)) {	set.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
@@ -90,7 +91,6 @@ public class ErrorProne extends Tool {
 			}
 		}
 		if (temp != null && !set.contains(temp)) { set.add(temp); }
-		System.out.println(set.size());
 		return set;
 	}
 

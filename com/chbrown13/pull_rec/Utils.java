@@ -83,6 +83,15 @@ public class Utils {
 	}
 
 	/**
+	 * Gets the current directory
+	 * 
+	 * @return   Path to current directory
+	 */
+	public static String getCurrentDir() {
+		return currentDir;
+	}
+
+	/**
 	 * Gets the local path of a file
 	 * 
 	 * @param path   Path to file in git repo

@@ -58,15 +58,19 @@ public class PullRecommender {
 				Set<Error> fixed = new HashSet<Error>();				
 				fixed.addAll(baseErrors);				
 				fixed.removeAll(pullErrors);
+				int i = 0;
+				Set<String> pullStr = new HashSet<String>();
+				Set<String> baseStr = new HashSet<String>();
+				Set<String> fixStr = new HashSet<String>();
+				
 				for (Error e: fixed) {
 					if (Utils.isFix(e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
-						System.out.println(e.getKey());
+						//System.out.println(e.getKey());
 					}
 				}
-
 			}
 			Utils.cleanup();
 		} catch (IOException e) {

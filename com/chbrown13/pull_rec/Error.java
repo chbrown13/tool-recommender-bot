@@ -12,7 +12,9 @@ public class Error {
 	private String log;
 
 	public Error(String name, String path, String line, String error, String msg, String log) {
-		this.key = String.join(":", path, line, error);
+		String project = Utils.getProjectName();
+		String realPath = path.replace(project+"1", project).replace(project+"2", project);
+		this.key = String.join(":", realPath, line, error);
 		this.filename = name;
 		this.filepath = path;
 		this.line = Integer.parseInt(line);
@@ -178,12 +180,12 @@ public class Error {
 	}
 
     /**
-	 * Hash Error objects based on class variables.
+	 * Hash Error objects based on key
 	 *
 	 * @return   Hash value
 	 */
     @Override
     public int hashCode() {
-		return Objects.hash(key, filename, filepath, line, error, message, log);
+		return Objects.hash(key);
 	}
 }
