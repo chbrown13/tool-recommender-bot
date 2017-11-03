@@ -17,7 +17,11 @@ public class ErrorProne extends Tool {
 			"<version>3.3</version>\n" +
 			"<configuration>\n" +
 	  		"<compilerId>javac-with-errorprone</compilerId>\n" +
-	  		"<forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
+			"<forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
+			"<showWarnings>true</showWarnings>" +
+			"<compilerArgs>" +
+			"<arg>-XepAllErrorsAsWarnings</arg>" +
+			"</compilerArgs>" +
 	  		"<source>8</source>\n" +
 	  		"<target>8</target>\n" +
 			"</configuration>\n" +
