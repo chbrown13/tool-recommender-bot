@@ -12,10 +12,11 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
-	private int recs;
-	private Set<String> prs;
+	private static Set<String> prs = new HashSet<String>();	
+	private static int recs = 0;;
 	private static int open = 0;
-	private static int pulls;
+	private static int pulls = 0;
+	private static int removed = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -24,19 +25,6 @@ public class PullRecommender {
 		prs = new HashSet<String>();
 	}
 
-	/**
-	 * Gets the number of recommendations made
-	 *
-	 * @return   Count of recommendations
-     */
-	public int getRecommendationCount() {
-		return this.recs;
-	}
-
-	public int getPRCount() {
-		return this.prs.size();
-	}
-	
 	/**
 	 * Post message recommending tool to Github on pull request fixing error.
 	 *
@@ -69,12 +57,13 @@ public class PullRecommender {
 			if(baseErrors != null && pullErrors != null) {
 				Set<Error> fixed = new HashSet<Error>();				
 				fixed.addAll(baseErrors);				
-				//System.out.println("LET'S GO!!!!!!!!!!!!!");
 				fixed.removeAll(pullErrors);
 				for (Error e: fixed) {
-					//System.out.println(e.getKey() + " " + pullErrors.contains(e));
 					if (Utils.isFix(e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
+					} else {
+						removed += 1;
+						System.out.println(e.getKey());
 					}
 				}
 
@@ -128,10 +117,11 @@ public class PullRecommender {
 			}
 		}
 		System.out.println("{num} recommendations made on {prs} PRs, {open} which were open out of {pulls} total."
-			.replace("{num}", Integer.toString(recommender.getRecommendationCount()))
-			.replace("{prs}", Integer.toString(recommender.getPRCount()))
+			.replace("{num}", Integer.toString(recs))
+			.replace("{prs}", Integer.toString(prs.size()))
 			.replace("{open}", Integer.toString(open))
 			.replace("{pulls}", Integer.toString(pulls)));
+		System.out.println("{num} errors reported were just removed.".replace("{num}", Integer.toString(removed)));
 	}
 }
 
