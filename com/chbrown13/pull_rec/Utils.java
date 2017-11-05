@@ -467,7 +467,6 @@ public class Utils {
 		System.out.println(hash);		
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
-		System.out.println(log);
 		return tool.parseOutput(log);
 	}
 
