@@ -12,7 +12,7 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
-	private static Set<String> prs = new HashSet<String>();	
+	private static Set<Integer> prs = new HashSet<Integer>();	
 	private static int recs = 0;;
 	private static int open = 0;
 	private static int pulls = 0;
@@ -22,7 +22,6 @@ public class PullRecommender {
 		this.repo = repo;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
-		prs = new HashSet<String>();
 	}
 
 	/**
@@ -36,7 +35,7 @@ public class PullRecommender {
 		String comment = error.generateComment(tool, errors, hash);
 		System.out.println(comment);
 		recs += 1;
-		prs.add(error.getKey());
+		prs.add(pull.number());
 	}
 
 	/**

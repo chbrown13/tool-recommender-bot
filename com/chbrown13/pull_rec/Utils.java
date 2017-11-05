@@ -246,8 +246,9 @@ public class Utils {
 			m.match();
 			g = new ActionGenerator(src, dst, m.getMappings());
 			g.generate();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+			return -1;
 		}
 		MappingStore store = m.getMappings();		
 		ITree errorNode = getErrorNode(tree1.getRoot(), errorPos);
@@ -335,7 +336,7 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		//System.out.println(output);
+		System.out.println(output);
 		return output;
 	}
 
