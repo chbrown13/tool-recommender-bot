@@ -59,16 +59,11 @@ public class PullRecommender {
 				fixed.addAll(baseErrors);				
 				fixed.removeAll(pullErrors);
 				int i = 0;
-				Set<String> pullStr = new HashSet<String>();
-				Set<String> baseStr = new HashSet<String>();
-				Set<String> fixStr = new HashSet<String>();
-				
 				for (Error e: fixed) {
 					if (Utils.isFix(e)) {
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
-						//System.out.println(e.getKey());
 					}
 				}
 			}
@@ -120,12 +115,12 @@ public class PullRecommender {
 				recommender.analyze(pull);
 			}
 		}
-		System.out.println("{num} recommendations made on {prs} PRs, {open} which were open out of {pulls} total."
+		System.out.println("{num} recommendations made on {prs} pull request(s), {open} of which were open out of {pulls} total, while {rem} bug(s) fixed were not recommended because the error was just removed."
 			.replace("{num}", Integer.toString(recs))
 			.replace("{prs}", Integer.toString(prs.size()))
 			.replace("{open}", Integer.toString(open))
-			.replace("{pulls}", Integer.toString(pulls)));
-		System.out.println("{num} errors reported were just removed.".replace("{num}", Integer.toString(removed)));
+			.replace("{pulls}", Integer.toString(pulls))
+			.replace("{rem}", Integer.toString(removed)));
 	}
 }
 

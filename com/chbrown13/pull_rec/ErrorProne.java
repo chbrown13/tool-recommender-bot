@@ -69,7 +69,8 @@ public class ErrorProne extends Tool {
 			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
 				continue;
 			}
-			else if (line.startsWith("[ERROR] ")) { //Maven build error
+			else if (line.startsWith("[ERROR] ") || line.startsWith("[INFO] ") ||
+						line.startsWith("[WARNING] ")) { //Maven build error
 				continue;
 			}
 			else if (line.matches(regex) || line.startsWith(dir)) {

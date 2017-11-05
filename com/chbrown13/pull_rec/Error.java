@@ -174,7 +174,7 @@ public class Error {
 	public boolean equals(Object o) {
 		if (o instanceof Error) {
 			Error e = (Error) o;
-			return e.getKey() == this.key;
+			return e.getKey().equals(this.key);
 		}
 	    return false;
 	}
