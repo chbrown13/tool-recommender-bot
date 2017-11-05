@@ -6,7 +6,7 @@ import com.github.gumtreediff.client.Run;
 import com.github.gumtreediff.gen.*;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.*;
-import com.github.gumtreediff.matchers.heuristic.LcsMatcher;
+import com.github.gumtreediff.matchers.heuristic.gt.*;
 import com.github.gumtreediff.tree.*;
 import java.io.*;
 import java.lang.*;
@@ -226,7 +226,8 @@ public class Utils {
 	 * @param errorPos Character offset of error
 	 * @return		   Changed line number
 	 */
-	private static int determineFix(String base, String pull, int errorPos) {
+	private static int findFix(String base, String pull, int errorPos) {
+		Run.initGenerators();		
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
 		ITree src = null;
@@ -235,7 +236,7 @@ public class Utils {
 		TreeContext tree2 = null;
 		Matcher m = null;
 		ActionGenerator g = null;
-		Action closestAction = null;
+		boolean deleteOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
 			tree2 = jdt2.generateFromFile(pull);
@@ -250,17 +251,24 @@ public class Utils {
 		}
 		MappingStore store = m.getMappings();		
 		ITree errorNode = getErrorNode(tree1.getRoot(), errorPos);
-		List<Action> actions = g.getActions(); 
+		List<Action> actions = g.getActions();
+		Action closestAction;
 		try {
 			closestAction = actions.get(0);			
 		} catch (IndexOutOfBoundsException e) {
 			return -1;
-		}
+		}		
 		for(Action a: actions) {
+			if(!a.toString().startsWith("DEL")) {
+				deleteOnly = false;
+			}
 			int pos = a.getNode().getPos();
 			if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
 				closestAction = a;
 			}
+		}
+		if (deleteOnly) {
+			return -1;
 		}
 		ITree temp = null;
 		if (closestAction.toString().startsWith("DEL")) { //get closest sibling or parent
@@ -279,46 +287,7 @@ public class Utils {
 			}
 			return posToLine(temp.getPos(), pull);
 	}
-
-	/**
-	 * Checks if pull request changes only remove code without fix
-	 * 
-	 * @param file1   Path to base file
-	 * @param file2   Path to pull request version of file
-	 * @param error  Current error to check
-	 * @return       False if code is updated or added, otherwise true
-	 */
-	private static boolean isDeleteOnly(String file1, String file2, Error error) {
-   		Run.initGenerators();
-   		try {
-   			ITree src = Generators.getInstance().getTree(file1).getRoot();
-   			ITree dst = Generators.getInstance().getTree(file2).getRoot();
-   			List<ITree> srcTrees = src.getTrees();
-   			List<ITree> dstTrees = dst.getTrees();
-   			LcsMatcher lcs = new LcsMatcher(src, dst, new MappingStore());
-   			lcs.match();
-			for (ITree tree: dst.getDescendants()) { // node added/updated in destination
-   				if (!tree.isMatched()) {
-   					return determineFix(file1, file2, getErrorOffset(error, file1)) < 0;
-   				}
-			}
-			System.out.println("Error removed but may not have been fixed");
-		   } catch (IOException e) { e.printStackTrace(); }
-		   return true;
-	}
-
-	/**
-	 * Downloads files in questions and determines if bug was actually fixed
-	 * 
-	 * @param error  Error in question
-	 * @return       True if error prone bug was fixed, else false
-	 */
-	public static boolean isFix(Error error) {
-		String file1 = error.getFilePath();
-		String file2 = file1.replace(projectName + "1", projectName+"2");
-		return !isDeleteOnly(file1, file2, error);
-	}
-
+	
 	/**
 	 * Returns line number of code fix
 	 * 
@@ -332,6 +301,18 @@ public class Utils {
 		} else { // Shouldn't have been considered a fix
 			return (Integer)null;
 		}
+	}
+
+	/**
+	 * Downloads files in questions and determines if bug was actually fixed
+	 * 
+	 * @param error  Error in question
+	 * @return       True if error prone bug was fixed, else false
+	 */
+	public static boolean isFix(Error error) {
+		String file1 = error.getFilePath();
+		String file2 = file1.replace(projectName + "1", projectName+"2");
+		return findFix(file1, file2, getErrorOffset(error, file1)) > 0;
 	}
 
 	/**
@@ -354,7 +335,7 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println(output);
+		//System.out.println(output);
 		return output;
 	}
 
@@ -464,7 +445,7 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println(hash);		
+		//System.out.println(hash);		
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
 		return tool.parseOutput(log);
