@@ -33,7 +33,7 @@ Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \maketitle
 \begin{abstract}
-Automated recommendation systems are important for improving tool discovery and increasing user productivity. Here's ours...
+Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations are the most effective mode of tool discovery and that the receptiveness of recommendees is the most important characteristic in determining the outcome of tool recommendations. To help increase awareness of useful tools, we developed and evaluated a new recommendation system \tool designed to integrate aspects of peer interactions and user receptivity into automated tool suggestions for software developers of real-world applications. Our findings suggest that \tool is awesome, cool, and very effective in improving tool discovery.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -48,7 +48,7 @@ Automated recommendation systems can help solve this problem... \\
 
 But existing recommendations systems are ineffective... \\
 
-Peer interactions and receptiveness are effective\cite{vlhcc17}... \\
+Peer interactions and receptiveness are effective~\cite{vlhcc17}... \\
 
 We created \tool to solve this... \\
 
@@ -56,9 +56,16 @@ We created \tool to solve this... \\
 \textbf{RQ1:} How often can we expect \tool to make recommendations?  \\
 \textbf{RQ2:} How useful are recommendations from \tool to developers?  \\
 
-Contributions...\\
+To answer these questions, we conducted a study analyzing \tool on five? popular open source Java projects to observe how many tool suggestions would be made based on past changes to the code base and how software developers reacted to receiving recommendations. This research makes the following contributions:\\
+
+\begin{itemize}
+\item We introduce the design and implementation of a novel automated recommendation system \tool
+\item We provide implications for future
+\end{itemize}
 
 \section{Related Work}
+
+Improving tool discovery...\\
 
 Existing automated tool recommendation systems...
 
@@ -66,10 +73,16 @@ Existing automated tool recommendation systems...
 \tool is awesome. Here's how...
 
 \subsection{Implementation}
-Technical details...
+\tool technical details...
+
+\subsubsection{Jenkins}
+
+\subsubsection{Maven}
+
+\subsubsection{Error Prone}
 
 \subsection{Receptiveness}
-How we integrated receptiveness...
+\tool was designed to integrate characteristics of peer interactions into automated recommendations. To better understand what makes peer-to-peer recommendations an effective mode of tool discovery, we observed how colleagues recommend tools to each other while completing tasks in a previous study. Our results found that the receptiveness of users was the only significant indicator of determining whether a tool recommendation was effective or not. Fogg defines receptiveness with to criteria, \textit{demonstrating desire} and \textit{familiarity} with the technology~\cite{FoggPersuasive}.
 
 \paragraph{Desire}
 
@@ -87,35 +100,45 @@ We divided our study into two segments to address each research question:
 
 \subsubsection{RQ1}
 
-Last n pull requests on repositories...
+Last 100 pull requests on repositories...
 
 \subsubsection{RQ2}
 
-Followed up with developers to gather responses...
+Followed up with pull request authors to gather data on recommendation...
 
 \section{Results}
 
 \subsection{How often can we expect \tool to make recommendations?}
 
-Number of recommendations... \\
+Tons of recommendations... \\
 
-0 false positives... \\
+No false positives... \\
 
 \subsection{How useful are recommendations from \tool to developers?}
 
-Response rate...\\
+Excellent responses from recommendees...\\
 
-Qualitative responses... \\
+Statistically significant data...
 
 \section{Discussion}
 
 \subsection{Implications}
 
-What do results say about ways to improve tool recommendation systems...
+Here's what our results say about ways to improve tool recommendation systems...
 
 \subsection{Threats to Validity}
 
+Internal: 
+
+External: Java, open vs. closed source, Error Prone,
+
 \subsection{Future Work}
+
+More tools to recommend (static analysis, security, etc.) \\
+
+More programming languages instead of just java...\\
+
+More build systems (ant, gradle, TravisCI, bazel)...\\
 
 \section{Conclusion}
 
