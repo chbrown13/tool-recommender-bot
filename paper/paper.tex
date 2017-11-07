@@ -77,12 +77,10 @@ Existing automated tool recommendation systems...
 
 \subsubsection{Jenkins}
 
-\subsubsection{Maven}
-
 \subsubsection{Error Prone}
 
 \subsection{Receptiveness}
-\tool was designed to integrate characteristics of peer interactions into automated recommendations. To better understand what makes peer-to-peer recommendations an effective mode of tool discovery, we observed how colleagues recommend tools to each other while completing tasks in a previous study. Our results found that the receptiveness of users was the only significant indicator of determining whether a tool recommendation was effective or not. Fogg defines receptiveness with to criteria, \textit{demonstrating desire} and \textit{familiarity} with the technology~\cite{FoggPersuasive}.
+\tool was designed to integrate characteristics of peer interactions into automated recommendations. To better understand user-to-user recommendations and why they are effective for tool discovery, we observed how colleagues recommend tools to each other while completing tasks in prior work. Our results found that the receptiveness of users was the only significant indicator of determining whether a tool recommendation was effective or not compared to other interaction characteristics, such as politeness~\cite{vlhcc17}. Fogg defines receptiveness using two criteria, \textit{demonstrating a desire} and \textit{familiarity} with the adopted behavior~\cite{FoggPersuasive}.
 
 \paragraph{Desire}
 
@@ -92,7 +90,40 @@ Existing automated tool recommendation systems...
 
 \subsection{Projects}
 
-Trending open source java projects on Github that build with maven used for evaluation...
+To evaluate the effectiveness of our recommendation system, we implemented \tool on five real-world open-source software applications. We selected projects hosted on Github\footnote{https://github.com}, a popular source code management site that hosts thousands of code repositories online. To narrow down projects for our evaluation, we picked Github projects that met the following criteria:
+
+\begin{itemize}
+\item one of the top Trending projects\footnote{https://github.com/trending} on GitHub based on activity by the community at the time of this writing,
+\item primarily written in the Java programming language\footnote{https://java.com},
+\item owned by a Github organization instead of personal user accounts,
+\item and used Maven\footnote{https://maven.apache.org/} for software build management.
+\end{itemize}
+
+\begin{table}
+	\centering
+	\caption{Evaluation Projects}
+	\begin{tabular}{|l|l|l|c|}
+		\hline
+		\textbf{Project} & \textbf{Java Files} & \textbf{LOC} & \textbf{Pull Requests} \\
+		\hline
+		spring-boot\footnote{https://github.com/spring-projects/spring-boot.git} &  &  & \\
+		\hline
+		dubbo\footnote{https://github.com/alibaba/dubbo.git} &  &  & \\
+		\hline
+		guava\footnote{https://github.com/google/guava.git}  &  &  & \\
+		\hline
+		retrofit\footnote{https://github.com/square/retrofit.git}  &  &  & \\
+		\hline
+		rocketmq\footnote{https://github.com/apache/rocketmq.git}  &  &  & \\
+		\hline
+		\end{tabular}
+	\begin{tablenotes}
+        \item[1] Details on projects used for study including GitHub repository name, number of Java files, lines of Java code, and total pull requests.
+    \end{tablenotes}
+	\label{tools}
+\end{table}
+
+Table~\ref{tools} presents the projects used for evaluating \tool in our study and provides details about each repository. These repositories span a wide range of organizations and real-world software applications, including a system to create ``stand-alone, production-grade'' Spring applications~\cite{spring-boot}, a high-performance remote procedure call framework from Chinese e-commerce company Alibaba~\cite{dubbo}, a collection of core Google libraries~\cite{guava}, an HTTP client for Android financial services mobile application Square~\cite{square-retrofit}, and a distributed messaging and data-streaming platform by Apache~\cite{rocketmq}.
 
 \subsection{Study Design}
 
@@ -122,17 +153,19 @@ Statistically significant data...
 
 \section{Discussion}
 
+\subsection{Observations}
+
 \subsection{Implications}
 
 Here's what our results say about ways to improve tool recommendation systems...
 
-\subsection{Threats to Validity}
+\section{Limitations}
 
-Internal: 
+Internal\\
 
-External: Java, open vs. closed source, Error Prone,
+An external threat to the validity of our study is that we only observed open source projects hosted on Github in our evaluation. Our results may not generalize to closed source software projects and their developers. To minimize this, we selected popular real-world software applications on Github owned by organizations to avoid the use of personal development projects. Additionally, our recommendation system has limited generalizablility due to the fact we currently only assess recommendations for the Error Prone static analysis tool on Java projects that build with Maven. Future work will look to extend \tool to include different types of tools, programming languages, and build systems.
 
-\subsection{Future Work}
+\section{Future Work}
 
 More tools to recommend (static analysis, security, etc.) \\
 
@@ -142,7 +175,7 @@ More build systems (ant, gradle, TravisCI, bazel)...\\
 
 \section{Conclusion}
 
-
+\tool is awesome
 
 %\balance
 %\section{Acknowledgments}
