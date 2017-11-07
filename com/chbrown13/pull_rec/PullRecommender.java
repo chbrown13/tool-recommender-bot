@@ -39,6 +39,15 @@ public class PullRecommender {
 	}
 
 	/**
+	 * Checks if the change is actually a fix or not
+	 */
+	private boolean isFix(Set<Error> base, Set<Error> pull, Error error) {
+		if (base.size() == 0 || pull.size() == 0 || base.size() == pull.size()) {
+			return false;
+		}
+		return Utils.isFix(error);
+	}
+	/**
 	 * Analyze code of files in pull request and compare to master branch.
 	 *
 	 * @param pull   Current pull request
@@ -48,7 +57,7 @@ public class PullRecommender {
 		Tool tool = new ErrorProne();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		try {
-			String author = pull.json().getJsonObject("user").getString("login");
+			String author = pull.json().getJsonObject("head").getJsonObject("user").getString("login");
 			String pullHash = pull.json().getJsonObject("head").getString("sha");
 			String baseHash = pull.json().getJsonObject("base").getString("sha");
 			Set<Error> baseErrors = Utils.checkout(baseHash, author, tool, true);
@@ -60,13 +69,13 @@ public class PullRecommender {
 				int i = 0;
 				for (Error e: fixed) {
 					//System.out.println(e.getKey());
-					if (Utils.isFix(e)) {
-						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number()));
+					if (isFix(baseErrors, pullErrors, e)) {
+						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title());
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
 					}
-				}
+				}	
 			}
 			Utils.cleanup();
 		} catch (IOException e) {
@@ -122,6 +131,9 @@ public class PullRecommender {
 			.replace("{open}", Integer.toString(open))
 			.replace("{pulls}", Integer.toString(pulls))
 			.replace("{rem}", Integer.toString(removed)));
+		for (Integer i: prs) {
+			System.out.println(i);
+		}
 	}
 }
 

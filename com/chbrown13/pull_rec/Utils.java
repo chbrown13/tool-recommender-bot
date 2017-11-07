@@ -237,6 +237,7 @@ public class Utils {
 		Matcher m = null;
 		ActionGenerator g = null;
 		boolean deleteOnly = true;
+		boolean insertOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
 			tree2 = jdt2.generateFromFile(pull);
@@ -263,12 +264,15 @@ public class Utils {
 			if(!a.toString().startsWith("DEL")) {
 				deleteOnly = false;
 			}
+			if(!a.toString().startsWith("INS")) {
+				insertOnly = false;
+			}
 			int pos = a.getNode().getPos();
 			if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
 				closestAction = a;
 			}
 		}
-		if (deleteOnly) {
+		if (deleteOnly || insertOnly) {
 			return -1;
 		}
 		ITree temp = null;
@@ -295,13 +299,7 @@ public class Utils {
 	 * @return   Line number of what is considered a fix or null if none
      */
 	public static int getFix() {
-		if (fixLine > 0) {
-			return fixLine;
-		} else if (fixLine == 0) {
-			return 1;
-		} else { // Shouldn't have been considered a fix
-			return (Integer)null;
-		}
+		return fixLine;
 	}
 
 	/**
@@ -313,6 +311,10 @@ public class Utils {
 	public static boolean isFix(Error error) {
 		String file1 = error.getFilePath();
 		String file2 = file1.replace(projectName + "1", projectName+"2");
+		if (!(new File(file1).isFile()) || !(new File(file2).isFile())) {
+			System.out.println("No file");
+			return false;
+		}
 		return findFix(file1, file2, getErrorOffset(error, file1)) > 0;
 	}
 
@@ -336,7 +338,7 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println(output);
+		//System.out.println(output);
 		return output;
 	}
 
