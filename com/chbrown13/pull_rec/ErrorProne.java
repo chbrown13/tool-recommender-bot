@@ -16,7 +16,8 @@ public class ErrorProne extends Tool {
 			"<artifactId>maven-compiler-plugin</artifactId>\n" +
 			"<version>3.3</version>\n" +
 			"<configuration>\n" +
-	  		"<compilerId>javac-with-errorprone</compilerId>\n" +
+			"<compilerId>javac-with-errorprone</compilerId>\n" +
+			"<forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
 			"<showWarnings>true</showWarnings>\n" +
 			"<compilerArgs>\n" +
 			"<arg>-XepAllErrorsAsWarnings</arg>\n" +
@@ -86,7 +87,6 @@ public class ErrorProne extends Tool {
 				}
 				String errorMessage = error[3];
 				temp = new Error(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, "");
-				temp.addLog(line);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}

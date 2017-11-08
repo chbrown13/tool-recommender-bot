@@ -11,8 +11,10 @@ import com.github.gumtreediff.tree.*;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
+import java.nio.file.*;
 import java.util.*;
 import javax.xml.parsers.*;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -272,7 +274,10 @@ public class Utils {
 				closestAction = a;
 			}
 		}
-		if (deleteOnly || insertOnly) {
+		if (deleteOnly) {
+			return -1;
+		}
+		if (insertOnly) {
 			return -1;
 		}
 		ITree temp = null;
@@ -311,10 +316,36 @@ public class Utils {
 	public static boolean isFix(Error error) {
 		String file1 = error.getFilePath();
 		String file2 = file1.replace(projectName + "1", projectName+"2");
-		if (!(new File(file1).isFile()) || !(new File(file2).isFile())) {
-			System.out.println("No file");
+		boolean noChange = false;
+		String content1 = "";
+		String content2 = "";
+		File base = new File(file1);
+		File pull = new File(file2);
+		if (!base.isFile() || !pull.isFile()) {
 			return false;
+		} else {
+			try {
+				noChange = FileUtils.contentEquals(base, pull);	
+				content1 = new String(Files.readAllBytes(Paths.get(file1)));
+				content2 = new String(Files.readAllBytes(Paths.get(file2)));			
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			if (noChange || content1.equals(content2)) {
+				return false;
+			}
 		}
+		/*if(file1.contains("ProviderServiceImpl.java")) {
+			System.out.println(file1+" "+noChange);
+			try{
+				
+				System.out.println(content1);
+				System.out.println(content2);				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}*/
 		return findFix(file1, file2, getErrorOffset(error, file1)) > 0;
 	}
 
@@ -338,7 +369,6 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		//System.out.println(output);
 		return output;
 	}
 
@@ -438,6 +468,7 @@ public class Utils {
 			dirName += "2";
 			owner = author;
 		}
+		System.out.println(dirName+" "+author+" "+hash);
 		try {
 			Git git = Git.cloneRepository()
 			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", owner)
@@ -448,7 +479,6 @@ public class Utils {
 			e.printStackTrace();
 			return null;
 		}
-		//System.out.println(hash);		
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
 		return tool.parseOutput(log);

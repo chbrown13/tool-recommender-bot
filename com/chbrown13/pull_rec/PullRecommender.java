@@ -42,7 +42,7 @@ public class PullRecommender {
 	 * Checks if the change is actually a fix or not
 	 */
 	private boolean isFix(Set<Error> base, Set<Error> pull, Error error) {
-		if (base.size() == 0 || pull.size() == 0 || base.size() == pull.size()) {
+		if (base.size() == 0 || pull.size() == 0) {
 			return false;
 		}
 		return Utils.isFix(error);
@@ -67,8 +67,10 @@ public class PullRecommender {
 				fixed.addAll(baseErrors);				
 				fixed.removeAll(pullErrors);
 				int i = 0;
+				System.out.println(baseErrors.size());
+				System.out.println(pullErrors.size());
+				System.out.println(fixed.size());
 				for (Error e: fixed) {
-					//System.out.println(e.getKey());
 					if (isFix(baseErrors, pullErrors, e)) {
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title());
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
