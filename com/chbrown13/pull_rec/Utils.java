@@ -336,16 +336,8 @@ public class Utils {
 				return false;
 			}
 		}
-		/*if(file1.contains("ProviderServiceImpl.java")) {
-			System.out.println(file1+" "+noChange);
-			try{
-				
-				System.out.println(content1);
-				System.out.println(content2);				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}*/
+		System.out.println(content1);
+		System.out.println(content2);
 		return findFix(file1, file2, getErrorOffset(error, file1)) > 0;
 	}
 
