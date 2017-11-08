@@ -460,7 +460,7 @@ public class Utils {
 			dirName += "2";
 			owner = author;
 		}
-		System.out.println(dirName+" "+author+" "+hash);
+		System.out.println(dirName+" "+owner+" "+hash);
 		try {
 			Git git = Git.cloneRepository()
 			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", owner)
