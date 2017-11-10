@@ -335,6 +335,10 @@ public class Utils {
 			if (noChange || content1.equals(content2)) {
 				return false;
 			}
+			if (error.getError().contains("MissingOverride") && 
+				(!content2.contains("@Override") || content1.contains("@Override"))) {
+				return false;
+			}
 		}
 		System.out.println(content1);
 		System.out.println(content2);
