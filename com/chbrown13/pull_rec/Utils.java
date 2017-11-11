@@ -229,6 +229,15 @@ public class Utils {
 	 * @return		   Changed line number
 	 */
 	private static int findFix(String base, String pull, int errorPos) {
+		// PrintStream originalStream = System.out;
+		
+		// PrintStream dummyStream = new PrintStream(new OutputStream(){
+		// 	public void write(int b) {
+		// 		// NO-OP
+		// 	}
+		// });
+		
+		// System.setOut(dummyStream);
 		Run.initGenerators();		
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
@@ -239,7 +248,7 @@ public class Utils {
 		Matcher m = null;
 		ActionGenerator g = null;
 		boolean deleteOnly = true;
-		boolean insertOnly = true;
+		//boolean insertOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
 			tree2 = jdt2.generateFromFile(pull);
@@ -266,8 +275,8 @@ public class Utils {
 			if(!a.toString().startsWith("DEL")) {
 				deleteOnly = false;
 			}
-			if(!a.toString().startsWith("INS")) {
-				insertOnly = false;
+			if(a.toString().endsWith("@Deprecated")) {
+				return -1;			
 			}
 			int pos = a.getNode().getPos();
 			if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
@@ -277,25 +286,27 @@ public class Utils {
 		if (deleteOnly) {
 			return -1;
 		}
-		if (insertOnly) {
-			return -1;
-		}
+		// if (insertOnly) {
+		// 	return -1;
+		// }
 		ITree temp = null;
 		if (closestAction.toString().startsWith("DEL")) { //get closest sibling or parent
 			int i = errorNode.positionInParent();
 			while (i > 0) {
 				i -= 1;
 				temp = errorNode.getParent().getChildren().get(i);
-				if (searchNode(temp, dst)) {
-					return posToLine(temp.getPos(), pull);
-				}
+				if (!searchNode(temp, dst)) {
+					return -1;
+				} 
 			}
-		} //INS or UPD or other
+		} else { //INS or UPD or other
 			temp = closestAction.getNode();
 			while (!searchNode(temp, dst)) {
 				temp = temp.getParent();
 			}
-			return posToLine(temp.getPos(), pull);
+		}
+		System.out.println("FIX!!!!!!!! " + closestAction.toString() +" "+ temp.toShortString());		
+		return posToLine(temp.getPos(), pull);
 	}
 	
 	/**
@@ -340,9 +351,12 @@ public class Utils {
 				return false;
 			}
 		}
-		System.out.println(content1);
-		System.out.println(content2);
-		return findFix(file1, file2, getErrorOffset(error, file1)) > 0;
+		int fix = findFix(file1, file2, getErrorOffset(error, file1));
+		if (fix > 0) {
+			System.out.println(content1);
+			System.out.println(content2);
+		}
+		return fix > 0;
 	}
 
 	/**

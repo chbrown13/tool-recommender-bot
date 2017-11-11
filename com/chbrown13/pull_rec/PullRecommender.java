@@ -69,7 +69,8 @@ public class PullRecommender {
 				int i = 0;
 				for (Error e: fixed) {
 					if (isFix(baseErrors, pullErrors, e)) {
-						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title());
+						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title()
+							+ " at line " + Integer.toString(Utils.getFix()));
 						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
