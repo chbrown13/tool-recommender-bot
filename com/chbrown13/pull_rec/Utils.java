@@ -15,11 +15,12 @@ import java.nio.file.*;
 import java.util.*;
 import javax.xml.parsers.*;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -483,6 +484,7 @@ public class Utils {
 			Git git = Git.cloneRepository()
 			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", owner)
 				.replace("{repo}", projectName))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider("tool-recommender-bot", "bot-recommender-tool"))
 			.setDirectory(new File(dirName)).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
