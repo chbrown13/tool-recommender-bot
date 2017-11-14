@@ -16,7 +16,10 @@
 \hyphenation{op-tical net-works semi-conduc-tor}
 \IEEEoverridecommandlockouts
 \raggedbottom
-\newcommand{\tool}{tool-recommender-bot }
+\newcommand{\tool}{tool-recommender-bot}
+\newcommand{\pseudosection}[1]{\vspace{2mm} \noindent {\bf #1}}
+\newcommand{\pseudosubsection}[1]{\vspace{2mm} {\it #1}}
+
 \begin{document}
 
 % Copyright
@@ -33,7 +36,8 @@ Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \maketitle
 \begin{abstract}
-Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations are the most effective mode of tool discovery and that the receptiveness of recommendees is the most important characteristic in determining the outcome of tool recommendations. To help increase awareness of useful tools, we developed and evaluated a new recommendation system \tool designed to integrate aspects of peer interactions and user receptivity into automated tool suggestions for software developers of real-world applications. Our findings suggest that \tool is awesome, cool, and very effective in improving tool discovery.
+Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations is an effective mode of tool discovery, and the receptiveness of recommendees is a vital characteristic in determining the outcome of tool suggestions. To help increase awareness of useful tools, we developed and evaluated a new system \tool~designed to integrate aspects of peer interactions and user receptivity into automated tool recommendations for software developers of real-world applications. Our findings suggest that \tool~is awesome, cool, and very effective in improving tool discovery.
+%Software quality is a primary concern of software engineers and users, however developers often ignore useful tools to improve quality and ease debugging for programmers.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -50,16 +54,16 @@ But existing recommendations systems are ineffective... \\
 
 Peer interactions and receptiveness are effective~\cite{vlhcc17}... \\
 
-We created \tool to solve this... \\
+We created \tool~to solve this... \\
 
 \noindent
-\textbf{RQ1:} How often can we expect \tool to make recommendations?  \\
-\textbf{RQ2:} How useful are recommendations from \tool to developers?  \\
+\textbf{RQ1:} How often can we expect \tool~to make recommendations?  \\
+\textbf{RQ2:} How useful are recommendations from \tool~to developers?  \\
 
-To answer these questions, we conducted a study analyzing \tool on five? popular open source Java projects to observe how many tool suggestions would be made based on past changes to the code base and how software developers reacted to receiving recommendations. This research makes the following contributions:\\
+To answer these questions, we conducted a study analyzing \tool~on five? popular open source Java projects to observe how many tool suggestions would be made based on past changes to the code base and how software developers reacted to receiving recommendations. This research makes the following contributions:\\
 
 \begin{itemize}
-\item We introduce the design and implementation of a novel automated recommendation system \tool
+\item We introduce the design and implementation of a novel automated recommendation system \tool~
 \item We provide implications for future
 \end{itemize}
 
@@ -67,36 +71,69 @@ To answer these questions, we conducted a study analyzing \tool on five? popular
 
 Improving tool discovery...\\
 
-Existing automated tool recommendation systems...
+Existing automated tool recommendation systems...\\
+
+Improving awareness of software engineering tools...\\
 
 \section{Tool}
-\tool is awesome. Here's how...
+Our approach, \tool, aims to increase awareness of useful programming tools to software engineers. This section describes the design and implementation of our system.
+
+\subsection{Design}
+Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{Murphy-HillPeerInteraction}. Many automated help systems are designed to simulate user-to-user recommendations in order to increase awareness of application tools and features, for instance Microsoft's intelligent office assistant Clippy. To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. We found that \emph{receptiveness} has a significant outcome of a tool recommendation, while other interaction characteristics such as politeness or persuasiveness did no impact effectivenesst~\cite{vlhcc17}. 
+
+\pseudosection{Receptiveness}
+
+Previous work emphasizes the importance of receptivity. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. He defines receptiveness using two criteria: 1) demonstrating a desire to adopt the target behavior and 2) familiarity with the technology. Below we present how \tool~integrates each of these concepts and how they influence the design of the system.
+
+\pseudosubsection{1. Desire}
+
+Software has permeated every area of our society. The primary desire of software users is to have enjoyable and problem-free experiences with software. The developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study by the National Institute of Standards and Technology revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help save time and effort in completing these tasks. We aim to increase awareness of these tools and improve software developer productivity by automatically making recommendations to capitalize on user and programmer desires to have mistake-free software.
+
+To target this desire, our initial implementation automatically recommends \textsc{Error Prone}, a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns.\footnote{http://errorprone.info} Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools are useful in debugging and creating desireable applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
+
+\pseudosubsection{2. Familiarity}
+
+Choosing an audience familiar with the target behavior is also vital to increasing adoption. To increase use of helpful programming tools, such as static analysis tools, our system focuses on making recommendations to software engineers in the projects they develop. Familiarity with source code is important for creating software applications, and code understandability is crucial for software development,  maintenance, debugging, and testing~\cite{ASE}.
+
+To choose a familiar audience, we make recommendations to developers of Java projects hosted on Github\footnote{https://github.com}, a popular source code management website that hosts millions of projects and serves millions of users. \tool~makes tool recommendations on pull requests, or proposed changes by contributors submitted to the source code. Developers making these changes should be knowledgeable about the project they are contributing to. Furthermore, our approach makes suggestions for tools when errors are fixed by the developer instead of reporting errors in their changes since pull request creators are familiar with the changes they are proposing to make to the source code. The GitHub interface allows users to review and comment on pull requests in situ with the proposed changes, and this is where we make our recommendations.
 
 \subsection{Implementation}
-\tool technical details...
 
-\subsubsection{Jenkins}
+\tool~builds on four key concepts to automatically recommend tools to users and improve tool discovery based on our design goals for receptivity.
 
-\subsubsection{Error Prone}
+\pseudosubsection{1. Continuous Integration}
 
-\subsection{Receptiveness}
-\tool was designed to integrate characteristics of peer interactions into automated recommendations. To better understand user-to-user recommendations and why they are effective for tool discovery, we observed how colleagues recommend tools to each other while completing tasks in prior work. Our results found that the receptiveness of users was the only significant indicator of determining whether a tool recommendation was effective or not compared to other interaction characteristics, such as politeness~\cite{vlhcc17}. Fogg defines receptiveness using two criteria, \textit{demonstrating a desire} and \textit{familiarity} with the adopted behavior~\cite{FoggPersuasive}.
+Our system utilizes continuous integration to recommend useful tools before pull request changes are integrated into the main repository, or merged. \tool~is implemented as a plugin for Jenkins, ``the leading open source automation server'' for source code deployment and delivery.\footnote{https://jenkins.io/} The system uses Jenkins to clone Github repositories and periodically check for newly-opened pull requests every 15 minutes. When a new pull request is found, our system uses Jenkins to automatically run our approach to recommend \textsc{Error Prone}.
 
-\paragraph{Desire}
+To analyze the source code, we target projects that use the Maven~\footnote{https://maven.apache.org/} build automation and software management tool for Java applications. Our approach uses Maven to automatically handle dependencies and perform the static analysis when the project builds. We inject \textsc{Error Prone} as a Maven plugin to repository's \textit{pom.xml} project object model file to add it to the build process. \tool~then builds both the original version of the code before the proposed changes were made (base) and the changed version of the repository with the pull request modifications implemented (head) to inspect differences. Using Maven allows \tool~to run on a large number of Java projects that use the popular build tool and also makes our approach extendable to recommend other tools implemented as Maven plugins in future work. 
 
-\paragraph{Familiarity}
+\pseudosubsection{2. Fix Identification}
+
+After analyzing the base and head versions of the code, our approach parses the build output of each version to determine if any reported errors were fixed in the pull request. \textsc{Error Prone} identifies the faults and we developed an algorithm to use that information and determine if a fix to the identified bug was made. \tool~uses the code differencing tool GumTree to identify actions (addition, delete, insert, move, and update) performed to changed files in pull request versions and convert the code into symtax trees~\cite{GumTree}. 
+
+To determine if an error was fixed, we take several things into consideration: First, our approach ignores instances where only delete actions were detected between the base and head versions of a file. This avoids making recommendations in situations where bugs were removed but not necessarily fixed in refactoring tasks, such as deleting and moving code, renaming classes, etc. Second, we ignore occurrences of deprecated classes because, similarly, the error reported was not fixed but removed. Third, we do not consider error fixes that were made by changes to a different file because we want to make recommendations where the developer is familiar with the changes that occurred. These help us minimize the number of false positives and errant recommendations in our approach.
+
+\pseudosubsection{3. Fix Localizaton}
+
+When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by \textsc{Error Prone}. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent.
+
+\pseudosubsection{4. Code Review}
+
+Code reviews from developers are often required for examining code changes~\cite{?}. On Github, code reviews are primarily done through pull request comments~\cite{?}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system also aims to make recommendations using language similar to interactions between colleagues, such as complementing their work using ``Good job!''~\cite{?}.
+
+To further increase the adoption of static analysis tools, we report other instances of similar errors found by \textsc{Error Prone} in the base version of the code. In the recommendation, \tool~adds links to at most two locations where \textsc{Error Prone} found the same error as the one that was fixed. We hope this encourags the use of \textsc{Error Prone} to find more bugs in the pull request before the code is merged into the code base. Figure 1 presents a recommendation from our system on a pull request review.
 
 \section{Methodology}
 
 \subsection{Projects}
 
-To evaluate the effectiveness of our recommendation system, we implemented \tool on five real-world open-source software applications. We selected projects hosted on Github\footnote{https://github.com}, a popular source code management site that hosts thousands of code repositories online. To narrow down projects for our evaluation, we picked Github projects that met the following criteria:
+To evaluate the effectiveness of our recommendation system, we assessed \tool~on five real-world open-source software applications. To narrow down projects for our evaluation, we picked Github repositories that met the following criteria:
 
 \begin{itemize}
-\item one of the top Trending projects\footnote{https://github.com/trending} on GitHub based on activity by the community at the time of this writing,
+\item one of the top Trending projects\footnote{https://github.com/trending} on Github based on activity by the community at the time of this writing,
 \item primarily written in the Java programming language\footnote{https://java.com},
-\item owned by a Github organization instead of personal user accounts,
-\item and used Maven\footnote{https://maven.apache.org/} for software build management.
+\item build with Maven,
+\item and are owned by a GitHub organization, instead of personal user account projects.
 \end{itemize}
 
 \begin{table}
@@ -123,7 +160,7 @@ To evaluate the effectiveness of our recommendation system, we implemented \tool
 	\label{tools}
 \end{table}
 
-Table~\ref{tools} presents the projects used for evaluating \tool in our study and provides details about each repository. These repositories span a wide range of organizations and real-world software applications, including a system to create ``stand-alone, production-grade'' Spring applications~\cite{spring-boot}, a high-performance remote procedure call framework from Chinese e-commerce company Alibaba~\cite{dubbo}, a collection of core Google libraries~\cite{guava}, an HTTP client for Android financial services mobile application Square~\cite{square-retrofit}, and a distributed messaging and data-streaming platform by Apache~\cite{rocketmq}.
+Table~\ref{tools} presents the projects used for evaluating \tool~in our study and provides details about each repository. These repositories span a wide range of organizations and real-world software applications, including a system to create ``stand-alone, production-grade'' Spring applications~\cite{spring-boot}, a high-performance remote procedure call framework from Chinese e-commerce company Alibaba~\cite{dubbo}, a collection of core Google libraries~\cite{guava}, an HTTP client for Android financial services mobile application Square~\cite{square-retrofit}, and a distributed messaging and data-streaming platform by Apache~\cite{rocketmq}.
 
 \subsection{Study Design}
 
@@ -139,13 +176,13 @@ Followed up with pull request authors to gather data on recommendation...
 
 \section{Results}
 
-\subsection{How often can we expect \tool to make recommendations?}
+\subsection{How often can we expect \tool~to make recommendations?}
 
 Tons of recommendations... \\
 
 No false positives... \\
 
-\subsection{How useful are recommendations from \tool to developers?}
+\subsection{How useful are recommendations from \tool~to developers?}
 
 Excellent responses from recommendees...\\
 
@@ -163,7 +200,7 @@ Here's what our results say about ways to improve tool recommendation systems...
 
 Internal\\
 
-An external threat to the validity of our study is that we only observed open source projects hosted on Github in our evaluation. Our results may not generalize to closed source software projects and their developers. To minimize this, we selected popular real-world software applications on Github owned by organizations to avoid the use of personal development projects. Additionally, our recommendation system has limited generalizablility due to the fact we currently only assess recommendations for the Error Prone static analysis tool on Java projects that build with Maven. Future work will look to extend \tool to include different types of tools, programming languages, and build systems.
+An external threat to the validity of our study is that we only observed open source projects hosted on Github in our evaluation. Our results may not generalize to closed source software projects and their developers. To minimize this, we selected popular real-world software applications on Github owned by organizations to avoid the use of personal development projects. Additionally, our recommendation system has limited generalizablility due to the fact we currently only assess recommendations for the Error Prone static analysis tool on Java projects that build with Maven. Future work will look to extend \tool~to include different types of tools, programming languages, and build systems.
 
 \section{Future Work}
 
