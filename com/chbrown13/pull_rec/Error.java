@@ -134,14 +134,13 @@ public class Error {
 		Set<Error> similarSet = new HashSet<Error>();
 		Error sim;
 		for (Error epi: similar) {
-			if ((!epi.getKey().equals(this.getKey()) && !epi.getFileName().equals(this.getFileName())) && 
-				(epi.getError().equals(this.getError()) || epi.getMessage().equals(this.getMessage()))) {
+			if (!this.equals(epi) && this.similar(epi)) {
 				similarSet.add(epi);
 			}
 		}
 		Iterator<Error> iter = similarSet.iterator();
 		if (similarSet.isEmpty()) {
-			comment = comment.replace("{similar}", " ");
+			return null;
 		} else if (similarSet.size() == 1) {
 				comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(iter.next(), sha)).replace("{issue}", "a similar issue"));
 		} else {
@@ -163,6 +162,17 @@ public class Error {
 			.replace("{sha}", hash).replace("{repo}", Utils.getProjectName())
 			.replace("{user}", Utils.getProjectOwner());
 		return Utils.MARKDOWN_LINK.replace("{src}", err.getFileName()).replace("{url}", url);
+	}
+
+	/**
+	 * Compare Error objects based on error
+	 */
+	public boolean similar(Object o) {
+		if (o instanceof Error) {
+			Error e = (Error) o;
+			return e.getError().equals(this.error);
+		}
+		return false;
 	}
 
 	/**

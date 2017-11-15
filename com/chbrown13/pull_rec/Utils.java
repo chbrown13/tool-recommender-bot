@@ -16,7 +16,8 @@ import java.util.*;
 import javax.xml.parsers.*;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -252,15 +253,6 @@ public class Utils {
 	 * @return		   Changed line number
 	 */
 	private static int findFix(String base, String pull, int errorPos) {
-		// PrintStream originalStream = System.out;
-		
-		// PrintStream dummyStream = new PrintStream(new OutputStream(){
-		// 	public void write(int b) {
-		// 		// NO-OP
-		// 	}
-		// });
-		
-		// System.setOut(dummyStream);
 		Run.initGenerators();		
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
@@ -271,7 +263,6 @@ public class Utils {
 		Matcher m = null;
 		ActionGenerator g = null;
 		boolean deleteOnly = true;
-		//boolean insertOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
 			tree2 = jdt2.generateFromFile(pull);
@@ -309,9 +300,6 @@ public class Utils {
 		if (deleteOnly) {
 			return -1;
 		}
-		// if (insertOnly) {
-		// 	return -1;
-		// }
 		ITree temp = null;
 		if (closestAction.toString().startsWith("DEL")) { //get closest sibling or parent
 			int i = errorNode.positionInParent();
@@ -367,10 +355,6 @@ public class Utils {
 				return false;
 			}
 			if (noChange || content1.equals(content2)) {
-				return false;
-			}
-			if (error.getError().contains("MissingOverride") && 
-				(!content2.contains("@Override") || content1.contains("@Override"))) {
 				return false;
 			}
 		}
@@ -475,8 +459,8 @@ public class Utils {
 			FileWriter writer = new FileWriter(tempPom, false);
 			myTool = false;
 			parseXML(pom, tool, writer);
-			tempPom.renameTo(new File(pom));			
 			writer.close();
+			tempPom.renameTo(new File(pom));			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -495,6 +479,7 @@ public class Utils {
 		String dirName = projectName;
 		String owner = "";
 		String branch = "";
+		Git git = null;
 		if(base) {
 			dirName += "1";
 			owner = projectOwner;
@@ -505,21 +490,34 @@ public class Utils {
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
-			Git git = Git.cloneRepository()
+			git = Git.cloneRepository()
 				.setURI("https://github.com/{owner}/{repo}.git"
 					.replace("{owner}", owner).replace("{repo}", projectName))
 				.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-				.setDirectory(new File(dirName)).call();
+				.setDirectory(new File(dirName))
+				.setCloneAllBranches(true).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
-			if (!base) {
-				String cmd = "git --git-dir={dir}/.git fetch origin pull/{num}/head:{branch}; git --git-dir={dir}/.git checkout -f {branch}"
-					.replaceAll("\\{dir\\}", dirName)
-					.replaceAll("\\{branch\\}", branch)
-					.replace("{num}", Integer.toString(id));
-				System.out.println(cmd);
-				//e.printStackTrace();
-				//return null;
+			if (git != null && !base) {
+				try {
+					git.branchCreate().setName(branch)
+						.setUpstreamMode(SetupUpstreamMode.TRACK)
+						.call();
+					git.checkout().setName(branch).call();
+				} catch (RefAlreadyExistsException raee) {
+					try {
+						git.checkout().setName(branch).call();
+					} catch (Exception e2) {
+						e2.printStackTrace();
+						return null;
+					}
+				} catch (Exception e3) {
+					e3.printStackTrace();
+					return null;
+				}
+			} else {
+				e.printStackTrace();
+				return null;
 			}
 		}
 		addToolPomPlugin(dirName, tool);

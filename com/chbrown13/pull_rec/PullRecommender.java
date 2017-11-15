@@ -33,9 +33,11 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, String hash, int line, Set<Error> errors) {
 		String comment = error.generateComment(tool, errors, hash);
-		System.out.println(comment);
-		recs += 1;
-		prs.add(pull.number());
+		if (comment != null) {
+			System.out.println(comment);
+			recs += 1;
+			prs.add(pull.number());
+		}
 	}
 
 	/**
@@ -47,6 +49,7 @@ public class PullRecommender {
 		}
 		return Utils.isFix(error);
 	}
+
 	/**
 	 * Analyze code of files in pull request and compare to master branch.
 	 *
@@ -59,7 +62,7 @@ public class PullRecommender {
 		String developer = "";
 		boolean pullRec = true;
 		try {
-			Iterator<Commit> commits = pull.commits().iterator();
+			/*Iterator<Commit> commits = pull.commits().iterator();
 			while (commits.hasNext()) {
 				Commit.Smart commit = new Commit.Smart(commits.next());
 				String dev = commit.json().getJsonObject("author").getString("name");
@@ -70,7 +73,7 @@ public class PullRecommender {
 					System.out.println("multiple devs");
 				}
 			}
-			if (pullRec) {
+			if (pullRec) {*/
 				String label = pull.json().getJsonObject("head").getString("label");
 				String pullHash = pull.json().getJsonObject("head").getString("sha");
 				String baseHash = pull.json().getJsonObject("base").getString("sha");
@@ -92,7 +95,7 @@ public class PullRecommender {
 					}	
 				}
 				Utils.cleanup();
-			}
+			//}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
