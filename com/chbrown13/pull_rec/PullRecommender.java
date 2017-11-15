@@ -54,30 +54,45 @@ public class PullRecommender {
 	 * @return       Number of recommendations made
 	 */
 	private void analyze(Pull.Smart pull) {
-		Tool tool = new ErrorProne();
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		Tool tool = new ErrorProne();		
+		String developer = "";
+		boolean pullRec = true;
 		try {
-			String author = pull.json().getJsonObject("head").getJsonObject("user").getString("login");
-			String pullHash = pull.json().getJsonObject("head").getString("sha");
-			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Set<Error> baseErrors = Utils.checkout(baseHash, author, tool, true);
-			Set<Error> pullErrors = Utils.checkout(pullHash, author, tool, false);
-			if(baseErrors != null && pullErrors != null) {
-				Set<Error> fixed = new HashSet<Error>();				
-				fixed.addAll(baseErrors);				
-				fixed.removeAll(pullErrors);
-				int i = 0;
-				for (Error e: fixed) {
-					if (isFix(baseErrors, pullErrors, e)) {
-						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title()
-							+ " at line " + Integer.toString(Utils.getFix()));
-						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
-					} else {
-						removed += 1;
-					}
-				}	
+			Iterator<Commit> commits = pull.commits().iterator();
+			while (commits.hasNext()) {
+				Commit.Smart commit = new Commit.Smart(commits.next());
+				String dev = commit.json().getJsonObject("author").getString("name");
+				if (developer.isEmpty()) {
+					developer = dev;
+				} else if (dev != developer) {
+					pullRec = false;
+					System.out.println("multiple devs");
+				}
 			}
-			Utils.cleanup();
+			if (pullRec) {
+				String label = pull.json().getJsonObject("head").getString("label");
+				String pullHash = pull.json().getJsonObject("head").getString("sha");
+				String baseHash = pull.json().getJsonObject("base").getString("sha");
+				Set<Error> baseErrors = Utils.checkout(baseHash, label, pull.number(), tool, true);
+				Set<Error> pullErrors = Utils.checkout(pullHash, label, pull.number(), tool, false);
+				if(baseErrors != null && pullErrors != null) {
+					Set<Error> fixed = new HashSet<Error>();				
+					fixed.addAll(baseErrors);				
+					fixed.removeAll(pullErrors);
+					int i = 0;
+					for (Error e: fixed) {
+						if (isFix(baseErrors, pullErrors, e)) {
+							System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title()
+								+ " at line " + Integer.toString(Utils.getFix()));
+							makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
+						} else {
+							removed += 1;
+						}
+					}	
+				}
+				Utils.cleanup();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	

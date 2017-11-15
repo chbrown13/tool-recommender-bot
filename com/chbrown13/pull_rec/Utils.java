@@ -47,7 +47,29 @@ public class Utils {
 	
 	private static String projectOwner = "";
 
+	private static String username = "";
+
+	private static String password = "";
+
 	private static int fixLine = -1;
+
+	/**
+	 * Stores current user's Github login
+	 *
+	 * @param name   Github account username
+	 */
+	public static void setUserName(String name) {
+		username = name;
+	}
+
+	/**
+	 * Stores current user's Github password
+	 *
+	 * @param pass   Github account password
+	 */
+	public static void setPassword(String pass) {
+		password = pass;
+	}
 
 	/**
 	 * Stores current project name.
@@ -469,27 +491,36 @@ public class Utils {
 	 * @param base   True if checking base repo, false if PR version
 	 * @return       Set errors reported from tool
 	 */
-	public static Set<Error> checkout(String hash, String author, Tool tool, boolean base) {
+	public static Set<Error> checkout(String hash, String ref, int id, Tool tool, boolean base) {
 		String dirName = projectName;
 		String owner = "";
+		String branch = "";
 		if(base) {
 			dirName += "1";
 			owner = projectOwner;
 		} else {
 			dirName += "2";
-			owner = author;
+			owner = ref.split(":")[0];
+			branch = ref.split(":")[1];
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
 			Git git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", owner)
-				.replace("{repo}", projectName))
-			.setCredentialsProvider(new UsernamePasswordCredentialsProvider("tool-recommender-bot", "bot-recommender-tool"))
-			.setDirectory(new File(dirName)).call();
+				.setURI("https://github.com/{owner}/{repo}.git"
+					.replace("{owner}", owner).replace("{repo}", projectName))
+				.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
+				.setDirectory(new File(dirName)).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
+			if (!base) {
+				String cmd = "git --git-dir={dir}/.git fetch origin pull/{num}/head:{branch}; git --git-dir={dir}/.git checkout -f {branch}"
+					.replaceAll("\\{dir\\}", dirName)
+					.replaceAll("\\{branch\\}", branch)
+					.replace("{num}", Integer.toString(id));
+				System.out.println(cmd);
+				//e.printStackTrace();
+				//return null;
+			}
 		}
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
@@ -551,6 +582,8 @@ public class Utils {
 		catch (FileNotFoundException e) {
 		    e.printStackTrace();
 		}
+		setUserName(creds[0]);
+		setPassword(creds[1]);
 		return creds;
 	}
 }
