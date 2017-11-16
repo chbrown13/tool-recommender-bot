@@ -495,7 +495,7 @@ public class Utils {
 				try {
 					owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
 					repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-				} catch (NullPointerException npe) { //unknown repository
+				} catch (NullPointerException|ClassCastException pulle) { //unknown repository
 					owner = head.getJsonObject("user").getString("login");
 					repo = projectName;
 				}
