@@ -109,13 +109,7 @@ public class PullRecommender {
 				break;
 			}
 			Pull.Smart pull = new Pull.Smart(pullit.next());
-			try{
-				if (pull.state().equals("open")) {
-					open += 1;
-				}
-			} catch (Exception e) {
-				//Do nothing
-			}
+			analyze(pull);
 			requests.add(pull);
 			i++;
 			pulls++;
@@ -129,11 +123,6 @@ public class PullRecommender {
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
-		if (requests != null && !requests.isEmpty()) {
-			for (Pull.Smart pull: requests) {
-				recommender.analyze(pull);
-			}
-		}
 		System.out.println("{num} recommendations made on {prs} pull request(s), {open} of which were open out of {pulls} total, while {rem} bug(s) fixed were not recommended because the error was just removed."
 			.replace("{num}", Integer.toString(recs))
 			.replace("{prs}", Integer.toString(prs.size()))
