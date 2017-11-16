@@ -31,13 +31,19 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, String hash, int line, Set<Error> errors) {
-		String comment = error.generateComment(tool, errors, hash);
-		if (comment != null) {
-			System.out.println(comment);
-			recs += 1;
-			prs.add(pull.number());
+	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, int line, Set<Error> errors) {
+		try {
+			String sha = pull.json().getJsonObject("head").getString("sha");
+			String comment = error.generateComment(tool, errors, sha);
+			if (comment != null) {
+				System.out.println(comment);
+				recs += 1;
+				prs.add(pull.number());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		
 	}
 
 	/**
@@ -62,11 +68,8 @@ public class PullRecommender {
 		String developer = "";
 		boolean pullRec = true;
 		try {
-			String label = pull.json().getJsonObject("head").getString("label");
-			String pullHash = pull.json().getJsonObject("head").getString("sha");
-			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Set<Error> baseErrors = Utils.checkout(baseHash, label, pull.number(), tool, true);
-			Set<Error> pullErrors = Utils.checkout(pullHash, label, pull.number(), tool, false);
+			Set<Error> baseErrors = Utils.checkout(pull, tool, true);
+			Set<Error> pullErrors = Utils.checkout(pull, tool, false);
 			if(baseErrors != null && pullErrors != null) {
 				Set<Error> fixed = new HashSet<Error>();				
 				fixed.addAll(baseErrors);				
@@ -76,7 +79,7 @@ public class PullRecommender {
 					if (isFix(baseErrors, pullErrors, e)) {
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())+" "+pull.title()
 							+ " at line " + Integer.toString(Utils.getFix()));
-						makeRecommendation(tool, pull, e, pullHash, Utils.getFix(), baseErrors);
+						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
 					}

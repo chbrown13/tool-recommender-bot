@@ -8,11 +8,13 @@ import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.*;
 import com.github.gumtreediff.matchers.heuristic.gt.*;
 import com.github.gumtreediff.tree.*;
+import com.jcabi.github.Pull;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
+import javax.json.*;
 import javax.xml.parsers.*;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
@@ -316,7 +318,6 @@ public class Utils {
 				temp = temp.getParent();
 			}
 		}
-		System.out.println("FIX!!!!!!!! " + closestAction.toString() +" "+ temp.toShortString());		
 		return posToLine(temp.getPos(), pull);
 	}
 	
@@ -475,24 +476,30 @@ public class Utils {
 	 * @param base   True if checking base repo, false if PR version
 	 * @return       Set errors reported from tool
 	 */
-	public static Set<Error> checkout(String hash, String ref, int id, Tool tool, boolean base) {
+	public static Set<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
 		String dirName = projectName;
-		String owner = "";
-		String branch = "";
+		String hash, owner, branch, repo;
+		JsonObject json = pull.json();
 		Git git = null;
 		if(base) {
+			hash = json.getJsonObject("base").getString("sha");
 			dirName += "1";
 			owner = projectOwner;
+			repo = projectName;
+			branch = "";
 		} else {
+			JsonObject head = json.getJsonObject("head");
+			hash = head.getString("sha");
 			dirName += "2";
-			owner = ref.split(":")[0];
-			branch = ref.split(":")[1];
+			owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
+			repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
+			branch = head.getString("ref");
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
 			git = Git.cloneRepository()
 				.setURI("https://github.com/{owner}/{repo}.git"
-					.replace("{owner}", owner).replace("{repo}", projectName))
+					.replace("{owner}", owner).replace("{repo}", repo))
 				.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
 				.setDirectory(new File(dirName))
 				.setCloneAllBranches(true).call();
