@@ -123,12 +123,10 @@ public class PullRecommender {
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
-		System.out.println("{num} recommendations made on {prs} pull request(s), {open} of which were open out of {pulls} total, while {rem} bug(s) fixed were not recommended because the error was just removed."
-			.replace("{num}", Integer.toString(recs))
-			.replace("{prs}", Integer.toString(prs.size()))
-			.replace("{open}", Integer.toString(open))
-			.replace("{pulls}", Integer.toString(pulls))
-			.replace("{rem}", Integer.toString(removed)));
+		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total."
+			.replace("{recs}", Integer.toString(recs))
+			.replace("{pulls}", Integer.toString(prs.size()))
+			.replace("{totals}", Integer.toString(requests.size())));
 		for (Integer i: prs) {
 			System.out.println(i);
 		}
