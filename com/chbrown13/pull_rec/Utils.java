@@ -481,19 +481,29 @@ public class Utils {
 		String hash, owner, branch, repo;
 		JsonObject json = pull.json();
 		Git git = null;
-		if(base) {
-			hash = json.getJsonObject("base").getString("sha");
-			dirName += "1";
-			owner = projectOwner;
-			repo = projectName;
-			branch = "";
-		} else {
-			JsonObject head = json.getJsonObject("head");
-			hash = head.getString("sha");
-			dirName += "2";
-			owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
-			repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-			branch = head.getString("ref");
+		try {
+			if(base) {
+				hash = json.getJsonObject("base").getString("sha");
+				dirName += "1";
+				owner = projectOwner;
+				repo = projectName;
+				branch = "";
+			} else {
+				JsonObject head = json.getJsonObject("head");
+				hash = head.getString("sha");
+				dirName += "2";
+				try {
+					owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
+					repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
+				} catch (NullPointerException npe) { //unknown repository
+					owner = head.getJsonObject("user").getString("login");
+					repo = projectName;
+				}
+				branch = head.getString("ref");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
