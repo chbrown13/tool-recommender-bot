@@ -88,6 +88,7 @@ public class PullRecommender {
 			Utils.cleanup();
 		} catch (IOException e) {
 			e.printStackTrace();
+			Utils.cleanup();
 		}	
 	}
 
