@@ -50,7 +50,7 @@ public class PullRecommender {
 	 * Checks if the change is actually a fix or not
 	 */
 	private boolean isFix(Set<Error> base, Set<Error> pull, Error error) {
-		if (base.size() == 0 || pull.size() == 0) {
+		if (base.size() == 0) {
 			return false;
 		}
 		return Utils.isFix(error);
