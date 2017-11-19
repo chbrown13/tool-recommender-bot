@@ -318,6 +318,9 @@ public class Utils {
 				temp = temp.getParent();
 			}
 		}
+		if (temp = null) {
+			return -1;
+		}
 		return posToLine(temp.getPos(), pull);
 	}
 	
