@@ -507,7 +507,6 @@ public class Utils {
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
-			cleanup();
 			git = Git.cloneRepository()
 				.setURI("https://github.com/{owner}/{repo}.git"
 					.replace("{owner}", owner).replace("{repo}", repo))
