@@ -49,11 +49,19 @@ public class PullRecommender {
 	/**
 	 * Checks if the change is actually a fix or not
 	 */
-	private boolean isFix(Set<Error> base, Set<Error> pull, Error error) {
-		if (base.size() == 0) {
-			return false;
+	private boolean isFix(Set<Error> base, Set<Error> pull, Error error, List<String> files) {
+		boolean fileCheck = false;
+		for (String f: files) {
+			if (error.getFilePath().contains(f)) {
+				System.out.println("!!!!"+error.getFilePath()+"    "+f);
+				fileCheck = true;
+				break;
+			}
 		}
-		return Utils.isFix(error);
+		if (base.size() > 0 && fileCheck) {
+			return Utils.isFix(error);
+		}
+		return false;
 	}
 
 	/**
@@ -66,7 +74,26 @@ public class PullRecommender {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		Tool tool = new ErrorProne();		
 		String developer = "";
-		boolean pullRec = true;
+		boolean pullRec = false;
+		List<String> javaFiles = new ArrayList<String>();
+		Iterator<JsonObject> files = null;
+		try {
+			files = pull.files().iterator();			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+		while (files.hasNext()) {
+			JsonObject f = files.next();
+			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
+				javaFiles.add(f.getString("filename"));
+				pullRec = true;
+			}		
+		}
+		if (!pullRec) {
+			System.out.println("No java changes.");
+			return;
+		}
 		try {
 			Set<Error> baseErrors = Utils.checkout(pull, tool, true);
 			Set<Error> pullErrors = Utils.checkout(pull, tool, false);
@@ -76,7 +103,7 @@ public class PullRecommender {
 				fixed.removeAll(pullErrors);
 				int i = 0;
 				for (Error e: fixed) {
-					if (isFix(baseErrors, pullErrors, e)) {
+					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
 							+ " reported at line " + e.getLineNumberStr() + " fixed at line " + Integer.toString(Utils.getFix()));
 						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
