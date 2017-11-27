@@ -518,7 +518,7 @@ public class Utils {
 				.setCloneAllBranches(true).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
-			if (git != null && !base) {
+			/*if (git != null && !base) {
 				try {
 					git.branchCreate().setName(branch)
 						.setUpstreamMode(SetupUpstreamMode.TRACK)
@@ -535,10 +535,10 @@ public class Utils {
 					e3.printStackTrace();
 					return null;
 				}
-			} else {
+			} else {*/
 				e.printStackTrace();
 				return null;
-			}
+			//}
 		}
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
