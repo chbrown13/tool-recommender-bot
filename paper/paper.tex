@@ -44,30 +44,26 @@ Software Engineering; Tool Recommendation; Tool Discovery; Open Source
 \end{IEEEkeywords}
 
 \section{Introduction}
-%Importance
-Software contains many tools and features designed to make users more efficient and effective in their work. However, despite a wide availability of such useful tools, many are often ignored or underutilized because users do not know of their existence~\cite{?}. The amount of tools provided by applications is also continuing to increase, making it more difficult for users to discover these helpful tools~\cite{bloat}. This lack of awareness leads to wasted time and billions of wasted dollars each year~\cite{malachowski}.
 
-One area where worker effectiveness and efficiency is extremely important is the software industry. Software has permeated nearly every facet of our society and. Additionally, defects and errors in software cost companies millions of dollars to fix~\cite{?}.
-Quality is a primary concern for both software engineers and software users, however developers often ignore useful tools to help improve the quality of their code.
+Software has permeated nearly every area of our society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
 
-Automated recommendation systems can help solve this problem...
+Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million.\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/}. Additionally, the price of repairing these code failures is becoming more expensive over time~\cite{SEEconomics}.
 
-But existing recommendations systems are ineffective...
+To make software engineers more effective and efficient in their work, many types of tools have been created to automatically perform code analysis, refactoring, security checks, and more for programmers. One such type is static analysis tools. Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools can be useful for finding code defects early in the development process before code is released. According to a report from IBM, the relative cost for fixing errors also drastically increases the longer the fault exists in the code base through the software development lifecycle. Previous studies also show that static analysis tools are effective in preventing bugs in code to save money for companies in addition to time and effort for developers~\cite{UsingStaticAnalysis}.
 
-Peer interactions and receptiveness are effective~\cite{vlhcc17}...
+Althouth quality is a primary concern for software producers and consumers, developers often ignore these useful tools which help improve the quality of their code~\cite{Johnson2013Why}. There are many barriers to tool adoption, and one of the main reasons useful tools are ignored or underutilized is because of the discoverability barrier. This refers to when users are unaware of tools' existence in software~\cite{Murphy-HillScreencastingDiscovery}. This lack of awareness can lead to significant amounts of wasted time and money in the software industry.
 
-We created \tool~to solve this... To evaluate the effectiveness of our approach, we studied the following research questions (RQs): \\
+%Researchers have explored methods for increasing tool discovery among software users. Fischer suggests that some of the more popular methods for raising tool awareness, such as documentation and help menus, are ineffective for increasing adoption of useful tools and features~\cite{ActiveHelpSystems}. These \textit{passive help systems} require users to first recognize the system's existence, navigate to the items, and then manually search for help. However, users rarely seek help by discovering new functionality and will often just rely on their own previous knowledge~\cite{something}. 
+%
+%Active help systems are the preferred method of helping users discover new functionality in software. These systems automatically recommend useful tools to software users. However, there remains room for improvement among these system-to-user recommendation systems. For example, Clippy, an intelligent office assistant for Microsoft Office products, was able to automatically suggest tools and features to Microsoft software users. However, the system was found ineffective and eventually removed. Peer interactions and receptiveness are effective~\cite{vlhcc17}...
+
+To solve the static analysis tool discovery problem, we developed a new recommender system called \textit{\tool}. \tool was designed to automatically recommend static analysis tools to software engineers. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. To evaluate the effectiveness of our system, we studied the following research questions (RQs): \\
 
 \noindent
 \textbf{RQ1:} How often can we expect \tool~to make recommendations?  \\
 \textbf{RQ2:} How useful are recommendations from \tool~to developers?  \\
 
-To answer these questions, we evaluated our system on open source Java projects to observe how many tool suggestions would be made based on past changes to the code base and how software developers reacted to receiving recommendations. This research makes the following contributions:
-
-\begin{itemize}
-\item introduce the design and evaluation of \tool, a novel approach to improving tool discovery
-\item provide implications for designing effective automated recommendation systems.
-\end{itemize}
+To answer these questions, we evaluated our system on open source Java projects to observe how many tool suggestions would be made based on past changes to the code base. We also examined how software developers reacted to receiving tool recommendations from our system. The main research contribution of our work is introducing the design and evaluation of a new automated recommendation system \tool, a novel approach to improving the discovery of static analysis tools for software engineers by simulating tool recommendations made between peers.
 
 \section{Related Work}
 
@@ -81,7 +77,7 @@ Improving awareness of software engineering tools...\\
 Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.
 
 \subsection{Design}
-Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{Murphy-HillPeerInteraction}. Many automated help systems are designed to simulate user-to-user recommendations in order to increase awareness of application tools and features, for instance Microsoft's intelligent office assistant Clippy\cite{Clippy}. 
+Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{Murphy-HillPeerInteraction}. Many automated help systems are designed to simulate user-to-user recommendations in order to increase awareness of application tools and features, for instance Microsoft Clippy\cite{Clippy}. 
 
 To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. Our results found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation, while other characteristics, such as politeness and persuasiveness, do not significantly impact the outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
 
@@ -93,7 +89,7 @@ Previous work emphasizes the importance of receptivity. Fogg outlined best pract
 
 The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase awareness of these tools to improve software quality and developer productivity, ultimately meeting users' and developers' desire for less buggy software.
 
-To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends \textsc{Error Prone}.\footnote{http://errorprone.info} \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools are useful in debugging and creating desireable applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
+To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends \textsc{Error Prone}.\footnote{http://errorprone.info} \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. These tools are useful in debugging and creating desireable applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
 
 \pseudosubsection{2. Familiarity}
 
