@@ -59,7 +59,6 @@ public class ErrorProne extends Tool {
 	  */
 	@Override
 	public Set<Error> parseOutput(String msg) {
-		//System.out.println(msg+"...");
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String dir = Utils.getCurrentDir();
 		String[] lines = msg.split("\n");
