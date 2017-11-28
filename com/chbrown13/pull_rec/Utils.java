@@ -518,31 +518,11 @@ public class Utils {
 				.setCloneAllBranches(true).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
-			/*if (git != null && !base) {
-				try {
-					git.branchCreate().setName(branch)
-						.setUpstreamMode(SetupUpstreamMode.TRACK)
-						.call();
-					git.checkout().setName(branch).call();
-				} catch (RefAlreadyExistsException raee) {
-					try {
-						git.checkout().setName(branch).call();
-					} catch (Exception e2) {
-						e2.printStackTrace();
-						return null;
-					}
-				} catch (Exception e3) {
-					e3.printStackTrace();
-					return null;
-				}
-			} else {*/
-				e.printStackTrace();
-				return null;
-			//}
+			e.printStackTrace();
+			return null;
 		}
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
-		System.out.println(log);
 		return tool.parseOutput(log);
 	}
 

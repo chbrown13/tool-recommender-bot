@@ -17,6 +17,7 @@ public class PullRecommender {
 	private static int open = 0;
 	private static int pulls = 0;
 	private static int removed = 0;
+	private static int fixes = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -53,7 +54,6 @@ public class PullRecommender {
 		boolean fileCheck = false;
 		for (String f: files) {
 			if (error.getFilePath().contains(f)) {
-				System.out.println("!!!!"+error.getFilePath()+"    "+f);
 				fileCheck = true;
 				break;
 			}
@@ -98,14 +98,16 @@ public class PullRecommender {
 			Set<Error> baseErrors = Utils.checkout(pull, tool, true);
 			Set<Error> pullErrors = Utils.checkout(pull, tool, false);
 			if(baseErrors != null && pullErrors != null) {
+				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
 				Set<Error> fixed = new HashSet<Error>();				
 				fixed.addAll(baseErrors);				
 				fixed.removeAll(pullErrors);
 				int i = 0;
 				for (Error e: fixed) {
+					fixes += 1;
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
-							+ " reported at line " + e.getLineNumberStr() + " fixed at line " + Integer.toString(Utils.getFix()));
+							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(Utils.getFix()));
 						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
 					} else {
 						removed += 1;
@@ -140,6 +142,7 @@ public class PullRecommender {
 			requests.add(pull);
 			i++;
 			pulls++;
+			System.out.println(i);
 		}
 		return requests;
 	}
@@ -150,10 +153,11 @@ public class PullRecommender {
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
-		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total."
+		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
 			.replace("{recs}", Integer.toString(recs))
 			.replace("{pulls}", Integer.toString(prs.size()))
-			.replace("{totals}", Integer.toString(requests.size())));
+			.replace("{totals}", Integer.toString(requests.size()))
+			.replace("{fix}", Integer.toString(fixes - recs)));
 		for (Integer i: prs) {
 			System.out.println(i);
 		}
