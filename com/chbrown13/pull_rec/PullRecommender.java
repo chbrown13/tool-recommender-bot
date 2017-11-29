@@ -15,7 +15,6 @@ public class PullRecommender {
 	private static Set<Integer> prs = new HashSet<Integer>();	
 	private static int recs = 0;;
 	private static int open = 0;
-	private static int pulls = 0;
 	private static int removed = 0;
 	private static int fixes = 0;
 
@@ -124,7 +123,7 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests(int num) {
+	private ArrayList<Pull.Smart> getPullRequests() {
 		System.out.println("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -132,15 +131,19 @@ public class PullRecommender {
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		int i = 0;
 		while (pullit.hasNext()) {
-			if (i >= num) {
-				break;
-			}
 			Pull.Smart pull = new Pull.Smart(pullit.next());
-			analyze(pull);
-			requests.add(pull);
-			i++;
-			pulls++;
-			System.out.println(i);
+			try {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+					analyze(pull);					
+					requests.add(pull);
+				} else {
+					System.out.println("No new pull requests");
+					break;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
 		}
 		return requests;
 	}
@@ -150,7 +153,7 @@ public class PullRecommender {
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
 		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
 			.replace("{recs}", Integer.toString(recs))
 			.replace("{pulls}", Integer.toString(prs.size()))
