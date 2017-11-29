@@ -12,6 +12,12 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
+	private static Set<Integer> prs = new HashSet<Integer>();	
+	private static int recs = 0;;
+	private static int open = 0;
+	private static int pulls = 0;
+	private static int removed = 0;
+	private static int fixes = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -26,14 +32,34 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Pull.Smart pull, ErrorProneItem error, String sha, int line) {
+	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, int line, Set<Error> errors) {
 		try {
-			String comment = error.generateComment();
-			PullComments pullComments = pull.comments();	
-			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, sha, error.getFilePath(), line));	
+			String sha = pull.json().getJsonObject("head").getString("sha");
+			String comment = error.generateComment(tool, errors, sha);
+			System.out.println(comment);
+			PullComments pullComments = pull.comments();
+			PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, sha, error.getLocalFilePath(), line));	
+			recs += 1;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Checks if the change is actually a fix or not
+	 */
+	private boolean isFix(Set<Error> base, Set<Error> pull, Error error, List<String> files) {
+		boolean fileCheck = false;
+		for (String f: files) {
+			if (error.getFilePath().contains(f)) {
+				fileCheck = true;
+				break;
+			}
+		}
+		if (base.size() > 0 && fileCheck) {
+			return Utils.isFix(error);
+		}
+		return false;
 	}
 
 	/**
@@ -44,41 +70,52 @@ public class PullRecommender {
 	 */
 	private void analyze(Pull.Smart pull) {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		Tool tool = new ErrorProne();		
+		String developer = "";
+		boolean pullRec = false;
+		List<String> javaFiles = new ArrayList<String>();
+		Iterator<JsonObject> files = null;
 		try {
-			String pullHash = pull.json().getJsonObject("head").getString("sha");
-			String baseHash = pull.json().getJsonObject("base").getString("sha");
-			Iterator<JsonObject> fileit = pull.files().iterator();
-			while (fileit.hasNext()) {
-				JsonObject file = fileit.next();
-				String filename = file.getString("filename");
-				System.out.println(filename);
-				if (filename.endsWith(".java")) {
-					String pullURL = file.getString("raw_url");
-					String baseURL = pullURL.replace(pullHash, baseHash);
-					String baseTempFile = String.join("_", baseHash, filename);
-					String pullTempFile = String.join("_", pullHash, filename);
-					Utils.wget(baseURL, baseTempFile);
-					Utils.wget(pullURL, pullTempFile);
-					String baseLog = ErrorProneItem.analyzeCode(baseTempFile);
-					if (baseLog == null || baseLog == "") {
-						continue;
+			files = pull.files().iterator();			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+		while (files.hasNext()) {
+			JsonObject f = files.next();
+			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
+				javaFiles.add(f.getString("filename"));
+				pullRec = true;
+			}		
+		}
+		if (!pullRec) {
+			System.out.println("No java changes.");
+			return;
+		}
+		try {
+			Set<Error> baseErrors = Utils.checkout(pull, tool, true);
+			Set<Error> pullErrors = Utils.checkout(pull, tool, false);
+			if(baseErrors != null && pullErrors != null) {
+				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
+				Set<Error> fixed = new HashSet<Error>();				
+				fixed.addAll(baseErrors);				
+				fixed.removeAll(pullErrors);
+				int i = 0;
+				for (Error e: fixed) {
+					fixes += 1;
+					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
+						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
+							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(Utils.getFix()));
+						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
 					} else {
-						String pullLog = ErrorProneItem.analyzeCode(pullTempFile);
-						List<ErrorProneItem> baseEP = ErrorProneItem.parseErrorProneOutput(baseLog);
-						List<ErrorProneItem> pullEP = ErrorProneItem.parseErrorProneOutput(pullLog);
-						for (ErrorProneItem epi: baseEP) {
-							int fix = Utils.getFix(baseTempFile, pullTempFile, epi);
-							if (!pullEP.contains(epi) && fix > 0) {
-								epi.setFilePath(filename);
-								System.out.println("Fixed: "+epi.getKey());
-								makeRecommendation(pull, epi, pullHash, fix);
-							}
-						}
+						removed += 1;
 					}
-				}
+				}	
 			}
+			Utils.cleanup();
 		} catch (IOException e) {
 			e.printStackTrace();
+			Utils.cleanup();
 		}	
 	}
 
@@ -87,23 +124,23 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
-		System.out.println("Getting new pull requests...");
+	private ArrayList<Pull.Smart> getPullRequests(int num) {
+		System.out.println("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state","open");
+		params.put("state", "all");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
+		int i = 0;
 		while (pullit.hasNext()) {
-			Pull.Smart pull = new Pull.Smart(pullit.next());
-			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
-					requests.add(pull);
-					System.out.println("Pull Request #" + Integer.toString(pull.number()) + ": " + pull.title());
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				return null;
+			if (i >= num) {
+				break;
 			}
+			Pull.Smart pull = new Pull.Smart(pullit.next());
+			analyze(pull);
+			requests.add(pull);
+			i++;
+			pulls++;
+			System.out.println(i);
 		}
 		return requests;
 	}
@@ -113,15 +150,14 @@ public class PullRecommender {
         RtGithub github = new RtGithub(acct[0], acct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
-		if (requests != null && !requests.isEmpty()) {
-			for (Pull.Smart pull: requests) {
-				recommender.analyze(pull);
-			}
-		} else {
-			System.out.println("No pull requests recently opened.");
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests(Integer.parseInt(args[2]));
+		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
+			.replace("{recs}", Integer.toString(recs))
+			.replace("{pulls}", Integer.toString(prs.size()))
+			.replace("{totals}", Integer.toString(requests.size()))
+			.replace("{fix}", Integer.toString(fixes - recs)));
+		for (Integer i: prs) {
+			System.out.println(i);
 		}
 	}
 }
-
-
