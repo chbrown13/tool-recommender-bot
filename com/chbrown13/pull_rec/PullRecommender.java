@@ -127,7 +127,7 @@ public class PullRecommender {
 		System.out.println("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "all");
+		params.put("state", "open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		int i = 0;
 		while (pullit.hasNext()) {
