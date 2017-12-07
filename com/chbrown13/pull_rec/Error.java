@@ -78,6 +78,16 @@ public class Error {
 	}
 
 	/**
+	 * Gets the local filepath to where error was reported in the project.
+	 *
+ 	 * @return   String filepath
+	 */
+	public String getLocalFilePath() {
+        String path = this.filepath.replace(Utils.getCurrentDir() + "/", "");
+        return path.substring(path.indexOf("/") + 1);
+	}
+	
+	/**
 	 * Sets the filename for error.
 	 *
 	 * @param path   Filename of file with error

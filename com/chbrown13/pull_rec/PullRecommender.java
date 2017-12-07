@@ -34,13 +34,19 @@ public class PullRecommender {
 	 */
 	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, int line, Set<Error> errors) {
 		try {
-			String sha = pull.json().getJsonObject("head").getString("sha");
-			String comment = error.generateComment(tool, errors, sha);
+			String head = pull.json().getJsonObject("head").getString("sha");
+			String base = pull.json().getJsonObject("base").getString("sha");			
+			String comment = error.generateComment(tool, errors, base);
 			if (comment != null) {
-				System.out.println(comment);
+				//System.out.println(comment);
+				System.out.println(String.join(" ", Utils.getProjectOwner(), Utils.getProjectName(), 
+					Integer.toString(pull.number()), "\""+comment+"\"", head, error.getLocalFilePath(), 
+					Integer.toString(line))
+				);
 				recs += 1;
 				prs.add(pull.number());
 			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
