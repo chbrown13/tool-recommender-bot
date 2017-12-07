@@ -168,7 +168,7 @@ public class Error {
 	 */
 	private String getErrorLink(Error err, String hash) {
 		String url = Utils.LINK_URL.replace("{line}", err.getLineNumberStr())
-			.replace("/{path}", Utils.getLocalPath(err.getFilePath()))
+			.replace("/{path}", Utils.getLocalPath(err.getLocalFilePath()))
 			.replace("{sha}", hash).replace("{repo}", Utils.getProjectName())
 			.replace("{user}", Utils.getProjectOwner());
 		return Utils.MARKDOWN_LINK.replace("{src}", err.getFileName()).replace("{url}", url);
