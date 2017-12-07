@@ -120,20 +120,6 @@ public class Utils {
 	}
 
 	/**
-	 * Gets the local path of a file
-	 * 
-	 * @param path   Path to file in git repo
-	 * @return       Path to file in current working directory
-	 */
-	public static String getLocalPath(String path) {
-		String remove = currentDir;
-		if (!currentDir.endsWith(projectName)) {
-			remove += "/" + projectName;
-		}
-		return path.replace(remove, "");
-	}
-
-	/**
 	 * Gets the Gumtree node of error reported by ErrorProne
 	 * 
 	 * @param root   root of the file AST tree
