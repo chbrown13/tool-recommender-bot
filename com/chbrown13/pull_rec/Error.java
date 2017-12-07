@@ -57,16 +57,6 @@ public class Error {
 	 */
 	public String getFilePath() {
 		return this.filepath;
-    }
-    
-    /**
-	 * Gets the local filepath to where error was reported in the project.
-	 *
- 	 * @return   String filepath
-	 */
-	public String getLocalFilePath() {
-        String path = this.filepath.replace(Utils.getCurrentDir() + "/", "");
-        return path.substring(path.indexOf("/") + 1);
 	}
 
 	/**
@@ -87,6 +77,16 @@ public class Error {
 		return this.filename;
 	}
 
+	/**
+	 * Gets the local filepath to where error was reported in the project.
+	 *
+ 	 * @return   String filepath
+	 */
+	public String getLocalFilePath() {
+        String path = this.filepath.replace(Utils.getCurrentDir() + "/", "");
+        return path.substring(path.indexOf("/") + 1);
+	}
+	
 	/**
 	 * Sets the filename for error.
 	 *
@@ -140,7 +140,7 @@ public class Error {
 	public String generateComment(Tool tool, Set<Error> similar, String sha) {
 		String comment = Utils.BASE_COMMENT.replace("{desc}", tool.getDescription()).replace("{tool}", tool.getName()).replace("{link}", tool.getLink());
 		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName()); //TODO replace with tool
-		comment = comment.replace("{fixed}", "\`\`\`" + this.log + "\`\`\`");
+		comment = comment.replace("{fixed}", "```" + this.log + "```");
 		Set<Error> similarSet = new HashSet<Error>();
 		Error sim;
 		for (Error epi: similar) {
