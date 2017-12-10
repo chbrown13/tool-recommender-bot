@@ -47,7 +47,7 @@ Software Engineering; Tool Recommendation; Tool Discovery; Open Source
 
 Software has permeated nearly every area of our society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
 
-Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million.\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/}. Additionally, the price of repairing these code failures is becoming more expensive over time~\cite{SEEconomics}.
+Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million~[TODO: find a better example].\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/} Additionally, studies have shown the price of repairing these code failures becomes more expensive the longer the bug exists~\cite{SEEconomics}.
 
 To make software engineers more effective and efficient in their work, many types of tools have been created to automatically perform code analysis, refactoring, security checks, and more for programmers. One such type is static analysis tools. Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools can be useful for finding code defects early in the development process before code is released. According to a report from IBM, the relative cost for fixing errors also drastically increases the longer the fault exists in the code base through the software development lifecycle~\cite{SoftwareAssuranceSDLC}. Previous studies also show that static analysis tools are effective in preventing bugs in code to save money for companies in addition to time and effort for developers~\cite{UsingStaticAnalysis}.
 
@@ -57,7 +57,7 @@ Althouth quality is a primary concern for software producers and consumers, deve
 %
 %Active help systems are the preferred method of helping users discover new functionality in software. These systems automatically recommend useful tools to software users. However, there remains room for improvement among these system-to-user recommendation systems. For example, Clippy, an intelligent office assistant for Microsoft Office products, was able to automatically suggest tools and features to Microsoft software users. However, the system was found ineffective and eventually removed. Peer interactions and receptiveness are effective~\cite{vlhcc17}...
 
-To solve the static analysis tool discovery problem, we developed a new recommender system called~\textit{\tool}. \tool~was designed to automatically recommend static analysis tools to software engineers. Previous research has shown that user-to-user recommendations, or peer interactions, are the most effective mode of increasing awareness of tools among software users~\cite{PeerInteraction}. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. To evaluate the effectiveness of our system, we studied the following research questions (RQs): \\
+To solve the static analysis tool discovery problem, we developed a new recommender system called~\textit{\tool}. \tool~was designed to automatically recommend static analysis tools to software engineers. Previous research has shown that user-to-user recommendations are the most effective mode of increasing awareness of tools among software users~\cite{MurphyHill2011PeerInteraction}. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. To evaluate the effectiveness of our system, we studied the following research questions (RQs): \\
 
 \noindent
 \textbf{RQ1:} How often can we expect \tool~to make recommendations?  \\
@@ -67,21 +67,21 @@ To answer these questions, we evaluated our system on open source Java projects 
 
 \section{Related Work}
 
-Our work builds on previous research studying the lack of tool adoption by software engineers, methods for improving tool discovery, and existing approaches for automated tool recommendations.
+Our approach is based on previous research examining how users learn about and discover tools, the lack of tool adoption among software engineers, and existing automated tool recommendation systems.
 
-Previous research has explored reasons why software engineers don't use helpful tools. Murphy-Hill and colleagues studied developers to uncover why programmers don't use refactoring tools for maintaining software~\cite{MurphyHillWhyRefactoringTools}. Johnson et al gathered data from software engineers to determine their perspective on static analysis tools and reasons for underuse~\cite{JohnsonStaticAnalysis}.
+Researchers have explored ways humans learn about new tools. Prior work in diffusion of innovations~\cite{Rogers2003Diffusion} and persuasion theory~\cite{Shen2012Persuasion} show that the way messages are communicated impacts reception. There are a numerous methods for discovering tools in software, however, research suggests that recommendations from peers, or \textit{peer interactions}, are the most effective. Murphy-Hill found that peer interactions were the most effective mode of tool discovery among software engineers compared to chance encounters, tutorials, descriptions, social media, or discussion threads~\cite{MurphyHill2011PeerInteraction}~\cite{Murphy-Hill2015HowDoUsers}. Similarly, Welty discovered that software users sought help from colleagues more than search engines and help menus~\cite{Welty2011Help}. Our work builds on the results of these studies by integrating qualities of effective peer-to-peer recommendations into an automated recommendation system.
 
-Improving tool discovery...\\
+Previous work has explored the tool adoption problem in software engineering and barriers preventing developers from adopting useful tools for important programming tasks. Researchers have created numerous tools to aid software engineers in their work, but these products are often ignored by developers~\cite{Ivanov2017Gaps}. Tilley and colleagues studied the challenges of adopting these research-of-the-shelf tools in industry~\cite{Tilley2003ROTS}. Johnson and colleagues reported reasons why software engineers don't use static analysis tools to help find and prevent bugs in their code~\cite{Johnson2013Why}. Xiao and colleagues examined barriers and social influences blocking developers from using security tools to detect and prevent vulnerabilities and malicious attacks~\cite{Xiao2014Security}. Our project aims to increase software engineer tool adoption by developing \tool~to automatically and effectively recommend useful tools to help complete development tasks.
 
-Existing automated tool recommendation systems...\\
+Additionally, there are numerous existing technical approaches created to improve the tool discovery problem. Researchers have developed several active help systems using community involvement. Gordon and colleagues developed Codepourri, a system using crowdsourcing to collectively create Python tutorials~\cite{Gordon2015Codepourri}. Linton and colleagues designed a recommender system called OWL (organization-wide learning) to disseminate tool knowledge using logs throughout a company~\cite{Linton2000OWL}. ToolBox was developed as a ``community sensitive help system'' by Maltzahn to recommend Unix commands~\cite{Maltzahn1995Toolbox}. Answer Garden helps users discover new tools based on common questions asked by colleagues~\cite{Ackerman1990AnswerGarden}. SpyGlass automatically recommends tools to help users navigate code~\cite{Viriyakattiyaporn2010Spyglass}
 
-Improving awareness of software engineering tools...\\
+Fischer and colleagues examined systems that require users to explicitly seek help from the software, or passive help systems~\cite{Fischer1984ActiveHelpSystems}. Fischer concluded technical passive recommendation systems, such as documentation and help menues, are ineffective and inefficient for users. Instead, active help systems are more useful for increasing tool awareness. We developed \tool~to actively suggest useful programming tools and increase awareness for software engineers. Our approach differs from existing recommendation systems in the design and implementation of our tool.
 
 \section{Tool}
 Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.
 
 \subsection{Design}
-Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{Murphy-HillPeerInteraction}. Many automated help systems are designed to simulate user-to-user recommendations in order to increase awareness of application tools and features, for instance Microsoft Clippy\cite{Clippy}. 
+Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{MurphyHill2011PeerInteraction}. Many existing help systems simulate user-to-user recommendations to increase awareness of application tools and features. 
 
 To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. Our results found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation, while other characteristics, such as politeness and persuasiveness, do not significantly impact the outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
 
@@ -97,9 +97,9 @@ To target this desire of mistake-free code, our initial implementation of \tool~
 
 \pseudosubsection{2. Familiarity}
 
-Choosing an audience familiar with the target behavior is also vital to increasing adoption. To increase use of helpful programming tools, such as static analysis tools, our system focuses on making recommendations to software engineers within the context of the projects they develop. Familiarity with source code is important for creating software applications, and code understandability is one of the most important factors for software development, maintenance, debugging, and testing~\cite{Understandability}.
+Choosing an audience familiar with the target behavior is also vital to increasing adoption. To increase use of helpful programming tools, such as static analysis tools, our system focuses on making recommendations to software engineers within the context of the projects they develop. Familiarity with source code is important for creating software applications. Scalabrino and colleagues claim code understandability is one of the most important factors for software development, maintenance, debugging, and testing~\cite{Scalabrino2017Understandability}.
 
-To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when reported errors are fixed by developers in pull requests to capitalize on their familiarity with their modifications. The GitHub interface allows users to review and comment on pull requests in situ with the proposed changes, and this is where we make our recommendations.
+To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when reported errors are fixed by developers in pull requests to capitalize on their familiarity with their modifications. The GitHub interface allows users to review and comment on pull requests in situ with the proposed changes, this is where we make our recommendations.
 
 \subsection{Implementation}
 
@@ -119,11 +119,11 @@ To determine if an error was fixed, we take several things into consideration: F
 
 \pseudosubsection{3. Fix Localizaton}
 
-When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by \textsc{Error Prone}. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent.
+When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by \textsc{Error Prone}. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent. Additionally, the line of the fix had to be converted to the equivalent position in the pull request diff file displaying the changes between file versions, or number of lines below the "@@" header\footnote{https://developer.github.com/v3/pulls/comments/\#create-a-comment}, before moving on to the next phase.
 
 \pseudosubsection{4. Code Review}
 
-Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work'~\cite{?}.
+Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs \textsc{Error Prone} and analyzes the code, providing feedback to developers based on their changes and the output of the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work'~\cite{?}.
 
 To further increase the adoption of static analysis tools, we report other instances of similar errors found by \textsc{Error Prone} in the base version of the code. In the recommendation, \tool~adds links to at most two locations where \textsc{Error Prone} found the same error as the one that was fixed. We hope this encourags the use of \textsc{Error Prone} to find more bugs in the pull request before the code is merged into the code base. Figure 1 presents a recommendation from our system on a pull request review.
 
@@ -134,19 +134,20 @@ To further increase the adoption of static analysis tools, we report other insta
 To evaluate the effectiveness of our recommendation system, we assessed \tool~on five real-world open-source software applications. To narrow down projects for our evaluation, we picked Github repositories that met the following criteria:
 
 \begin{itemize}
-\item one of the top Trending projects\footnote{https://github.com/trending} on Github based on activity by the community at the time of this writing,
 \item primarily written in the Java programming language\footnote{https://java.com},
-\item build with Maven,
-\item and are owned by a GitHub organization, instead of personal user account projects.
+\item build with Maven containing a \textit{pom.xml} file in the top directory,
+\item and had at least 10 pull requests submitted by developers in the last six months (180 days).
 \end{itemize}
 
-\begin{table}
-	\centering
-	\caption{Evaluation Projects}
-	\begin{tabular}{|l|l|l|c|}
-		\hline
-		\textbf{Project} & \textbf{Java Files} & \textbf{LOC} & \textbf{Pull Requests} \\
-		\hline
+Using the GitHub Search Repositories\footnote{https://developer.github.com/v3/search/\#search-repositories} functionality through the jcabi GitHub Java API\footnote{http://github.jcabi.com/}, we were able to find 106 projects that met the above criteria.
+
+%\begin{table}
+%	\centering
+%	\caption{Evaluation Projects}
+%	\begin{tabular}{|l|l|l|c|}
+%		\hline
+%		\textbf{Project} & \textbf{Java Files} & \textbf{LOC} & \textbf{Pull Requests} \\
+%		\hline
 %		spring-boot\footnote{https://github.com/spring-projects/spring-boot.git} &  &  & \\
 %		\hline
 %		dubbo\footnote{https://github.com/alibaba/dubbo.git} &  &  & \\
@@ -157,13 +158,13 @@ To evaluate the effectiveness of our recommendation system, we assessed \tool~on
 %		\hline
 %		rocketmq\footnote{https://github.com/apache/rocketmq.git}  &  &  & \\
 %		\hline
-		\end{tabular}
-	\begin{tablenotes}
-        \item[1] Details on projects used for study including GitHub repository name, number of Java files, lines of Java code, and total pull requests.
-    \end{tablenotes}
-	\label{tools}
-\end{table}
-
+%		\end{tabular}
+%	\begin{tablenotes}
+%        \item[1] Details on projects used for study including GitHub repository name, number of Java files, lines of Java code, and total pull requests.
+%    \end{tablenotes}
+%	\label{tools}
+%\end{table}
+%
 
 \subsection{Study Design}
 
@@ -215,7 +216,7 @@ More build systems (ant, gradle, TravisCI, bazel)...\\
 
 \section{Conclusion}
 
-\tool is awesome
+\tool~is awesome
 
 %\balance
 %\section{Acknowledgments}
