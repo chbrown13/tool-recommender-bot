@@ -123,15 +123,17 @@ When a fix is identified in the pull request, \tool~then aims to find the locati
 
 \pseudosubsection{4. Code Review}
 
-Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs \textsc{Error Prone} and analyzes the code, providing feedback to developers based on their changes and the output of the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work'~\cite{?}.
+Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs \textsc{Error Prone} and analyzes the code, providing feedback to developers based on their changes and the output of the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work~\cite{?}.
 
-To further increase the adoption of static analysis tools, we report other instances of similar errors found by \textsc{Error Prone} in the base version of the code. In the recommendation, \tool~adds links to at most two locations where \textsc{Error Prone} found the same error as the one that was fixed. We hope this encourags the use of \textsc{Error Prone} to find more bugs in the pull request before the code is merged into the code base. Figure 1 presents a recommendation from our system on a pull request review.
+To further increase adoption and use of static analysis tools, we only make a recommendation if \textsc{Error Prone} reports other instances of the same error in the base version of the code. In the comment, \tool~automatically adds direct links to at most two separate locations where the defect that was fixed still exists in the code. We hope this encourages the developer receiving the recommendation to use \textsc{Error Prone} to fix similar errors and prevent more bugs from being merged into the master code base. Figure 1 presents an example recommendation from our system on a pull request review.
 
 \section{Methodology}
 
+Our evaluation gathers both quantitative and qualitative data to evaulate the effectiveness of \tool.
+
 \subsection{Projects}
 
-To evaluate the effectiveness of our recommendation system, we assessed \tool~on five real-world open-source software applications. To narrow down projects for our evaluation, we picked Github repositories that met the following criteria:
+To evaluate the effectiveness of our recommendation system, we assessed \tool~on real-world open-source software applications. Github hosts millions of code repositories, and to narrow down projects for our evaluation we picked public repos that met the following criteria:
 
 \begin{itemize}
 \item primarily written in the Java programming language\footnote{https://java.com},
@@ -139,30 +141,38 @@ To evaluate the effectiveness of our recommendation system, we assessed \tool~on
 \item and had at least 10 pull requests submitted by developers in the last six months (180 days).
 \end{itemize}
 
-Using the GitHub Search Repositories\footnote{https://developer.github.com/v3/search/\#search-repositories} functionality through the jcabi GitHub Java API\footnote{http://github.jcabi.com/}, we were able to find 106 projects that met the above criteria.
-
+Using the GitHub Search Repositories\footnote{https://developer.github.com/v3/search/\#search-repositories} functionality through the jcabi GitHub Java API\footnote{http://github.jcabi.com/}, we were able to identify 106 projects that met the above criteria. A full list of the repositories used in our evaluation is available to view online.\footnote{link}
 \subsection{Participants}
 
-Are we collecting any information on the developers?
+Are we collecting any demographic information on the developers?
 
 \subsection{Study Design}
 
-We designed our research study to address each  of our research questions.
+We designed our study to address each of our research questions and address the influence of our recommendation system on improving tool discovery.
 
 \pseudosubsection{RQ1}
 
-Quantitative (track number of recs over time)
+To gather data on how often \tool~makes recommendations, we counted the number of pull request comments made by our tool throughout the duration of our study. We wanted to determine how regularly our approach has opportunities to make recommendations to developers. For each project, we accumulated the number of recommendations made over [TODO: some period of time]. To run our evaluation on the 106 repositories simultaneously, we installed \tool~as Jenkins jobs on multiple virtual machines to analyze the code bases in parallel. 
+
+In addition to the rate at which our system makes recommendations, we also collected other measurements to evaluate our system. We calculated our tool's false-positive rate, instances where errors were fixed but not found elsewhere in the code, so no recommendation was made, and occurrences where our approach reported an error was removed but not fixed according to our algorithm in Section III.B.2.
 
 \pseudosubsection{RQ2}
 
-Qualitative (survey)
+To gather data on the usefulness of our system, we sent a follow-up survey to Github users who received a recommendation from our tool on a pull request they submitted. We asked the following questions to gather qualitative data:
+
+\begin{itemize}
+\item Question 1...
+\end{itemize}
+
+Developers voluntarily consented to participate in the survey and provide feedback on our recommendation.
 
 \subsection{Data Analysis}
 
+We analyzed the frequency of recommendations and follow-up survey responses to determine the effectiveness of our approach.
 
 \pseudosubsection{RQ1}
 
-Redirected pull requests to me to prevent false positives
+To prevent false positives from our tool, all potential recommendations were redirected to the researchers before posting a comment on a pull request. Johnson discovered that one of the main barriers for underuse of static analysis tool among software engineers is reporting false positives in the tool output~\cite{Johnson2013Why}.
 
 \pseudosubsection{RQ2}
 
