@@ -47,7 +47,8 @@ Software Engineering; Tool Recommendation; Tool Discovery; Open Source
 
 Software has permeated nearly every area of our society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
 
-Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million~[TODO: find a better example].\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/} Additionally, studies have shown the price of repairing these code failures becomes more expensive the longer the bug exists~\cite{SEEconomics}.
+Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million.\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/} Additionally, studies have shown the price of repairing these code failures becomes more expensive the longer the bug exists~\cite{SEEconomics}.
+%TODO: find better example
 
 To make software engineers more effective and efficient in their work, many types of tools have been created to automatically perform code analysis, refactoring, security checks, and more for programmers. One such type is static analysis tools. Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools can be useful for finding code defects early in the development process before code is released. According to a report from IBM, the relative cost for fixing errors also drastically increases the longer the fault exists in the code base through the software development lifecycle~\cite{SoftwareAssuranceSDLC}. Previous studies also show that static analysis tools are effective in preventing bugs in code to save money for companies in addition to time and effort for developers~\cite{UsingStaticAnalysis}.
 
@@ -93,13 +94,13 @@ Previous work emphasizes the importance of receptivity. Fogg outlined best pract
 
 The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase awareness of these tools to improve software quality and developer productivity, ultimately meeting users' and developers' desire for less buggy software.
 
-To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends \textsc{Error Prone}.\footnote{http://errorprone.info} \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. These tools are useful in debugging and creating desireable applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
+To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}.\footnote{http://errorprone.info} \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
 
 \pseudosubsection{2. Familiarity}
 
 Choosing an audience familiar with the target behavior is also vital to increasing adoption. To increase use of helpful programming tools, such as static analysis tools, our system focuses on making recommendations to software engineers within the context of the projects they develop. Familiarity with source code is important for creating software applications. Scalabrino and colleagues claim code understandability is one of the most important factors for software development, maintenance, debugging, and testing~\cite{Scalabrino2017Understandability}.
 
-To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when reported errors are fixed by developers in pull requests to capitalize on their familiarity with their modifications. The GitHub interface allows users to review and comment on pull requests in situ with the proposed changes, this is where we make our recommendations.
+To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when a reported error is fixed by a developer in a pull requests but still exists elsewhere in the code to capitalize on their familiarity with the modifications and encourage the use of static analysis tools to find more bugs. 
 
 \subsection{Implementation}
 
@@ -126,6 +127,7 @@ When a fix is identified in the pull request, \tool~then aims to find the locati
 Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs \textsc{Error Prone} and analyzes the code, providing feedback to developers based on their changes and the output of the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work~\cite{?}.
 
 To further increase adoption and use of static analysis tools, we only make a recommendation if \textsc{Error Prone} reports other instances of the same error in the base version of the code. In the comment, \tool~automatically adds direct links to at most two separate locations where the defect that was fixed still exists in the code. We hope this encourages the developer receiving the recommendation to use \textsc{Error Prone} to fix similar errors and prevent more bugs from being merged into the master code base. Figure 1 presents an example recommendation from our system on a pull request review.
+%TODO: Add screenshot
 
 \section{Methodology}
 
@@ -152,19 +154,13 @@ We designed our study to address each of our research questions and address the 
 
 \pseudosubsection{RQ1}
 
-To gather data on how often \tool~makes recommendations, we counted the number of pull request comments made by our tool throughout the duration of our study. We wanted to determine how regularly our approach has opportunities to make recommendations to developers. For each project, we accumulated the number of recommendations made over [TODO: some period of time]. To run our evaluation on the 106 repositories simultaneously, we installed \tool~as Jenkins jobs on multiple virtual machines to analyze the code bases in parallel. 
-
-In addition to the rate at which our system makes recommendations, we also collected other measurements to evaluate our system. We calculated our tool's false-positive rate, instances where errors were fixed but not found elsewhere in the code, so no recommendation was made, and occurrences where our approach reported an error was removed but not fixed according to our algorithm in Section III.B.2.
+To gather data on how often \tool~makes recommendations, we counted the number of pull request comments made by our tool throughout the duration of our study. We wanted to determine how regularly our approach has opportunities to make recommendations to developers. For each project, we accumulated the number of recommendations made over [some period of time]. To run our evaluation on the 106 repositories simultaneously, we installed \tool~as Jenkins jobs on multiple virtual machines to analyze the code bases in parallel. 
 
 \pseudosubsection{RQ2}
 
-To gather data on the usefulness of our system, we sent a follow-up survey to Github users who received a recommendation from our tool on a pull request they submitted. We asked the following questions to gather qualitative data:
+To gather data on the usefulness of our system, we sent a follow-up survey to Github users who received a recommendation from our tool on a pull request they submitted. In our survey, we asked developers if they had ever heard of \textsc{Error Prone} before our tool's recommendation and to name static analysis tools they normally use while programming, if any. We also asked Likert-scale questions for the perceived usefulness of our recommendation and how likely participants are to use \textsc{Error Prone} in the future. The survey concluded by providing participants an opportunity to add any comments or feedback on our system and the recommendation they received.
 
-\begin{itemize}
-\item Question 1...
-\end{itemize}
-
-Developers voluntarily consented to participate in the survey and provide feedback on our recommendation.
+Developers voluntarily consented to participate in the survey and provide feedback on our recommendation. To ensure participants answered honestly, we notified them that their responses would be used for research. Research shows that survey respondents are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}.
 
 \subsection{Data Analysis}
 
@@ -172,11 +168,14 @@ We analyzed the frequency of recommendations and follow-up survey responses to d
 
 \pseudosubsection{RQ1}
 
-To prevent false positives from our tool, all potential recommendations were redirected to the researchers before posting a comment on a pull request. Johnson discovered that one of the main barriers for underuse of static analysis tool among software engineers is reporting false positives in the tool output~\cite{Johnson2013Why}.
+To answer our first research question, we calculated the rate at which \tool~makes recommendations on opened pull requests. 
+In addition to recommendation frequency, we collected other data to evaluate our system. We determined the false-positive rate for recommendations made by our system. To track instances where \textsc{Error Prone} defects were removed between versions of code, we also report the number of errors fixed without another instance found in the code and the number of bugs removed but not fixed according to our fix identification algorithm in Section III.B.2.
+
+To prevent unnecessary comments on pull requests from our tool, all potential recommendations were reviewed by the researchers before posting to Github. Johnson discovered that one of the main barriers for underuse of static analysis tool among software engineers is reporting false positives in the tool output~\cite{Johnson2013Why}. We reviewed each pull request to determine if a fix was actually made. If so, \tool~could proceed and post the comment recommending \textsc{Error Prone} on the pull request. Otherwise we made note of a false positive found by our approach.
 
 \pseudosubsection{RQ2}
 
-Followed up with pull request authors to gather data on recommendation...
+For our second research question, we gathered data by accumulating responses from developers in our survey.
 
 \section{Results}
 
