@@ -45,7 +45,7 @@ public class PullRecommender {
 			email.setSSLOnConnect(true);
 			email.setFrom("toolrecommenderbot@gmail.com");
 			email.setSubject("[tool-recommender-bot] " + subject);
-			email.setMsg(String.join("\n", viewChanges, text);
+			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
 			System.out.println("Email sent for review.");	
