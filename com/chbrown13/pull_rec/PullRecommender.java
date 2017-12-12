@@ -6,11 +6,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.json.JsonObject;
-// import javax.mail.*;
-// import javax.mail.internet.*;
-// import javax.activation.*;
-// import javax.mail.Session;
-// import javax.mail.Transport;
+import org.apache.commons.mail.*;
+
 
 /**
  * PullRecommender is the main class for this project and handles interactions with Github repositories.
@@ -18,11 +15,10 @@ import javax.json.JsonObject;
 public class PullRecommender {
 
 	private Repo repo;
-	private static Set<Integer> prs = new HashSet<Integer>();	
-	private static int recs = 0;;
-	private static int open = 0;
-	private static int removed = 0;
-	private static int fixes = 0;
+	private Set<Integer> prs = new HashSet<Integer>();	
+	private int recs = 0;;
+	private int removed = 0;
+	private int fixes = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -30,48 +26,33 @@ public class PullRecommender {
 		Utils.setProjectOwner(repo.coordinates().user());
 	}
 
-	/*private void sendEmail() {
-				// Recipient's email ID needs to be mentioned.
-				String to = "dcbrown06@gmail.com";
-		
-			  // Sender's email ID needs to be mentioned
-			  String from = "toolrecommenderbot@gmail.com";
-		
-			  // Assuming you are sending email from localhost
-			  String host = "localhost";
-		
-			  // Get system properties
-			  Properties properties = System.getProperties();
-		
-			  // Setup mail server
-			  properties.setProperty("mail.smtp.host", host);
-		
-			  // Get the default Session object.
-			  Session session = Session.getDefaultInstance(properties);
-		
-			  try {
-				 // Create a default MimeMessage object.
-				 MimeMessage message = new MimeMessage(session);
-		
-				 // Set From: header field of the header.
-				 message.setFrom(new InternetAddress(from));
-		
-				 // Set To: header field of the header.
-				 message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-		
-				 // Set Subject: header field
-				 message.setSubject("This is the Subject Line!");
-		
-				 // Now set the actual message
-				 message.setText("This is actual message");
-		
-				 // Send message
-				 Transport.send(message);
-				 System.out.println("Sent message successfully....");
-			  } catch (MessagingException mex) {
-				 mex.printStackTrace();
-			  }
-	}*/
+	/**
+	 * Sends email to researchers for review
+	 * 
+	 * @param text    Contents of email message
+	 * @param subject Subject of the email
+	 * @param pr	  Pull request number
+	 */
+	private static void sendEmail(String text, String subject, int pr) {
+		SimpleEmail email = new SimpleEmail();
+		String viewChanges = Comment.changes.replace("{user}", Utils.getProjectOwner())
+			.replace("{repo}", Utils.getProjectName())
+			.replace("{num}", Integer.toString(pr));
+		try {
+			email.setHostName("smtp.googlemail.com");
+			email.setSmtpPort(465);
+			email.setAuthenticator(new DefaultAuthenticator("toolrecommenderbot", "bot-recommender-tool"));
+			email.setSSLOnConnect(true);
+			email.setFrom("toolrecommenderbot@gmail.com");
+			email.setSubject("[tool-recommender-bot] " + subject);
+			email.setMsg(String.join("\n", viewChanges, text);
+			email.addTo("dcbrow10@ncsu.edu");
+			email.send();		
+			System.out.println("Email sent for review.");	
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	/**
 	 * Post message recommending ErrorProne to Github on pull request fixing error.
@@ -85,15 +66,18 @@ public class PullRecommender {
 			String base = pull.json().getJsonObject("base").getString("sha");
 			String head = pull.json().getJsonObject("head").getString("sha");			
 			String comment = error.generateComment(tool, errors, base);
-			System.out.println(String.join(" ", Utils.getProjectOwner(), Utils.getProjectName(), 
+			String args = String.join(" ", Utils.getProjectOwner(), Utils.getProjectName(), 
 				Integer.toString(pull.number()), "\""+comment+"\"", head, error.getLocalFilePath(), 
-				Integer.toString(line))
+				Integer.toString(line)
 			);
-			//PullComments pullComments = pull.comments();
-			//PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, sha, error.getLocalFilePath(), line));	
+
+			String run = Comment.cmd.replace("{args}", args);
+			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", pull.number());
 			recs += 1;
+			prs.add(pull.number());
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 	}
 
@@ -154,8 +138,8 @@ public class PullRecommender {
 				fixed.removeAll(pullErrors);
 				int i = 0;
 				for (Error e: fixed) {
-					fixes += 1;
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
+						fixes += 1;						
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
 							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(Utils.getFix()));
 						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
@@ -189,6 +173,11 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}"
+						.replace("{rec}", Integer.toString(recs))
+						.replace("{fix}", Integer.toString(fixes - recs))
+						.replace("{rem}", Integer.toString(removed));
+					sendEmail(out, "Analyzed Pull Request", pull.number());						
 				} else {
 					System.out.println("No new pull requests");
 					break;
@@ -207,13 +196,11 @@ public class PullRecommender {
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
-		System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
-			.replace("{recs}", Integer.toString(recs))
-			.replace("{pulls}", Integer.toString(prs.size()))
-			.replace("{totals}", Integer.toString(requests.size()))
-			.replace("{fix}", Integer.toString(fixes - recs)));
-		for (Integer i: prs) {
-			System.out.println(i);
-		}	
+		// System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
+		// 	.replace("{recs}", Integer.toString(recs))
+		// 	.replace("{pulls}", Integer.toString(prs.size()))
+		// 	.replace("{totals}", Integer.toString(requests.size()))
+		// 	.replace("{fix}", Integer.toString(fixes - recs))
+		// );
 	}
 }

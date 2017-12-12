@@ -7,6 +7,9 @@ import com.jcabi.github.*;
  */
 public class Comment {		
 
+    public static String compile = "sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar com/chbrown13/pull_rec/Comment.java";
+    public static String cmd = "java -cp .:jcabi-github-0.23-jar-with-dependencies.jar com.chbrown13.pull_rec.Comment {args}";
+    public static String changes = "https://github.com/{user}/{repo}/pull/{num}/files";
     /**
      * Posts comment to a pull request on Github
      * 
@@ -20,7 +23,7 @@ public class Comment {
         try {
             PullComments pullComments = pull.comments();
             PullComment.Smart smartComment = new PullComment.Smart(pullComments.post(comment, hash, file, line));	
-            System.out.println(comment);
+            System.out.println("Recommendation comment posted.");
         } catch (Exception e) {
             e.printStackTrace();
         }
