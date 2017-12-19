@@ -13,7 +13,7 @@ import javax.json.*;
  */
 public class PullRecommender {
 
-	private static int year = 2012;
+	private static int year = 2008;
 
 	private static String getDates(int month) {
 		String date = "{y1}-{m1}-01..{y2}-{m2}-01";
@@ -52,8 +52,8 @@ public class PullRecommender {
 	public static void main(String[] args) {
 		int n = 0;
 		int x = 0;
-		int month = 1;
-		final Github github = new RtGithub("", "");
+		int month = 2;
+		final Github github = new RtGithub("chbrown13", "git_down1");
 		try { 
 			while (true) {
 				final JsonResponse resp = github.entry()
