@@ -177,7 +177,7 @@ public class PullRecommender {
 						.replace("{rec}", Integer.toString(recs))
 						.replace("{fix}", Integer.toString(fixes - recs))
 						.replace("{rem}", Integer.toString(removed));
-					sendEmail(out, "Analyzed Pull Request", pull.number());						
+					sendEmail(out, "New Pull Request", pull.number());						
 				} else {
 					System.out.println("No new pull requests");
 					break;
