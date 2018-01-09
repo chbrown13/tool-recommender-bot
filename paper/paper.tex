@@ -138,12 +138,12 @@ Our study evaluates the effectiveness of \tool~by analyzing how often our approa
 To determine the effectiveness of our approach, we used real-world open source software applications to evaluate \tool. Projects for our evaluation were selected from Github, which hosts millions of code repositories online. To narrow down the number of projects for our study, we chose repositories that met the following criteria:
 
 \begin{itemize}
-\item primarily written in the Java programming language\footnote{https://java.com},
-\item build with Maven and contain a \textit{pom.xml} file in the top directory,
-\item and were ranked among the top 100 forked repositories for a month since February 2008.
+\item primarily written in Java,
+\item builds with Maven,
+\item and were ranked among the top 100 forked repositories for every month from February 2008 - December 2017.
 \end{itemize}
 
-Using a GitHub search API with the above constraints, we identified 917 projects for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}} We selected the most forked repositories to collect popular projects with a lot of activity, and forking a repository is suggested as one of the GitHub contributor best practices and is a requirement by many projects for submitting a pull request to make changes to the master code base. 
+\textsc{Error Prone} currently only analyzes Java code, so our search was restricted to open source Java projects on GitHub. Our study focused on Maven projects because it is a popular build system for Java projects and also contains an \textsc{Error Prone} plug-in. The current implementation of \tool~automatically implements this plug-in by modifying the \textit{pom.xml} file in the top directory. We selected the most forked repositories to collect popular projects with a lot of activity, and forking a repository is suggested as one of the GitHub best practices for contributing to a project\footnote{https://guides.github.com/activities/forking/}. Using a GitHub search API with the above constraints, we identified 917 projects for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
 
 \subsection{Study Design}
 
@@ -157,7 +157,7 @@ Johnson and colleagues discovered one of the primary barriers to static analysis
 
 \pseudosection{RQ2}
 
-To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request. We asked developers four questions about their awareness of \textsc{Error Prone}, their static analysis tool usage, the usefulness of our recommendation, and how likely they are to use \textsc{Error Prone} in the future. The survey also included a free-response section to provide an opportunity for participants to add any other comments or feedback about the recommendation.
+To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request. We asked developers about their awareness of \textsc{Error Prone} and how likely they are to use the tool in the future. The survey also included a free-response section to provide an opportunity for participants to add comments on the usefulness of the recommendation.
 
 Developers voluntarily consented to complete the survey and provide feedback on our system. To ensure developers answered honestly, we notified respondents that their answers will be used for research purposes. Previous research has shown that survey participants are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}.
 
@@ -171,7 +171,7 @@ Effective tool recommendation systems should have ample opportunities to regular
 
 \pseudosection{RQ2}
 
-For our second research question, we accumulated responses from developers in our follow-up survey to determine the usefulness of our system. Dichotomous questions with Yes/No responses were used to gather information on if developers had prior knowledge of the existence of \textsc{Error Prone} and if they normally use static analysis tools during their work. Participants were also asked to list the static analysis tools they work with during software development. We utilized a five-point Likert scale for participants to rank how how helpful they found our recommendation and how likely they are to use \textsc{Error Prone} for future development tasks. These responses were used to analyze developers' reactions to our automated recommendation. Finally, researchers analyzed and independently coded open-ended responses from participants to further analyze the effectiveness of our system based on developer feedback.
+For our second research question, we accumulated responses from developers in our follow-up survey to determine the usefulness of our system. We utilized a five-point Likert scale for participants to rank how knowledgeable they were about the existence of \textsc{Error Prone} before the recommendation and how likely they are to use \textsc{Error Prone} for future development tasks. An optional free response section was provided at the end for respondents to describe explain why or why not they found the recommendation useful. These responses were used to analyze developers' reactions to our automated recommendation. Finally, researchers analyzed and independently coded open-ended responses from participants to further analyze the effectiveness of our system based on developer feedback.
 
 \section{Results}
 
