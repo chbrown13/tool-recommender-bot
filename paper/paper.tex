@@ -36,7 +36,7 @@ Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \maketitle
 \begin{abstract}
-Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations is an effective mode of tool discovery, and the receptiveness of recommendees is a vital characteristic in determining the outcome of tool suggestions. To help increase awareness of useful tools, we developed and evaluated a new system \tool~designed to integrate aspects of peer interactions and user receptivity into automated tool recommendations for software developers of real-world applications. Our findings suggest that \tool~is awesome, cool, and very effective in improving tool discovery.
+Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations is an effective mode of tool discovery, and the receptiveness of recommendees is a vital characteristic in determining the outcome of tool suggestions. To help increase awareness of useful tools, we developed and evaluated a new system, \tool, designed to integrate aspects of peer interaction, software engineering concepts, and user receptivity into automated tool recommendations for developers of real-world applications. We evaluated our approach on over 900 GitHub projects and our findings suggest that \tool~is awesome and very effective in improving tool discovery.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -131,51 +131,47 @@ To further increase adoption and use of static analysis tools, we only make a re
 
 \section{Methodology}
 
-Our evaluation gathers both quantitative and qualitative data to evaulate the effectiveness of \tool.
+Our study evaluates the effectiveness of \tool~by analyzing how often our approach makes tool recommendations and how developers respond to recommendations they receive from our system.
 
 \subsection{Projects}
 
-To evaluate the effectiveness of our recommendation system, we assessed \tool~on real-world open-source software applications. Github hosts millions of code repositories, and to narrow down projects for our evaluation we picked public repos that met the following criteria:
+To determine the effectiveness of our approach, we used real-world open source software applications to evaluate \tool. Projects for our evaluation were selected from Github, which hosts millions of code repositories online. To narrow down the number of projects for our study, we chose repositories that met the following criteria:
 
 \begin{itemize}
 \item primarily written in the Java programming language\footnote{https://java.com},
-\item build with Maven containing a \textit{pom.xml} file in the top directory,
-\item and had at least 10 pull requests submitted by developers in the last six months (180 days).
+\item build with Maven and contain a \textit{pom.xml} file in the top directory,
+\item and were ranked among the top 100 forked repositories for a month since February 2008.
 \end{itemize}
 
-Using the GitHub Search Repositories\footnote{https://developer.github.com/v3/search/\#search-repositories} functionality through the jcabi GitHub Java API\footnote{http://github.jcabi.com/}, we were able to identify 106 projects that met the above criteria. A full list of the repositories used in our evaluation is available to view online.\footnote{link}
-\subsection{Participants}
-
-Are we collecting any demographic information on the developers?
+Using a GitHub search API with the above constraints, we identified 917 projects for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}} We selected the most forked repositories to collect popular projects with a lot of activity, and forking a repository is suggested as one of the GitHub contributor best practices and is a requirement by many projects for submitting a pull request to make changes to the master code base. 
 
 \subsection{Study Design}
 
-We designed our study to address each of our research questions and address the influence of our recommendation system on improving tool discovery.
+We designed our evaluation to gather quantitative and qualitative data addressing our research questions.
 
-\pseudosubsection{RQ1}
+\pseudosection{RQ1}
 
-To gather data on how often \tool~makes recommendations, we counted the number of pull request comments made by our tool throughout the duration of our study. We wanted to determine how regularly our approach has opportunities to make recommendations to developers. For each project, we accumulated the number of recommendations made over [some period of time]. To run our evaluation on the 106 repositories simultaneously, we installed \tool~as Jenkins jobs on multiple virtual machines to analyze the code bases in parallel. 
+To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. To analyze the 917 repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to install \tool~as a Jenkins job on multiple virtual machines. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
 
-\pseudosubsection{RQ2}
+Johnson and colleagues discovered one of the primary barriers to static analysis tool usage among software engineers is false positives in the output~\cite{Johnson2013Why}. To prevent unnecessary recommendations from our system, we manually reviewed all instances where \tool~reported a recommendation should be made. After inspecting each reported pull request, we determined whether it was an appropriate case for our system to make a recommendation to developers. If so, we proceeded to post the comment recommending \textsc{Error Prone} on the pull request. Otherwise, we noted the instance of a false positive in our approach and did not make a recommendation.
 
-To gather data on the usefulness of our system, we sent a follow-up survey to Github users who received a recommendation from our tool on a pull request they submitted. In our survey, we asked developers if they had ever heard of \textsc{Error Prone} before our tool's recommendation and to name static analysis tools they normally use while programming, if any. We also asked Likert-scale questions for the perceived usefulness of our recommendation and how likely participants are to use \textsc{Error Prone} in the future. The survey concluded by providing participants an opportunity to add any comments or feedback on our system and the recommendation they received.
+\pseudosection{RQ2}
 
-Developers voluntarily consented to participate in the survey and provide feedback on our recommendation. To ensure participants answered honestly, we notified them that their responses would be used for research. Research shows that survey respondents are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}.
+To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request. We asked developers four questions about their awareness of \textsc{Error Prone}, their static analysis tool usage, the usefulness of our recommendation, and how likely they are to use \textsc{Error Prone} in the future. The survey also included a free-response section to provide an opportunity for participants to add any other comments or feedback about the recommendation.
+
+Developers voluntarily consented to complete the survey and provide feedback on our system. To ensure developers answered honestly, we notified respondents that their answers will be used for research purposes. Previous research has shown that survey participants are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}.
 
 \subsection{Data Analysis}
 
-We analyzed the frequency of recommendations and follow-up survey responses to determine the effectiveness of our approach.
+We analyzed the data collected in our study to determine effectiveness of our automated tool recommendation system.
 
-\pseudosubsection{RQ1}
+\pseudosection{RQ1}
 
-To answer our first research question, we calculated the rate at which \tool~makes recommendations on opened pull requests. 
-In addition to recommendation frequency, we collected other data to evaluate our system. We determined the false-positive rate for recommendations made by our system. To track instances where \textsc{Error Prone} defects were removed between versions of code, we also report the number of errors fixed without another instance found in the code and the number of bugs removed but not fixed according to our fix identification algorithm in Section III.B.2.
+Effective tool recommendation systems should have ample opportunities to regularly make recommendations to users. To determine how often \tool~automatically recommends \textsc{Error Prone}, we observed the number of pull request comments made by our tool. Our evaluation lasted for [some period of time], and we calculated the amount of true positive recommendations during that time span to measure the recommendation rate for each GitHub repository used in our study. To calculate the false positive rate, we compared the number of unnecessary instances where our tool proposed a recommendation found by researchers to the total number of instances where a recommendation reported by \tool.
 
-To prevent unnecessary comments on pull requests from our tool, all potential recommendations were reviewed by the researchers before posting to Github. Johnson discovered that one of the main barriers for underuse of static analysis tool among software engineers is reporting false positives in the tool output~\cite{Johnson2013Why}. We reviewed each pull request to determine if a fix was actually made. If so, \tool~could proceed and post the comment recommending \textsc{Error Prone} on the pull request. Otherwise we made note of a false positive found by our approach.
+\pseudosection{RQ2}
 
-\pseudosubsection{RQ2}
-
-For our second research question, we gathered data by accumulating responses from developers in our survey.
+For our second research question, we accumulated responses from developers in our follow-up survey to determine the usefulness of our system. Dichotomous questions with Yes/No responses were used to gather information on if developers had prior knowledge of the existence of \textsc{Error Prone} and if they normally use static analysis tools during their work. Participants were also asked to list the static analysis tools they work with during software development. We utilized a five-point Likert scale for participants to rank how how helpful they found our recommendation and how likely they are to use \textsc{Error Prone} for future development tasks. These responses were used to analyze developers' reactions to our automated recommendation. Finally, researchers analyzed and independently coded open-ended responses from participants to further analyze the effectiveness of our system based on developer feedback.
 
 \section{Results}
 
@@ -183,19 +179,25 @@ For our second research question, we gathered data by accumulating responses fro
 
 Tons of recommendations... \\
 
+No false positives...
+
 \subsection{How useful are recommendations from \tool~to developers?}
 
 Excellent responses from recommendees...\\
 
-Statistically significant data...
+Something statistically significant...
 
 \section{Discussion}
 
 \subsection{Observations}
 
+\subsubsection{Why Were There So Few Recommendations?}
+
+Non-java changes, documentation, errors removed not fixed, error fixed everywhere in code...
+
 \subsection{Implications}
 
-Here's what our results say about ways to improve tool recommendation systems...
+Here's what our results say about improving tool recommendation systems...
 
 \section{Limitations}
 
@@ -205,9 +207,9 @@ An external threat to the validity of our study is that we only observed open so
 
 \section{Future Work}
 
-More tools to recommend (static analysis, security, etc.) \\
+More programming languages (Python, C, C++ etc.)...\\
 
-More programming languages instead of just java...\\
+More types of tools to recommend (static analysis, security, debugging, etc.)... \\
 
 More build systems (ant, gradle, TravisCI, bazel)...\\
 
