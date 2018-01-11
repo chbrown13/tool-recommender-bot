@@ -40,6 +40,8 @@ public class Utils {
 
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
+	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
+
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
 	private static String currentDir = System.getProperty("user.dir");
