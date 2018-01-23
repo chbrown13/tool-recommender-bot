@@ -13,12 +13,12 @@
         <hudson.model.StringParameterDefinition>
           <name>USER</name>
           <description>Github user</description>
-          <defaultValue>chbrown13</defaultValue>
+          <defaultValue>{user}</defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>REPO</name>
           <description>Github repository</description>
-          <defaultValue>RecommenderTest</defaultValue>
+          <defaultValue>{repo}</defaultValue>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
@@ -84,3 +84,4 @@ java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar
   </publishers>
   <buildWrappers/>
 </project>
+
