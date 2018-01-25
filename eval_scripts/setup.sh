@@ -35,7 +35,8 @@ sudo yum -y install groovy
 
 # Install Ansible
 sudo yum -y install ansible
-sudo echo "localhost ansible_connection=local" > /etc/ansible/hosts
+echo "localhost ansible_connection=local" > hosts
+sudo mv hosts /etc/ansible/hosts
 
 # tool-recommender-bot study scripts
 wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/tool-recommender-bot.yml
