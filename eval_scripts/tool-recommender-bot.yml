@@ -5,6 +5,8 @@
     command: wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/jenkins.xml
   - name: get-cli
     command: wget http://localhost:8080/jnlpJars/jenkins-cli.jar
+  - name: get-projects
+    command: wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/tool-recommender-bot.yml
   - name: create-configs
     command: python eval.py
   - name: create-jobs 
