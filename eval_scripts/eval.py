@@ -6,11 +6,21 @@ def jenkins(user, repo):
     config = config.replace("{user}", user).replace("{repo}", repo)
     return config
 
+def get_creds():
+    with open(".ip") as f:
+        ip = f.read()
+    with open(".username") as f:
+        user = f.read()
+    with open(".password") as f:
+        passwd = f.read()
+    return ip, user, passwd
+
 def ssh():
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect("", username="", password="")
+    connect = get_creds()
+    ssh.connect(connect[0], username=connect[1], password=connect[2])
     ssh_stdin, stdout, stderr = ssh.exec_command("python projects.py")
     return stdout.readlines()
 
