@@ -6,7 +6,7 @@ def jenkins(user, repo):
     config = config.replace("{user}", user).replace("{repo}", repo)
     return config
 
-def get_creds():
+def connection():
     with open(".projects_ssh") as f:
         connect = f.readlines()
     return [c.replace("\n", "") for c in connect]
