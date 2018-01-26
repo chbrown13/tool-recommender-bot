@@ -195,26 +195,8 @@ public class PullRecommender {
 	public static void main(String[] args) {
 		String[] acct = Utils.getCredentials(".github.creds");
 		RtGithub github = new RtGithub(acct[0], acct[1]);
-		// try {
-		// 	BufferedReader br = new BufferedReader(new FileReader("projects.txt"));
-		// 	String line;
-		// 	int i = 0;
-		// 	while ((line = br.readLine()) != null) {
-		// 		String[] gitInfo = line.split("/");
-		// 		System.out.println(gitInfo[0] + " " + gitInfo[1] + " " + Integer.toString(i));
-				Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
-				PullRecommender recommender = new PullRecommender(repo);
-				ArrayList<Pull.Smart> requests = recommender.getPullRequests();
-				// System.out.println("{recs} recommendations made on {pulls} pull request(s) out of {totals} total. {fix} were just fixed."
-				// 	.replace("{recs}", Integer.toString(recs))
-				// 	.replace("{pulls}", Integer.toString(prs.size()))
-				// 	.replace("{totals}", Integer.toString(requests.size()))
-				// 	.replace("{fix}", Integer.toString(fixes - recs))
-				// );
-				//i++;
-			//}
-		// } catch (IOException io) {
-		//	io.printStackTrace();
-		// }
+		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
+		PullRecommender recommender = new PullRecommender(repo);
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
 	}
 }
