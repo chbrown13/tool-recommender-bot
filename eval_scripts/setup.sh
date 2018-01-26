@@ -38,6 +38,7 @@ sudo yum -y install ansible
 echo "localhost ansible_connection=local" > hosts
 sudo mv hosts /etc/ansible/hosts
 
-# tool-recommender-bot study scripts
+# Start tool-recommender-bot study
 wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/tool-recommender-bot.yml
+wget https://gist.githubusercontent.com/chbrown13/ca345f0d96401144373b745975724412/raw/6d689ecc32165bfa336a084d0ac6614a4581b982/.project_ssh
 ansible-playbook tool-recommender-bot.yml
