@@ -36,7 +36,7 @@ Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \maketitle
 \begin{abstract}
-Recommendation systems were developed to improve the adoption of useful software tools and features designed to save time and effort in completing tasks that are often ignored by users. Previous research suggests that peer-to-peer recommendations is an effective mode of tool discovery, and the receptiveness of recommendees is a vital characteristic in determining the outcome of tool suggestions. To help increase awareness of useful tools, we developed and evaluated a new system, \tool, designed to integrate aspects of peer interaction, software engineering concepts, and user receptivity into automated tool recommendations for developers of real-world applications. We evaluated our approach on over 900 GitHub projects and our findings suggest that \tool~is awesome and very effective in improving tool discovery.
+Software contains a variety of useful tools and features designed to increase productivity that are often ignored or undiscovered by users. This lack of tool awareness can have dangerous consequences, especially in the software engineering industry. Automated recommendation systems have been created to software tool discovery, however these systems are not as effective as user-to-user recommendations. To improve the effectiveness of recommender systems, we implemented \textit{\tool}, a novel system which allows toolsmiths to increase discovery of software engineering tools by integrating aspects of peer interactions, and found that our approach is useful in making recommendations and increasing awareness of a static analysis tool to programmers on 800+ GitHub projects.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -45,7 +45,7 @@ Software Engineering; Tool Recommendation; Tool Discovery; Open Source
 
 \section{Introduction}
 
-Software has permeated nearly every area of our society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
+Software is increasingly prevelant throughout society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
 
 Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million.\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/} Additionally, studies have shown the price of repairing these code failures becomes more expensive the longer the bug exists~\cite{SEEconomics}.
 %TODO: find better example
@@ -56,15 +56,20 @@ Althouth quality is a primary concern for software producers and consumers, deve
 
 %Researchers have explored methods for increasing tool discovery among software users. Fischer suggests that some of the more popular methods for raising tool awareness, such as documentation and help menus, are ineffective for increasing adoption of useful tools and features~\cite{ActiveHelpSystems}. These \textit{passive help systems} require users to first recognize the system's existence, navigate to the items, and then manually search for help. However, users rarely seek help by discovering new functionality and will often just rely on their own previous knowledge~\cite{something}. 
 %
-%Active help systems are the preferred method of helping users discover new functionality in software. These systems automatically recommend useful tools to software users. However, there remains room for improvement among these system-to-user recommendation systems. For example, Clippy, an intelligent office assistant for Microsoft Office products, was able to automatically suggest tools and features to Microsoft software users. However, the system was found ineffective and eventually removed. Peer interactions and receptiveness are effective~\cite{vlhcc17}...
+%Active help systems are the preferred method of helping users discover new functionality in software. These systems automatically recommend useful tools to software users. However, there remains room for improvement among these system-to-user recommendation systems. For example, Clippy, an intelligent office assistant for Microsoft Office products, was able to automatically suggest tools and features to Microsoft software users. However, the system was found ineffective and eventually removed. Peer interactions and receptiveness are effective~\cite{vlhcc17}... Previous research has shown that user-to-user recommendations are the most effective mode of increasing awareness of tools among software users~\cite{MurphyHill2011PeerInteraction}
 
-To solve the static analysis tool discovery problem, we developed a new recommender system called~\textit{\tool}. \tool~was designed to automatically recommend static analysis tools to software engineers. Previous research has shown that user-to-user recommendations are the most effective mode of increasing awareness of tools among software users~\cite{MurphyHill2011PeerInteraction}. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. To evaluate the effectiveness of our system, we studied the following research questions (RQs): \\
+To solve the tool discovery problem, we developed ~\textit{\tool} to automatically recommend useful tools to software developers. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. We seek to answer the following research questions (RQs): \\
 
 \noindent
 \textbf{RQ1:} How applicable is \tool~to real-world software applications?  \\ 
 \textbf{RQ2:} How useful are recommendations from \tool~to developers?  \\
 
-To answer these questions, we evaluated our system on open source Java projects to observe how many tool suggestions would be made based on past changes to the code base. We also examined how software developers reacted to receiving tool recommendations from our system. The main research contribution of our work is introducing the design and evaluation of a new automated recommendation system \tool, a novel approach to improving the discovery of static analysis tools for software engineers by simulating tool recommendations made between peers.
+To answer these questions, we evaluated our system by recommending a static analysis tool on open source Java projects. We observed the frequency of recommendations made based on developer changes to a code base and also examined how software developers reacted to receiving a suggestion from our system. This research makes the following contributions:
+
+\begin{itemize}
+ \item a novel automated recommendation system \tool~ that allows researchers to recommend software development tools to GitHub developers, and
+ \item an evaluation of the applicability and usefulness of our approach using the \textsc{Error Prone} static analysis tool
+ \end{itemize}
 
 \section{Related Work}
 
@@ -79,7 +84,7 @@ Additionally, there are numerous existing technical approaches created to improv
 Fischer and colleagues examined systems that require users to explicitly seek help from the software, or passive help systems~\cite{Fischer1984ActiveHelpSystems}. Fischer concluded technical passive recommendation systems, such as documentation and help menues, are ineffective and inefficient for users. Instead, active help systems are more useful for increasing tool awareness. We developed \tool~to actively suggest useful programming tools and increase awareness for software engineers. Our approach differs from existing recommendation systems in the design and implementation of our tool.
 
 \section{Tool}
-Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.
+Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.s
 
 \subsection{Design}
 Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{MurphyHill2011PeerInteraction}. Many existing help systems simulate user-to-user recommendations to increase awareness of application tools and features. 
