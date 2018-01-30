@@ -1,14 +1,8 @@
 ---
 - hosts: all
   tasks:
-  - name: get-config 
-    command: wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/jenkins.xml
   - name: get-cli
     command: wget http://localhost:8080/jnlpJars/jenkins-cli.jar
-  - name: get-projects
-    command: wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/eval.py
-  - name: create-configs
-    command: python eval.py
   - name: create-jobs 
     shell: "java -jar jenkins-cli.jar -s http://localhost:8080/ create-job {{item}} < {{item}}.xml"
     with_lines: cat configs.txt
