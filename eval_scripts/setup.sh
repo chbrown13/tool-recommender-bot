@@ -42,4 +42,7 @@ sudo mv hosts /etc/ansible/hosts
 # Start tool-recommender-bot study
 wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/tool-recommender-bot.yml
 wget https://gist.githubusercontent.com/chbrown13/ca345f0d96401144373b745975724412/raw/72cf4f75ec85bc9ad94c1e072965c797503e52b9/.projects_ssh
+wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/jenkins.xml
+wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/eval.py
+python eval.py
 ansible-playbook tool-recommender-bot.yml
