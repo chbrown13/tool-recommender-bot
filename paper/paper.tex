@@ -58,17 +58,17 @@ Althouth quality is a primary concern for software producers and consumers, deve
 %
 %Active help systems are the preferred method of helping users discover new functionality in software. These systems automatically recommend useful tools to software users. However, there remains room for improvement among these system-to-user recommendation systems. For example, Clippy, an intelligent office assistant for Microsoft Office products, was able to automatically suggest tools and features to Microsoft software users. However, the system was found ineffective and eventually removed. Peer interactions and receptiveness are effective~\cite{vlhcc17}... Previous research has shown that user-to-user recommendations are the most effective mode of increasing awareness of tools among software users~\cite{MurphyHill2011PeerInteraction}
 
-To solve the tool discovery problem, we developed ~\textit{\tool} to automatically recommend useful tools to software developers. We designed our system to make suggestions by integrating characteristics of peer interactions and concepts from the software engineering industry. We seek to answer the following research questions (RQs): \\
+To help solve the tool discovery problem, we developed \textit{\tool} to automatically recommend useful tools to software developers. We designed our system to make suggestions by integrating characteristics of peer interactions found in previous work as well as concepts from software engineering. \tool contains a unique workflow that runs specific tools and makes customized recommendations to developers on GitHub\footnote{https://github.com}, the most popular code hosting site for collaborative software development. This work seeks to answer the following research questions (RQs): \\
 
 \noindent
 \textbf{RQ1:} How applicable is \tool~to real-world software applications?  \\ 
 \textbf{RQ2:} How useful are recommendations from \tool~to developers?  \\
 
-To answer these questions, we evaluated our system by recommending a static analysis tool on open source Java projects. We observed the frequency of recommendations made based on developer changes to a code base and also examined how software developers reacted to receiving a suggestion from our system. This research makes the following contributions:
+To answer these questions, we evaluate \tool by recommending the \textsc{Error Prone}\footnote{http://errorprone.info} static analysis tool on open source Java GitHub projects. We observed the frequency of recommendations made and examined how software developers reacted to receiving a suggestion from our system. This research makes the following contributions:
 
 \begin{itemize}
- \item a novel automated recommendation system \tool~ that allows researchers to recommend software development tools to GitHub developers, and
- \item an evaluation of the applicability and usefulness of our approach using the \textsc{Error Prone} static analysis tool
+ \item a novel automated recommendation system \tool~that allows researchers to recommend software development tools to GitHub developers, and
+ \item an evaluation on the applicability and usefulness of our approach using \textsc{Error Prone}
  \end{itemize}
 
 \section{Related Work}
@@ -99,7 +99,7 @@ Previous work emphasizes the importance of receptivity. Fogg outlined best pract
 
 The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase awareness of these tools to improve software quality and developer productivity, ultimately meeting users' and developers' desire for less buggy software.
 
-To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}.\footnote{http://errorprone.info} \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
+To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}. \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
 
 \pseudosubsection{2. Familiarity}
 
