@@ -6,6 +6,7 @@ sudo yum -y update
 sudo yum -y install wget
 sudo yum -y install unzip
 sudo yum -y install python-pip
+sudo pip install --upgrade pip
 sudo pip install paramiko
 
 # Install Java
