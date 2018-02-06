@@ -45,4 +45,4 @@ wget https://gist.githubusercontent.com/chbrown13/ca345f0d96401144373b7459757244
 wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/jenkins.xml
 wget https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/eval.py
 python eval.py
-ansible-playbook tool-recommender-bot.yml
+sudo ansible-playbook tool-recommender-bot.yml
