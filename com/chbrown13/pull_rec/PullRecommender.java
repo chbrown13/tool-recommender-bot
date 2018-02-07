@@ -14,7 +14,7 @@ import javax.json.*;
  */
 public class PullRecommender {
 
-	private static int year = 2014;
+	private static int year = 2016;
 
 	private static String url = "https://raw.githubusercontent.com/{user}/{repo}/master/pom.xml";
 
