@@ -511,6 +511,9 @@ public class Utils {
 		}
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
+		if (log == null) {
+			return null;
+		}
 		return tool.parseOutput(log);
 	}
 
