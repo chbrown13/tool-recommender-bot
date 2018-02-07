@@ -572,8 +572,10 @@ public class Utils {
 		catch (FileNotFoundException e) {
 		    e.printStackTrace();
 		}
-		setUserName(creds[0]);
-		setPassword(creds[1]);
+		if (filename.contains("github")) {
+			setUserName(creds[0]);
+			setPassword(creds[1]);
+		}
 		return creds;
 	}
 }
