@@ -42,7 +42,7 @@ public class Utils {
 
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
 
-	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
+	private static String MVN_COMPILE = "sudo mvn -q -f {dir}/pom.xml compile";
 
 	private static String currentDir = System.getProperty("user.dir");
 
@@ -511,6 +511,9 @@ public class Utils {
 		}
 		addToolPomPlugin(dirName, tool);
 		String log = compile(dirName);
+		if (log == null) {
+			return null;
+		}
 		return tool.parseOutput(log);
 	}
 
@@ -569,8 +572,10 @@ public class Utils {
 		catch (FileNotFoundException e) {
 		    e.printStackTrace();
 		}
-		setUserName(creds[0]);
-		setPassword(creds[1]);
+		if (filename.contains("github")) {
+			setUserName(creds[0]);
+			setPassword(creds[1]);
+		}
 		return creds;
 	}
 }

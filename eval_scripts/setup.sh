@@ -29,6 +29,17 @@ sudo firewall-cmd --zone=public --permanent --add-port=8080/tcp
 sudo firewall-cmd --reload
 wget http://localhost:8080/jnlpJars/jenkins-cli.jar
 
+# Install Maven
+wget http://mirror.olnevhost.net/pub/apache/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
+tar xvf apache-maven-3.0.5-bin.tar.gz
+sudo mv apache-maven-3.0.5  /usr/local/apache-maven
+export M2_HOME=/usr/local/apache-maven
+export M2=$M2_HOME/bin 
+export PATH=$M2:$PATH
+source ~/.bashrc
+echo "JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")" | sudo tee -a /etc/profile
+source /etc/profile
+
 # Install Groovy
 sudo yum -y install groovy
 

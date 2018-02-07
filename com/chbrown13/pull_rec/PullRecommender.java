@@ -38,10 +38,11 @@ public class PullRecommender {
 		String viewChanges = Comment.changes.replace("{user}", Utils.getProjectOwner())
 			.replace("{repo}", Utils.getProjectName())
 			.replace("{num}", Integer.toString(pr));
+		String[] emailAcct = Utils.getCredentials(".email.creds");
 		try {
 			email.setHostName("smtp.googlemail.com");
 			email.setSmtpPort(465);
-			email.setAuthenticator(new DefaultAuthenticator("toolrecommenderbot", "bot-recommender-tool"));
+			email.setAuthenticator(new DefaultAuthenticator(emailAcct[0], emailAcct[1]));
 			email.setSSLOnConnect(true);
 			email.setFrom("toolrecommenderbot@gmail.com");
 			email.setSubject("[tool-recommender-bot] " + subject);
@@ -193,8 +194,8 @@ public class PullRecommender {
 	}
 
 	public static void main(String[] args) {
-		String[] acct = Utils.getCredentials(".github.creds");
-		RtGithub github = new RtGithub(acct[0], acct[1]);
+		String[] gitAcct = Utils.getCredentials(".github.creds");
+		RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
 		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
