@@ -367,11 +367,13 @@ public class Utils {
 	public static String compile(String path) {
 		String output = "";
 		String cmd = MVN_COMPILE.replace("{dir}", path);
+		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);	
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			String line;
 			while ((line = br.readLine()) != null) {
+				System.out.println(line);
 			    output += line + "\n";
 			}
 		} catch (IOException e) {
@@ -410,7 +412,8 @@ public class Utils {
 						if(qName.equals("plugins")) {
 							writer.write(tool.getPlugin());
 							writer.write("\n</plugins>");	
-							myTool = true;							
+							myTool = true;			
+							System.out.println(tool.getPlugin());				
 						} else if (qName.equals("project") && !myTool) {
 							writer.write(String.join("\n", "<build>", "<plugins>", 
 								tool.getPlugin(), "</plugins>", "</build>", "</project>"));
