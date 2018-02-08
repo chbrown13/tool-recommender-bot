@@ -541,6 +541,7 @@ public class Utils {
 	 */
 	public static void cd(String dir) throws FileNotFoundException {
 		String cmd = "cd " + dir;
+		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);		
 			if(!dir.equals("..")) {
@@ -548,6 +549,7 @@ public class Utils {
 			} else {
 				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
 			}
+			System.out.println(currentDir);
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			
 		}
