@@ -14,7 +14,6 @@
 \usetikzlibrary{patterns,shapes,arrows}
 \newcommand\tab[1][.5cm]{\hspace*{#1}}
 \hyphenation{op-tical net-works semi-conduc-tor}
-\IEEEoverridecommandlockouts
 \raggedbottom
 \newcommand{\tool}{tool-recommender-bot}
 \newcommand{\pseudosection}[1]{\vspace{2mm} \noindent {\bf #1}}
@@ -36,7 +35,7 @@ Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \maketitle
 \begin{abstract}
-Software contains a variety of useful tools and features designed to increase productivity that are often ignored or undiscovered by users. This lack of tool awareness can have dangerous consequences, especially in the software engineering industry. Automated recommendation systems have been created to software tool discovery, however these systems are not as effective as user-to-user recommendations. To improve the effectiveness of recommender systems, we implemented \textit{\tool}, a novel system which allows toolsmiths to increase discovery of software engineering tools by integrating aspects of peer interactions, and found that our approach is useful in making recommendations and increasing awareness of a static analysis tool to programmers on 800+ GitHub projects.
+Software developers have access to a variety of useful tools designed to increase productivity that are often ignored or undiscovered by potential users. This lack of tool awareness can have dangerous consequences, especially in the software engineering industry. Automated recommendation systems have been created in an attempt to improve software tool discovery, however these systems are still less effective than user-to-user recommendations. To increase awareness of helpful tools, we introduce \textit{\tool}, a novel system which integrates concepts from peer interactions and software development processes to increase discovery of software engineering tools, and found that our approach is useful in making recommendations and improving tool discovery of a static analysis tool to Java developers on open source GitHub projects.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -45,14 +44,15 @@ Software Engineering; Tool Recommendation; Tool Discovery; Open Source
 
 \section{Introduction}
 
-Software is increasingly prevelant throughout society. To keep up with the increasing demand for technology, software quality has become an increasingly important metric for software development teams. Processes such as peer code reviews, unit tests, continuous integration, test automation, and more have been implemented to ensure software maintains a high quality. 
+Software is becoming more and more prevalent throughout our society. To keep up with the increasing demands for technology, software engineers are making efforts to emphasize \textbf{definition}, or \textit{software quality}. This includes more focus on improving metrics that impact both software producers and consumers, such as functionality, reliability, usability, efficiency, maintainability, and portability~\cite{KitchenhamQualityTarget}. However, despite increased attention to software quality, defects in code remains a persisting and escalating problem. 
 
-Despite increased attention to the quality of code, the process of finding and fixing bugs in software, or debugging, is becoming more time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time at work debugging, and on average it takes 17.4 hours to debug one error~\cite{NIST}. Additionally, these errors can cost companies millions of dollars.  For example, a recent bug found in the cryptocurrency Ethereum resulted in the loss of \$30 million.\footnote{https://qz.com/1034321/ethereum-hack-a-coding-error-led-to-30-million-in-ethereum-being-stolen/} Additionally, studies have shown the price of repairing these code failures becomes more expensive the longer the bug exists~\cite{SEEconomics}.
-%TODO: find better example
+The 2017 Software Fail Watch by Tricentis, a software testing company, discovered that software failures impacted approximaltely half of the world's population (3.7 billion users) and caused \$1.7 trillion in financial losses.\footnote{https://www.tricentis.com/software-fail-watch/} Additionally, the process of finding and fixing bugs in code, or debugging, is becoming increasingly time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time debugging at work, and one error takes an average of 17.4 hours to debug~\cite{NIST}. Studies also show the cost of fixing an error becomes more expensive the longer a bug exists in source code~\cite{SEEconomics, SoftwareAssuranceSDLC}.
 
-To make software engineers more effective and efficient in their work, many types of tools have been created to automatically perform code analysis, refactoring, security checks, and more for programmers. One such type is static analysis tools. Static analysis tools can improve software quality by automatically inspecting code without running the program. These tools can be useful for finding code defects early in the development process before code is released. According to a report from IBM, the relative cost for fixing errors also drastically increases the longer the fault exists in the code base through the software development lifecycle~\cite{SoftwareAssuranceSDLC}. Previous studies also show that static analysis tools are effective in preventing bugs in code to save money for companies in addition to time and effort for developers~\cite{UsingStaticAnalysis}.
+To prevent production errors and improve code quality, researchers and toolsmiths have created software engineering tools to aid developers in their work. These useful tools provide a variety of functionality to save time and effort for software engineers in programming tasks, such as finding defects, identifying bugs, making large-scale code changes, suggesting fixes, and checking for security vulnerabilities. Research shows that tools for static analysis~\cite{UsingStaticAnalysis}, refactoring~\cite{Murphy-HillFitness}, security, code navigation, and more are effective in preventing defects and improving software quality, ultimately leading to reduced debugging costs and increased developer productivity.
 
-Althouth quality is a primary concern for software producers and consumers, developers often ignore these useful tools which help improve the quality of their code~\cite{Johnson2013Why}. There are many barriers to tool adoption, and one of the main reasons useful tools are ignored or underutilized is the discoverability barrier. This refers to when users are unaware of a tool's existence within software~\cite{Murphy-HillScreencastingDiscovery}. The tool discovery problem will continue to persist as applications become more ``bloated'' with features~\cite{SoftwareBloat}. This lack of awareness of static analysis tools can lead to significant amounts of wasted time and money in the software industry.
+Althouth quality is a primary concern for software producers and consumers, developers often ignore useful tools designed to help improve the quality of their code~\cite{Johnson2013Why}. There are many barriers to tool adoption, but one of primary reason useful tools are underused or ignored is the discoverability barrier, or when users are unaware of a tool's existence~\cite{Murphy-HillScreencastingDiscovery}. This lack of awareness can lead to poor code quality and significant amounts of wasted time and money fixing bugs. To improve tool discovery, automated recommendation systems have been created to 
+
+%Peer
 
 %Researchers have explored methods for increasing tool discovery among software users. Fischer suggests that some of the more popular methods for raising tool awareness, such as documentation and help menus, are ineffective for increasing adoption of useful tools and features~\cite{ActiveHelpSystems}. These \textit{passive help systems} require users to first recognize the system's existence, navigate to the items, and then manually search for help. However, users rarely seek help by discovering new functionality and will often just rely on their own previous knowledge~\cite{something}. 
 %
@@ -64,7 +64,7 @@ To help solve the tool discovery problem, we developed \textit{\tool} to automat
 \textbf{RQ1:} How applicable is \tool~to real-world software applications?  \\ 
 \textbf{RQ2:} How useful are recommendations from \tool~to developers?  \\
 
-To answer these questions, we evaluate \tool by recommending the \textsc{Error Prone}\footnote{http://errorprone.info} static analysis tool on open source Java GitHub projects. We observed the frequency of recommendations made and examined how software developers reacted to receiving a suggestion from our system. This research makes the following contributions:
+To answer these questions, we evaluate \tool~by recommending the \textsc{Error Prone}\footnote{http://errorprone.info} static analysis tool on open source Java GitHub projects. We observed the frequency of recommendations made and examined how software developers reacted to receiving a suggestion from our system. This research makes the following contributions:
 
 \begin{itemize}
  \item a novel automated recommendation system \tool~that allows researchers to recommend software development tools to GitHub developers, and
