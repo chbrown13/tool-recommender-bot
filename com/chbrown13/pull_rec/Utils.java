@@ -42,7 +42,7 @@ public class Utils {
 
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
 
-	private static String MVN_COMPILE = "sudo mvn -q -f {dir}/pom.xml compile";
+	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
 	private static String currentDir = System.getProperty("user.dir");
 
