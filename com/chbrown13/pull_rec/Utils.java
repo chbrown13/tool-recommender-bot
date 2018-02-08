@@ -367,7 +367,7 @@ public class Utils {
 	public static String compile(String path) {
 		String output = "";
 		String cmd = MVN_COMPILE.replace("{dir}", path);
-		System.out.println(cmd)
+		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);	
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
