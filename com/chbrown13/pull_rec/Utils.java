@@ -33,11 +33,13 @@ import org.xml.sax.helpers.DefaultHandler;
 public class Utils {
 
 	public static String MARKDOWN_LINK = "[{src}]({url})";
-
+	
 	public static String LINK_URL = "https://github.com/{user}/{repo}/blob/{sha}/{path}#L{line}";
-
+	
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
-
+	
+	private static String DIFF_URL = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{pr}.diff";
+	
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
@@ -237,8 +239,8 @@ public class Utils {
 	/**
 	 * Parse changes in file to determine if a fix was made
 	 * 
-	 * @param base    Name of source file
-	 * @param pull    Name of destination file
+	 * @param base     Name of source file
+	 * @param pull     Name of destination file
 	 * @param errorPos Character offset of error
 	 * @return		   Changed line number
 	 */
@@ -315,10 +317,34 @@ public class Utils {
 	/**
 	 * Returns line number of code fix
 	 * 
-	 * @return   Line number of what is considered a fix or null if none
+	 * @param pull Pull request of fix
+	 * @param err  Error fixed by user
+	 * @return     Line number of what is considered a fix or null if none
      */
-	public static int getFix() {
-		return fixLine;
+	public static int getFix(Pull.Smart pull, Error err) {
+		String url = DIFF_URL.replace("{user}", projectOwner)
+			.replace("{repo}", projectName)
+			.replace("{pr}", Integer.toString(pull.number()));
+		int newLine = fixLine;
+		String[] wget = wget(url).split("\n");
+		boolean diff = false;
+		for (String line: wget) {
+			if (line.startsWith("@@") && line.endsWith("@@")) {
+				diff = true;
+			}
+			if (diff) {
+				String l = line.substring(1).trim();
+				if (line.startsWith("+")) {
+					newLine += 1;
+				} else if (line.startsWith("-")) {
+					newLine -= 1;
+				}
+				if (err.getLog().contains(l) && !l.equals("")) {
+					break;
+				}
+			}
+		}
+		return newLine;
 	}
 
 	/**
@@ -533,6 +559,34 @@ public class Utils {
 			e.printStackTrace();
 		}	
 	}
+
+	/**
+	 * Utility method to get file contents from url.
+	 * 
+	 * @param link Url of file to download
+	 * @return     String of file contents
+	 */
+	private static String wget(String link) {
+		String s = "";
+		String out = "";
+		try {
+			URL url = new URL(link);
+			InputStream in;
+			try {
+				in = url.openStream();
+			} catch (FileNotFoundException e) {
+				//File URL does not exist, possibly new file in PR
+				in = new ByteArrayInputStream("".getBytes("UTF-8"));
+			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			while ((s = br.readLine()) != null) {
+				out += s + "\n";
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return out;
+}
 
 	/**
 	 * Changes the current working directory of the program

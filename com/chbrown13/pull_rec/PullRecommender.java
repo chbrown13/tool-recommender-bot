@@ -142,10 +142,12 @@ public class PullRecommender {
 				int i = 0;
 				for (Error e: fixed) {
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
-						fixes += 1;						
+						fixes += 1;			
+						int line = Utils.getFix(pull, e);			
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
-							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(Utils.getFix()));
-						makeRecommendation(tool, pull, e, Utils.getFix(), baseErrors);
+							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
+						
+						makeRecommendation(tool, pull, e, line, baseErrors);
 					} else {
 						removed += 1;
 					}
