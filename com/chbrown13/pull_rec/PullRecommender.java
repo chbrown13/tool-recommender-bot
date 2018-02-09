@@ -111,14 +111,14 @@ public class PullRecommender {
 								System.out.print(coords);
 								projects.add(coords);
 								x += 1;	
+								try {
+									PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("projects.txt", true)));
+									out.println(coords);
+									out.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
 							}						
-							try {
-								PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("projects.txt", true)));
-								out.println(coords);
-								out.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
 						}		
 						n += 1;
 						System.out.println(n);			
