@@ -14,8 +14,7 @@ import javax.json.*;
  */
 public class PullRecommender {
 
-	private static int year = 2016;
-
+	private static int year = 2013;
 	private static String url = "https://raw.githubusercontent.com/{user}/{repo}/master/pom.xml";
 
 	private static boolean wgetErrorProne(String user, String repo) {
@@ -82,7 +81,7 @@ public class PullRecommender {
 		int x = 0;
 		int month = 1;
 		int pg = 1;
-		final Github github = new RtGithub("chbrown13", "git_down1");
+		final Github github = new RtGithub("<username>", "<password>");
 		ArrayList<String> projects = new ArrayList<String>();
 		try { 
 			while (true) {
