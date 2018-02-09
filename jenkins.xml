@@ -53,16 +53,22 @@
   <builders>
     <hudson.tasks.Shell>
       <command>wget -q http://repo1.maven.org/maven2/com/jcabi/jcabi-github/0.23/jcabi-github-0.23-jar-with-dependencies.jar
-wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.1.0/error_prone_ant-2.1.0.jar
-wget -q https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
-wget -q https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit/4.9.0.201710071750-r/org.eclipse.jgit-4.9.0.201710071750-r.jar
-wget -q http://central.maven.org/maven2/com/jcraft/jsch/0.1.46/jsch-0.1.46.jar
-wget -q http://central.maven.org/maven2/org/apache/commons/commons-email/1.3.1/commons-email-1.3.1.jar
-wget -q http://central.maven.org/maven2/javax/mail/mail/1.4.7/mail-1.4.7.jar
-wget https://gist.githubusercontent.com/tool-recommender-bot/e26ced83dbabacd38c3e6cc557a70579/raw/5ab4b5aa87c9f8e66d21378e6fbcef7a4c5354fe/.github.creds
-wget https://gist.githubusercontent.com/tool-recommender-bot/3b445134655cf69d0c4d15042329a77f/raw/9adc9174605ea2ff0119a663b936036be61bec89/.email.creds
-sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com/chbrown13/pull_rec/ErrorProne.java com/chbrown13/pull_rec/Tool.java com/chbrown13/pull_rec/Error.java com/chbrown13/pull_rec/PullRecommender.java com/chbrown13/pull_rec/Utils.java com/chbrown13/pull_rec/Comment.java
-java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com.chbrown13.pull_rec.PullRecommender $USER $REPO</command>
+        wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.1.0/error_prone_ant-2.1.0.jar
+        wget -q https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
+        wget -q https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit/4.9.0.201710071750-r/org.eclipse.jgit-4.9.0.201710071750-r.jar
+        wget -q http://central.maven.org/maven2/com/jcraft/jsch/0.1.46/jsch-0.1.46.jar
+        wget -q http://central.maven.org/maven2/org/apache/commons/commons-email/1.3.1/commons-email-1.3.1.jar
+        wget -q http://central.maven.org/maven2/javax/mail/mail/1.4.7/mail-1.4.7.jar
+        export JAVA_HOME=/usr/lib/jvm/java-1.8.0/
+        export JRE_HOME=/usr/lib/jvm/java-1.8.0/jre
+        export M2_HOME=/opt/apache-maven-3.5.0/
+        export M2=$M2_HOME/bin 
+        export PATH=$M2:$PATH
+        wget -q https://gist.githubusercontent.com/tool-recommender-bot/e26ced83dbabacd38c3e6cc557a70579/raw/5ab4b5aa87c9f8e66d21378e6fbcef7a4c5354fe/.github.creds
+        wget -q https://gist.githubusercontent.com/tool-recommender-bot/3b445134655cf69d0c4d15042329a77f/raw/9adc9174605ea2ff0119a663b936036be61bec89/.email.creds
+        sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com/chbrown13/pull_rec/ErrorProne.java com/chbrown13/pull_rec/Tool.java com/chbrown13/pull_rec/Error.java com/chbrown13/pull_rec/PullRecommender.java com/chbrown13/pull_rec/Utils.java com/chbrown13/pull_rec/Comment.java
+        java -cp .:jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com.chbrown13.pull_rec.PullRecommender $USER $REPO
+      </command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
