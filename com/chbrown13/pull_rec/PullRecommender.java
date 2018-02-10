@@ -14,7 +14,7 @@ import javax.json.*;
  */
 public class PullRecommender {
 
-	private static int year = 2013;
+	private static int year = 2008;
 	private static String url = "https://raw.githubusercontent.com/{user}/{repo}/master/pom.xml";
 
 	private static boolean wgetErrorProne(String user, String repo) {
@@ -78,8 +78,7 @@ public class PullRecommender {
 
 	public static void main(String[] args) {
 		int n = 0;
-		int x = 0;
-		int month = 1;
+		int month = 2;
 		int pg = 1;
 		final Github github = new RtGithub("<username>", "<password>");
 		ArrayList<String> projects = new ArrayList<String>();
@@ -97,9 +96,10 @@ public class PullRecommender {
 				JsonArray items = resp.json().readObject().getJsonArray("items");
 				System.out.println(pg);
 				pg += 1;
-				if (items == null || items.isEmpty()) {
-					System.out.println(resp);
-					break;
+				if (items.isEmpty()) {
+					pg = 1;
+					month++;
+					continue;
 				} else {
 					final List<JsonObject> repos = items.getValuesAs(JsonObject.class);
 					System.out.println(repos.size());
@@ -110,7 +110,6 @@ public class PullRecommender {
 							if(!projects.contains(coords)) {
 								System.out.print(coords);
 								projects.add(coords);
-								x += 1;	
 								try {
 									PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("projects.txt", true)));
 									out.println(coords);
@@ -124,7 +123,7 @@ public class PullRecommender {
 						System.out.println(n);			
 					}	
 				}
-				if (pg % 5 == 0) {
+				if (pg == 5) {
 					pg = 1;
 					month += 1;
 				}		
@@ -133,7 +132,6 @@ public class PullRecommender {
 			e.printStackTrace();
 		}
 		System.out.println(n);
-		System.out.println(x);
 		System.out.println(projects.size());
 	}
 }
