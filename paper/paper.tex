@@ -128,27 +128,28 @@ To further increase adoption and use of static analysis tools, we only make a re
 
 \section{Methodology}
 
-Our study evaluates the effectiveness of \tool~by analyzing how often our approach makes tool recommendations and how developers respond to recommendations they receive from our system.
+Our study evaluates the effectiveness of \tool~by analyzing how often our system recommends software engineering tools and how developers respond to recommendations from our system.
 
 \subsection{Projects}
 
-To determine the effectiveness of our approach, we used real-world open source software applications to evaluate \tool. Projects for our evaluation were selected from Github, which hosts millions of code repositories online. To narrow down the number of projects for our study, we chose repositories that met the following criteria:
+We used real-world open source software applications from GitHub to evaluate \tool. To choose projects for our study from the millions of GitHub repositories, we selected projects that met the following criteria:
 
 \begin{itemize}
-\item primarily written in Java,
-\item builds with Maven,
-\item and were ranked among the top 100 forked repositories for every month from February 2008 - December 2017.
+\item primariy written in Java,
+\item ranked as a 1000 forked repositoy for a month in the last 10 years,
+\item builds with Maven, and
+\item do not already utilize \textsc{Error Prone}.
 \end{itemize}
 
-\textsc{Error Prone} currently only analyzes Java code, so our search was restricted to open source Java projects on GitHub. Our study focused on Maven projects because it is a popular build system for Java projects and also contains an \textsc{Error Prone} plug-in. The current implementation of \tool~automatically implements this plug-in by modifying the \textit{pom.xml} file in the top directory. We selected the most forked repositories to collect popular projects with a lot of activity, and forking a repository is suggested as one of the GitHub best practices for contributing to a project\footnote{https://guides.github.com/activities/forking/}. Using a GitHub search API with the above constraints, we identified 917 projects for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
+\textsc{Error Prone} only analyzes Java code, so our evaluation was limited to Java projects. We chose the most forked repositories to sample the most popular GitHub projects in terms of developer activity. Additionally, GitHub suggests forking a repository as a best practice for contributing and making pull requests to projects\footnote{https://guides.github.com/activities/forking/}. Maven is a build automation and dependency management system for Java projects. \tool~requires Maven to automatically modify \textit{pom.xml} files by adding the \textsc{Error Prone} plug-in and running the static analysis tool. Using a GitHub search API with the above constraints, we identified 2003 projects to use for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
 
 \subsection{Study Design}
 
-We designed our evaluation to gather quantitative and qualitative data addressing our research questions.
+We designed our evaluation to gather quantitative and qualitative data addressing our research questions.  To analyze 2000+ repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to generate Jenkins jobs with \tool~running on multiple virtual machines.
 
 \pseudosection{RQ1}
 
-To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. To analyze the 917 repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to install \tool~as a Jenkins job on multiple virtual machines. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
+To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
 
 Johnson and colleagues discovered one of the primary barriers to static analysis tool usage among software engineers is false positives in the output~\cite{Johnson2013Why}. To prevent unnecessary recommendations from our system, we manually reviewed all instances where \tool~reported a recommendation should be made. After inspecting each reported pull request, we determined whether it was an appropriate case for our system to make a recommendation to developers. If so, we proceeded to post the comment recommending \textsc{Error Prone} on the pull request. Otherwise, we noted the instance of a false positive in our approach and did not make a recommendation.
 
