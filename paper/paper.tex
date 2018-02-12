@@ -17,7 +17,7 @@
 \raggedbottom
 \newcommand{\tool}{tool-recommender-bot}
 \newcommand{\pseudosection}[1]{\vspace{2mm} \noindent {\bf #1}}
-\newcommand{\pseudosubsection}[1]{\vspace{2mm} {\it #1}}
+\newcommand{\pseudosubsection}[1]{\vspace{2mm} \noindent{\it #1}}
 
 \begin{document}
 
@@ -78,48 +78,48 @@ There are numerous existing technical approaches created to solve the tool disco
 \section{Tool}
 Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.s
 
-\subsection{Design}
+\pseudosection{Peer Interactions}
 Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{MurphyHill2011PeerInteraction}. Many existing help systems simulate user-to-user recommendations to increase awareness of application tools and features. 
 
 To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. Our results found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation, while other characteristics, such as politeness and persuasiveness, do not significantly impact the outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
 
-\pseudosection{Receptiveness}
+\pseudosubsection{Receptiveness}
 
 Previous work emphasizes the importance of receptivity. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. Our prior work defined receptiveness using two criteria introduced by Fogg: 1) demonstrating a desire and 2) familiarity with the target behavior and technology. Below we explain how \tool~was designed to recommend programming tools to software developers based on their desire and familiarity.
 
-\pseudosubsection{1. Desire}
+\subsubsection{Desire}
 
 The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase awareness of these tools to improve software quality and developer productivity, ultimately meeting users' and developers' desire for less buggy software.
 
 To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}. \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
 
-\pseudosubsection{2. Familiarity}
+\subsubsection{Familiarity}
 
 Choosing an audience familiar with the target behavior is also vital to increasing adoption. To increase use of helpful programming tools, such as static analysis tools, our system focuses on making recommendations to software engineers within the context of the projects they develop. Familiarity with source code is important for creating software applications. Scalabrino and colleagues claim code understandability is one of the most important factors for software development, maintenance, debugging, and testing~\cite{Scalabrino2017Understandability}.
 
 To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when a reported error is fixed by a developer in a pull requests but still exists elsewhere in the code to capitalize on their familiarity with the modifications and encourage the use of static analysis tools to find more bugs. 
 
-\subsection{Implementation}
+\pseudosection{Software Engineering}
 
 \tool~builds on four key concepts to automatically recommend tools to users and improve tool discovery based on our design goals for targeting developer receptivity.
 
-\pseudosubsection{1. Continuous Integration}
+\pseudosubsection{Continuous Integration}
 
 Our system utilizes continuous integration to recommend useful tools before pull request changes are integrated into the main repository, or merged. \tool~is implemented as a plugin for Jenkins, ``the leading open source automation server'' for source code deployment and delivery.\footnote{https://jenkins.io/} The system uses Jenkins to clone Github repositories and periodically check for newly-opened pull requests every 15 minutes. When a new pull request is found, our system uses Jenkins to automatically run our approach to recommend \textsc{Error Prone}.
 
 To analyze the source code, we target projects that use the Maven~\footnote{https://maven.apache.org/} build automation and software management tool for Java applications. Our approach uses Maven to automatically handle dependencies and perform the static analysis when the project builds. We inject \textsc{Error Prone} as a Maven plugin to repository's \textit{pom.xml} project object model file to add it to the build process. \tool~then builds both the original version of the code before the proposed changes were made (base) and the changed version of the repository with the pull request modifications implemented (head) to inspect differences. Using Maven allows \tool~to run on a large number of Java projects that use the popular build tool and also makes our approach extendable to recommend other tools implemented as Maven plugins in future work. 
 
-\pseudosubsection{2. Fix Identification}
+\pseudosubsection{Fix Identification}
 
 After analyzing the base and head versions of the code, our approach parses the build output of each version to determine if any reported errors were fixed in the pull request. \textsc{Error Prone} identifies faults found in the source code, and we developed an algorithm using that information to determine if changes made to the code in the head version fix the identified bug. Our technique uses the code differencing tool GumTree~\cite{GumTree} to identify actions (addition, delete, insert, move, and update) performed between pull request versions and parse the code to convert the text into abstract syntax trees. 
 
 To determine if an error was fixed, we take several things into consideration: First, our approach ignores instances where only delete actions were detected between the base and head versions of a file. This avoids making recommendations in situations where bugs were removed but not necessarily fixed in refactoring tasks, such as deleting and moving code, renaming classes, etc. Second, we ignore occurrences of deprecated classes because, similarly, the error reported was not fixed but removed. Third, we do not consider error fixes that were made by changes to a different file because we want to make recommendations where the developer is familiar with the changes that occurred. These help us minimize the number of false positives and errant recommendations in our approach.
 
-\pseudosubsection{3. Fix Localizaton}
+\pseudosubsection{Fix Localizaton}
 
 When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by \textsc{Error Prone}. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent. Additionally, the line of the fix had to be converted to the equivalent position in the pull request diff file displaying the changes between file versions, or number of lines below the "@@" header\footnote{https://developer.github.com/v3/pulls/comments/\#create-a-comment}, before moving on to the next phase.
 
-\pseudosubsection{4. Code Review}
+\pseudosubsection{Code Review}
 
 Code reviews from co-workers are often standard practice in software development. Pull requests are the primary method of code contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs \textsc{Error Prone} and analyzes the code, providing feedback to developers based on their changes and the output of the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends \textsc{Error Prone} as a comment at the fix location line from the previous step. Additionally, our system  uses language similar to comments between co-workers in recommendations, such as using ``Good job!'' to compliment developers on their work~\cite{?}.
 
@@ -128,31 +128,32 @@ To further increase adoption and use of static analysis tools, we only make a re
 
 \section{Methodology}
 
-Our study evaluates the effectiveness of \tool~by analyzing how often our approach makes tool recommendations and how developers respond to recommendations they receive from our system.
+Our study evaluates the effectiveness of \tool~by analyzing how often our system recommends software engineering tools and how developers respond to recommendations from our system.
 
 \subsection{Projects}
 
-To determine the effectiveness of our approach, we used real-world open source software applications to evaluate \tool. Projects for our evaluation were selected from Github, which hosts millions of code repositories online. To narrow down the number of projects for our study, we chose repositories that met the following criteria:
+We used real-world open source software applications to evaluate \tool. To choose study projects from the millions of GitHub repositories, we selected projects that met the following criteria:
 
 \begin{itemize}
-\item primarily written in Java,
-\item builds with Maven,
-\item and were ranked among the top 100 forked repositories for every month from February 2008 - December 2017.
+\item primariy written in Java,
+\item ranked a top 1000 monthly forked repositoy in the last 10 years,
+\item build using Maven, and
+\item do not already utilize \textsc{Error Prone}.
 \end{itemize}
 
-\textsc{Error Prone} currently only analyzes Java code, so our search was restricted to open source Java projects on GitHub. Our study focused on Maven projects because it is a popular build system for Java projects and also contains an \textsc{Error Prone} plug-in. The current implementation of \tool~automatically implements this plug-in by modifying the \textit{pom.xml} file in the top directory. We selected the most forked repositories to collect popular projects with a lot of activity, and forking a repository is suggested as one of the GitHub best practices for contributing to a project\footnote{https://guides.github.com/activities/forking/}. Using a GitHub search API with the above constraints, we identified 917 projects for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
+We chose the most forked repositories to sample the most popular GitHub projects in terms of developer activity. Additionally, GitHub suggests forking repositories as a best practice for making contributions and pull requests to projects\footnote{https://guides.github.com/activities/forking/}. \textsc{Error Prone} only analyzes Java code, so this evaluation was limited to Java projects.  Maven is a build automation and dependency management system for Java projects. \tool~requires Maven to automatically modify \textit{pom.xml} files by adding the \textsc{Error Prone} plug-in and running the static analysis tool. Using a GitHub search API with the above constraints, we identified 2003 projects to use for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
 
 \subsection{Study Design}
 
-We designed our evaluation to gather quantitative and qualitative data addressing our research questions.
+We designed our evaluation to gather quantitative and qualitative data addressing our research questions.  To analyze 2000+ repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to generate Jenkins jobs with \tool~running on multiple virtual machines.
 
-\pseudosection{RQ1}
+\pseudosubsection{RQ1}
 
-To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. To analyze the 917 repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to install \tool~as a Jenkins job on multiple virtual machines. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
+To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
 
 Johnson and colleagues discovered one of the primary barriers to static analysis tool usage among software engineers is false positives in the output~\cite{Johnson2013Why}. To prevent unnecessary recommendations from our system, we manually reviewed all instances where \tool~reported a recommendation should be made. After inspecting each reported pull request, we determined whether it was an appropriate case for our system to make a recommendation to developers. If so, we proceeded to post the comment recommending \textsc{Error Prone} on the pull request. Otherwise, we noted the instance of a false positive in our approach and did not make a recommendation.
 
-\pseudosection{RQ2}
+\pseudosubsection{RQ2}
 
 To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request. We asked developers about their awareness of \textsc{Error Prone} and how likely they are to use the tool in the future. The survey also included a free-response section to provide an opportunity for participants to add comments on the usefulness of the recommendation.
 
@@ -162,11 +163,11 @@ Developers voluntarily consented to complete the survey and provide feedback on 
 
 We analyzed the data collected in our study to determine effectiveness of our automated tool recommendation system.
 
-\pseudosection{RQ1}
+\pseudosubsection{RQ1}
 
 Effective tool recommendation systems should have ample opportunities to regularly make recommendations to users. To determine how often \tool~automatically recommends \textsc{Error Prone}, we observed the number of pull request comments made by our tool. Our evaluation lasted for [some period of time], and we calculated the amount of true positive recommendations during that time span to measure the recommendation rate for each GitHub repository used in our study. To calculate the false positive rate, we compared the number of unnecessary instances where our tool proposed a recommendation found by researchers to the total number of instances where a recommendation reported by \tool.
 
-\pseudosection{RQ2}
+\pseudosubsection{RQ2}
 
 For our second research question, we accumulated responses from developers in our follow-up survey to determine the usefulness of our system. We utilized a five-point Likert scale for participants to rank how knowledgeable they were about the existence of \textsc{Error Prone} before the recommendation and how likely they are to use \textsc{Error Prone} for future development tasks. An optional free response section was provided at the end for respondents to describe explain why or why not they found the recommendation useful. These responses were used to analyze developers' reactions to our automated recommendation. Finally, researchers analyzed and independently coded open-ended responses from participants to further analyze the effectiveness of our system based on developer feedback.
 
