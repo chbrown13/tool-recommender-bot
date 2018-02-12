@@ -17,8 +17,9 @@ public class PullRecommender {
 	private Repo repo;
 	private Set<Integer> prs = new HashSet<Integer>();	
 	private int recs = 0;;
-	private int removed = 0;
-	private int fixes = 0;
+	private int rem = 0;
+	private int fix = 0;
+	private String removed = "";
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -109,6 +110,7 @@ public class PullRecommender {
 	 */
 	private void analyze(Pull.Smart pull) {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		removed = "";
 		Tool tool = new ErrorProne();		
 		String developer = "";
 		boolean pullRec = false;
@@ -142,14 +144,15 @@ public class PullRecommender {
 				int i = 0;
 				for (Error e: fixed) {
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
-						fixes += 1;			
+						fix += 1;			
 						int line = Utils.getFix(pull, e);			
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
 							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
 						
 						makeRecommendation(tool, pull, e, line, baseErrors);
 					} else {
-						removed += 1;
+						rem += 1;
+						removed += e.getError() + "\n";
 					}
 				}	
 			}
@@ -178,10 +181,11 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}"
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}"
 						.replace("{rec}", Integer.toString(recs))
-						.replace("{fix}", Integer.toString(fixes - recs))
-						.replace("{rem}", Integer.toString(removed));
+						.replace("{fix}", Integer.toString(fix - recs))
+						.replace("{rem}", Integer.toString(rem))
+						.replace("{err}", removed);
 					sendEmail(out, "New Pull Request", pull.number());						
 				} else {
 					System.out.println("No new pull requests");
