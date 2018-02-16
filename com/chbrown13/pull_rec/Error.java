@@ -142,7 +142,7 @@ public class Error {
 			.replace("{tool}", tool.getName())
 			.replace("{link}", tool.getLink());
 		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName()); //TODO replace with tool
-		comment = comment.replace("{fixed}", "\\`\\`\\`" + this.message + this.log + "\\`\\`\\`");
+		comment = comment.replace("{fixed}", "\\`\\`\\`" + String.join(":", this.filename, getLineNumberStr(), " ") + this.message + this.log + "\\`\\`\\`");
 		Set<Error> similarSet = new HashSet<Error>();
 		Error sim;
 		for (Error epi: similar) {
