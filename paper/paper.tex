@@ -78,20 +78,20 @@ There are numerous existing technical approaches created to solve the tool disco
 \section{Tool}
 Our approach to improving tool discovery, \tool, aims to increase awareness and use of programming tools among software developers. This section describes the design and implementation of our system.s
 
-\pseudosection{Peer Interactions}
+\subsection{Peer Interactions}
 Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{MurphyHill2011PeerInteraction}. Many existing help systems simulate user-to-user recommendations to increase awareness of application tools and features. 
 
 To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. Our results found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation, while other characteristics, such as politeness and persuasiveness, do not significantly impact the outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
 
 \pseudosubsection{Receptiveness}
 
-Previous work emphasizes the importance of receptivity. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. Our prior work defined receptiveness using two criteria introduced by Fogg: 1) demonstrating a desire and 2) familiarity with the target behavior and technology. Below we explain how \tool~was designed to recommend programming tools to software developers based on their desire and familiarity.
+Previous work emphasizes the importance of receptivity. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. Our prior work defined receptiveness using two criteria introduced by Fogg: 1) demonstrating a desire and 2) familiarity with the target behavior and technology. Below we explain how \tool~was designed to recommend programming tools to software developers based on their desire and familiarity. \\
 
 \subsubsection{Desire}
 
 The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase awareness of these tools to improve software quality and developer productivity, ultimately meeting users' and developers' desire for less buggy software.
 
-To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}. \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. 
+To target this desire of mistake-free code, our initial implementation of \tool~automatically recommends the tool \textsc{Error Prone}. \textsc{Error Prone} is a static analysis tool created by Google to check for errors in Java code based on a suite of bug patterns. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. \\
 
 \subsubsection{Familiarity}
 
@@ -99,7 +99,7 @@ Choosing an audience familiar with the target behavior is also vital to increasi
 
 To choose a familiar audience, our approach makes recommendations on Github\footnote{https://github.com}, a popular source code management and version control website that hosts millions of projects and serves millions of users. \tool~makes its recommendations on pull requests, or proposed changes to source code submitted by programmers. Developers making these changes should be knowledgeable about the changes they propose as well as the code base to which they are contributing. Our approach suggests \textsc{Error Prone} when a reported error is fixed by a developer in a pull requests but still exists elsewhere in the code to capitalize on their familiarity with the modifications and encourage the use of static analysis tools to find more bugs. 
 
-\pseudosection{Software Engineering}
+\subsection{Software Engineering}
 
 \tool~builds on four key concepts to automatically recommend tools to users and improve tool discovery based on our design goals for targeting developer receptivity.
 
