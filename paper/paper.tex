@@ -66,7 +66,7 @@ To answer these questions, we evaluated \tool~with \textsc{Error Prone}\footnote
  \end{itemize}
 
 \section{Related Work}
-
+%TODO: Use related work from FSE committee
 Our implementation of \tool~builds on previous research examining tool discovery, lack of tool adoption among software engineers, and automated recommendation systems.
 
 Researchers have explored how humans learn about new tools. There are various methods to discover tools in software, and research suggests recommendations between peers is the most effective way to increase tool awareness. Murphy-Hill found that peer interactions were the most effective mode of tool discovery compared to tool encounters, tutorials, descriptions, social media, and discussion threads~\cite{MurphyHill2011PeerInteraction}~\cite{Murphy-Hill2015HowDoUsers}. Similarly, Welty discovered that software users sought help from colleagues more often than search engines and help menus~\cite{Welty2011Help}. To improve the effectiveness of recommendations from our system, we integrate qualities of peer interactions into \tool.
@@ -112,7 +112,7 @@ After analyzing the base and head versions of the code, our approach parses the 
 To determine if an error was fixed, we take several things into consideration: First, our approach ignores instances where only delete actions were detected between the base and head versions of a file. This avoids making recommendations in situations where bugs were removed but not necessarily fixed in refactoring tasks, such as deleting and moving code, renaming classes, etc. Second, we ignore occurrences of deprecated classes because, similarly, the error reported was not fixed but removed. Third, we do not consider error fixes that were made by changes to a different file because we want to make recommendations where the developer is familiar with the changes that occurred. These help us minimize the number of false positives and errant recommendations in our approach.
 
 %\pseudosubsection{Fix Localizaton}
-%
+%TODO: Delete?
 %When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by the software engineering tool, if applicable. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent. Additionally, the line of the fix had to be converted to the equivalent position in the pull request diff file displaying the changes between file versions, or number of lines below the "@@" header\footnote{https://developer.github.com/v3/pulls/comments/\#create-a-comment}, before moving on to the next phase.
 
 \pseudosubsection{Code Review}
