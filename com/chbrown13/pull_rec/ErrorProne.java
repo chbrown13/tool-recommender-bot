@@ -52,18 +52,18 @@ public class ErrorProne extends Tool {
 	}
 	
 	/**
-	 * Parses output from ErrorProne static analysis of code and creates objects.
+	 * Parses output from ErrorProne static analysis of code and creates Errors.
 	 *
 	 * @param msg    ErrorProne output
-	 * @return       List of ErrrorProne
+	 * @return       List of Error objects
 	  */
 	@Override
-	public Set<Error> parseOutput(String msg) {
+	public List<Error> parseOutput(String msg) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String dir = Utils.getCurrentDir();
 		String[] lines = msg.split("\n");
 		Error temp = null;
-		Set<Error> set = new HashSet<Error>();
+		List<Error> errors = new ArrayList<Error>();
 		for (String line: lines) {
 			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
 				continue;
@@ -73,7 +73,7 @@ public class ErrorProne extends Tool {
 				continue;
 			}
 			else if (line.matches(regex) || line.startsWith(dir)) {
-				if (temp != null && !set.contains(temp)) {	set.add(temp); }
+				if (temp != null && !errors.contains(temp)) {	errors.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
 				String errorFileName = errorFilePath.substring(errorFilePath.lastIndexOf("/")+1);
@@ -90,8 +90,8 @@ public class ErrorProne extends Tool {
 				temp.addLog(line);
 			}
 		}
-		if (temp != null && !set.contains(temp)) { set.add(temp); }
-		return set;
+		if (temp != null && !errors.contains(temp)) { errors.add(temp); }
+		return errors;
 	}
 
 	/**

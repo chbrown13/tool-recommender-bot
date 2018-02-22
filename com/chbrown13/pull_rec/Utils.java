@@ -377,10 +377,10 @@ public class Utils {
 			}
 		}
 		int fix = findFix(file1, file2, getErrorOffset(error, file1));
-		if (fix > 0) {
-			System.out.println(content1);
+		/*if (fix > 0) {
+			System.out.println(conSystem.out.println(content1);
 			System.out.println(content2);
-		}
+		}*/
 		return fix > 0;
 	}
 
@@ -399,7 +399,6 @@ public class Utils {
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			String line;
 			while ((line = br.readLine()) != null) {
-				System.out.println(line);
 			    output += line + "\n";
 			}
 		} catch (IOException e) {
@@ -439,7 +438,7 @@ public class Utils {
 							writer.write(tool.getPlugin());
 							writer.write("\n</plugins>");	
 							myTool = true;			
-							System.out.println(tool.getPlugin());				
+							//System.out.println(tool.getPlugin());				
 						} else if (qName.equals("project") && !myTool) {
 							writer.write(String.join("\n", "<build>", "<plugins>", 
 								tool.getPlugin(), "</plugins>", "</build>", "</project>"));
@@ -494,9 +493,9 @@ public class Utils {
 	 * @param author Creator of pull request
 	 * @param tool   Tool to perform analysis and recommend
 	 * @param base   True if checking base repo, false if PR version
-	 * @return       Set errors reported from tool
+	 * @return       List of errors reported from tool
 	 */
-	public static Set<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
+	public static List<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
 		String dirName = projectName;
 		String hash, owner, branch, repo;
 		JsonObject json = pull.json();
@@ -543,6 +542,7 @@ public class Utils {
 		if (log == null) {
 			return null;
 		}
+		System.out.println(log);
 		return tool.parseOutput(log);
 	}
 
@@ -595,7 +595,6 @@ public class Utils {
 	 */
 	public static void cd(String dir) throws FileNotFoundException {
 		String cmd = "cd " + dir;
-		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);		
 			if(!dir.equals("..")) {
@@ -603,7 +602,6 @@ public class Utils {
 			} else {
 				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
 			}
-			System.out.println(currentDir);
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			
 		}

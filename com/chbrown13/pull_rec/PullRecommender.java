@@ -19,7 +19,9 @@ public class PullRecommender {
 	private int recs = 0;;
 	private int rem = 0;
 	private int fix = 0;
+	private int noSim = 0;
 	private String removed = "";
+	private String noSimilar = "";
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -63,22 +65,27 @@ public class PullRecommender {
 	 * @param pull	 	Pull request to comment on
 	 * @param error     Error fixed in pull request
 	 */
-	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, int line, Set<Error> errors) {
+	private void makeRecommendation(Tool tool, Pull.Smart pull, Error error, int line, List<Error> errors) {
 		try {
 			String base = pull.json().getJsonObject("base").getString("sha");
 			String head = pull.json().getJsonObject("head").getString("sha");			
 			String comment = error.generateComment(tool, errors, base);
-			String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{pull}", Integer.toString(pull.number()));
-			comment += link;
-			String args = String.join(" ", Utils.getProjectOwner(), Utils.getProjectName(), 
-				Integer.toString(pull.number()), "\""+comment+"\"", head, error.getLocalFilePath(), 
-				Integer.toString(line)
-			);
+			if (comment != null) {
+				String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{pull}", Integer.toString(pull.number()));
+				comment += link;
+				String args = String.join(" ", Utils.getProjectOwner(), Utils.getProjectName(), 
+					Integer.toString(pull.number()), "\""+comment+"\"", head, error.getLocalFilePath(), 
+					Integer.toString(line)
+				);
 
-			String run = Comment.cmd.replace("{args}", args);
-			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", pull.number());
-			recs += 1;
-			prs.add(pull.number());
+				String run = Comment.cmd.replace("{args}", args);
+				sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", pull.number());
+				recs += 1;
+				prs.add(pull.number());
+			} else {
+				noSim += 1;
+				noSimilar += error.getLog() + "\n";
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
@@ -88,7 +95,7 @@ public class PullRecommender {
 	/**
 	 * Checks if the change is actually a fix or not
 	 */
-	private boolean isFix(Set<Error> base, Set<Error> pull, Error error, List<String> files) {
+	private boolean isFix(List<Error> base, List<Error> pull, Error error, List<String> files) {
 		boolean fileCheck = false;
 		for (String f: files) {
 			if (error.getFilePath().contains(f)) {
@@ -134,21 +141,22 @@ public class PullRecommender {
 			return;
 		}
 		try {
-			Set<Error> baseErrors = Utils.checkout(pull, tool, true);
-			Set<Error> pullErrors = Utils.checkout(pull, tool, false);
+			List<Error> baseErrors = Utils.checkout(pull, tool, true);
+			List<Error> pullErrors = Utils.checkout(pull, tool, false);
 			if(baseErrors != null && pullErrors != null) {
 				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
-				Set<Error> fixed = new HashSet<Error>();				
-				fixed.addAll(baseErrors);				
-				fixed.removeAll(pullErrors);
-				int i = 0;
+				List<Error> fixed = new ArrayList<Error>();	
+				for (Error e: baseErrors) {
+					if (!pullErrors.contains(e)) {
+						fixed.add(e);
+					}
+				}
 				for (Error e: fixed) {
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
 						fix += 1;			
 						int line = Utils.getFix(pull, e);			
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
 							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
-						
 						makeRecommendation(tool, pull, e, line, baseErrors);
 					} else {
 						rem += 1;
@@ -168,11 +176,11 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
+	private ArrayList<Pull.Smart> getPullRequests(int num) {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "open");
+		params.put("state", "all");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		int i = 0;
 		while (pullit.hasNext()) {
@@ -181,14 +189,20 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}"
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}\nFixed but not exists: {sim}\n{simErr}"
 						.replace("{rec}", Integer.toString(recs))
 						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
-						.replace("{err}", removed);
-					sendEmail(out, "New Pull Request", pull.number());						
+						.replace("{err}", removed)
+						.replace("{sim}", Integer.toString(noSim))
+						.replace("{simErr}", noSimilar);
+					sendEmail(out, "New Pull Request", pull.number());
+					System.out.println(out);
+					break;						
 				} else {
-					System.out.println("No new pull requests");
+					if (requests.isEmpty()) {
+						System.out.println("No new pull requests");
+					}
 					break;
 				}
 			} catch (IOException e) {
@@ -204,6 +218,7 @@ public class PullRecommender {
 		RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		int pull = Integer.parseInt(args[2]);
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests(pull);
 	}
 }
