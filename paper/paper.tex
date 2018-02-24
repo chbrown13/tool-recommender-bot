@@ -105,7 +105,7 @@ Our system utilizes continuous integration to recommend useful tools before pull
 
 To analyze the source code, we target projects that use the Maven~\footnote{https://maven.apache.org/} build automation and software management tool for Java applications. Our approach uses Maven to automatically handle dependencies and perform the static analysis when the project builds. We inject the desired software engineering tool as a Maven plugin to repository's \textit{pom.xml} project object model file to add it to the build process. \tool~then builds both the original version of the code before the proposed changes were made (base) and the changed version of the repository with the pull request modifications implemented (head) to inspect differences. Using Maven allows \tool~to run on a large number of Java projects that use the popular build tool and also makes our approach extendable to recommend other tools implemented as Maven plugins in future work. 
 
-\pseudosubsection{Patch Identification}
+\pseudosubsection{Fix Identification}
 
 After analyzing the base and head versions of the code, our approach parses the build output of each version to determine if any reported errors were fixed in the pull request. The software engineering tool identifies faults in the source code, and we take the tool's output and use it in an algorithm we developed to determine if pull request changes fix a reported bug. Our technique uses the code differencing tool GumTree~\cite{GumTree} to identify actions (addition, delete, insert, move, and update) performed between pull request versions and parse the code to convert the text into abstract syntax trees. 
 
@@ -137,12 +137,14 @@ We used real-world open source software applications to evaluate \tool. To choos
 
 \begin{itemize}
 \item primariy written in Java,
-\item ranked a top 1000 monthly forked repositoy in the last 10 years,
-\item build using Maven, and
-\item do not already utilize \textsc{Error Prone}.
+\item build using Maven,
+\item do not already use \textsc{Error Prone},
+\item have at least 100 stars,
+\item ranked among the top forked repositories, and
+\item have had 10 pull request opened in the last n days? %TODO: finalize project list
 \end{itemize}
 
-We chose the most forked repositories to sample the most popular GitHub projects in terms of developer activity. Additionally, GitHub suggests forking repositories as a best practice for making contributions and pull requests to projects\footnote{https://guides.github.com/activities/forking/}. \textsc{Error Prone} only analyzes Java code, so this evaluation was limited to Java projects.  Maven is a build automation and dependency management system for Java projects. \tool~requires Maven to automatically modify \textit{pom.xml} files by adding the \textsc{Error Prone} plug-in and running the static analysis tool. Using a GitHub search API with the above constraints, we identified 2003 projects to use for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
+\textsc{Error Prone} only analyzes Java code, so this evaluation was limited to Java projects. Maven is a build automation and dependency management system for Java projects. \tool~requires Maven to automatically modify the \textit{pom.xml} files and run the tool. We chose the most forked and starred repositories to retrieve the most popular GitHub projects in terms of developer activity. GitHub suggests forking repositories as a best practice for making contributions and pull requests to projects\footnote{https://help.github.com/articles/fork-a-repo/}. Stars represent a social aspect of GitHub for users to indicate their favorite projects and repositories they are interested in\footnote{https://help.github.com/articles/about-stars/}. Using a GitHub search API, we identified 2003 projects to use for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
 
 \subsection{Study Design}
 
