@@ -13,9 +13,9 @@ sudo firewall-cmd --reload
 wget http://localhost:8080/jnlpJars/jenkins-cli.jar
 
 # Install Maven
-wget http://mirror.olnevhost.net/pub/apache/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
-tar xvf apache-maven-3.0.5-bin.tar.gz
-sudo mv apache-maven-3.0.5  /usr/local/apache-maven
+wget http://mirror.olnevhost.net/pub/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz
+tar xvf apache-maven-3.5.2-bin.tar.gz
+sudo mv apache-maven-3.5.2  /usr/local/apache-maven
 
 # Install Ansible
 sudo yum -y install ansible

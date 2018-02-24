@@ -38,5 +38,5 @@ public abstract class Tool {
 
     public abstract String getPlugin();
     
-    public abstract Set<Error> parseOutput(String log);
+    public abstract List<Error> parseOutput(String log);
 }

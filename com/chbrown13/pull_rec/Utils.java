@@ -60,6 +60,8 @@ public class Utils {
 
 	private static int fixLine = -1;
 
+	private static int fixType = -1;
+
 	/**
 	 * Stores current user's Github login
 	 *
@@ -302,11 +304,13 @@ public class Utils {
 					return -1;
 				} 
 			}
+			fixType = 1;
 		} else { //INS or UPD or other
 			temp = closestAction.getNode();
 			while (!searchNode(temp, dst)) {
 				temp = temp.getParent();
 			}
+			fixType = 0;
 		}
 		if (temp == null) {
 			return -1;
@@ -325,23 +329,24 @@ public class Utils {
 		String url = DIFF_URL.replace("{user}", projectOwner)
 			.replace("{repo}", projectName)
 			.replace("{pr}", Integer.toString(pull.number()));
-		int newLine = fixLine;
+		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
 		boolean diff = false;
 		for (String line: wget) {
-			if (line.startsWith("@@") && line.endsWith("@@")) {
+			if (line.contains(err.getFileName())) {
 				diff = true;
+				continue;
+			} 
+			else if (line.startsWith("@@") && line.endsWith("@@")) {
+				//ignore
+				continue;
 			}
 			if (diff) {
 				String l = line.substring(1).trim();
-				if (line.startsWith("+")) {
-					newLine += 1;
-				} else if (line.startsWith("-")) {
-					newLine -= 1;
-				}
 				if (err.getLog().contains(l) && !l.equals("")) {
 					break;
-				}
+				} 					
+				newLine += 1;
 			}
 		}
 		return newLine;
@@ -377,10 +382,10 @@ public class Utils {
 			}
 		}
 		int fix = findFix(file1, file2, getErrorOffset(error, file1));
-		if (fix > 0) {
-			System.out.println(content1);
+		/*if (fix > 0) {
+			System.out.println(conSystem.out.println(content1);
 			System.out.println(content2);
-		}
+		}*/
 		return fix > 0;
 	}
 
@@ -399,7 +404,6 @@ public class Utils {
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			String line;
 			while ((line = br.readLine()) != null) {
-				System.out.println(line);
 			    output += line + "\n";
 			}
 		} catch (IOException e) {
@@ -439,7 +443,7 @@ public class Utils {
 							writer.write(tool.getPlugin());
 							writer.write("\n</plugins>");	
 							myTool = true;			
-							System.out.println(tool.getPlugin());				
+							//System.out.println(tool.getPlugin());				
 						} else if (qName.equals("project") && !myTool) {
 							writer.write(String.join("\n", "<build>", "<plugins>", 
 								tool.getPlugin(), "</plugins>", "</build>", "</project>"));
@@ -494,9 +498,9 @@ public class Utils {
 	 * @param author Creator of pull request
 	 * @param tool   Tool to perform analysis and recommend
 	 * @param base   True if checking base repo, false if PR version
-	 * @return       Set errors reported from tool
+	 * @return       List of errors reported from tool
 	 */
-	public static Set<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
+	public static List<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
 		String dirName = projectName;
 		String hash, owner, branch, repo;
 		JsonObject json = pull.json();
@@ -543,6 +547,7 @@ public class Utils {
 		if (log == null) {
 			return null;
 		}
+		System.out.println(log);
 		return tool.parseOutput(log);
 	}
 
@@ -595,7 +600,6 @@ public class Utils {
 	 */
 	public static void cd(String dir) throws FileNotFoundException {
 		String cmd = "cd " + dir;
-		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);		
 			if(!dir.equals("..")) {
@@ -603,7 +607,6 @@ public class Utils {
 			} else {
 				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
 			}
-			System.out.println(currentDir);
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			
 		}

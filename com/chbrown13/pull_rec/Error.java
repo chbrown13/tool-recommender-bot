@@ -137,27 +137,28 @@ public class Error {
 	 *
 	 * @return   Message with fixed error and tool recommendation
 	 */
-	public String generateComment(Tool tool, Set<Error> similar, String sha) {
+	public String generateComment(Tool tool, List<Error> similar, String sha) {
 		String comment = Utils.BASE_COMMENT.replace("{desc}", tool.getDescription())
 			.replace("{tool}", tool.getName())
 			.replace("{link}", tool.getLink());
 		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName()); //TODO replace with tool
 		comment = comment.replace("{fixed}", "\\`\\`\\`" + String.join(":", this.filename, getLineNumberStr(), " ") + this.message + this.log + "\\`\\`\\`");
-		Set<Error> similarSet = new HashSet<Error>();
+		List<Error> simList = new ArrayList<Error>();
 		Error sim;
 		for (Error epi: similar) {
 			if (!this.equals(epi) && this.similar(epi)) {
-				similarSet.add(epi);
+				simList.add(epi);
 			}
 		}
-		Iterator<Error> iter = similarSet.iterator();
-		if (similarSet.isEmpty()) {
+		Iterator<Error> iter = simList.iterator();
+		if (simList.isEmpty()) {
 			return null;
-		} else if (similarSet.size() == 1) {
+		} else if (simList.size() == 1) {
 				comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(iter.next(), sha)).replace("{issue}", "a similar issue"));
 		} else {
 			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
 		}
+		System.out.println("Err- "+comment);
 		return comment;
 	}
 
