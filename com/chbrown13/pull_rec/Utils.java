@@ -60,6 +60,8 @@ public class Utils {
 
 	private static int fixLine = -1;
 
+	private static int fixType = -1;
+
 	/**
 	 * Stores current user's Github login
 	 *
@@ -302,11 +304,13 @@ public class Utils {
 					return -1;
 				} 
 			}
+			fixType = 1;
 		} else { //INS or UPD or other
 			temp = closestAction.getNode();
 			while (!searchNode(temp, dst)) {
 				temp = temp.getParent();
 			}
+			fixType = 0;
 		}
 		if (temp == null) {
 			return -1;
@@ -325,23 +329,24 @@ public class Utils {
 		String url = DIFF_URL.replace("{user}", projectOwner)
 			.replace("{repo}", projectName)
 			.replace("{pr}", Integer.toString(pull.number()));
-		int newLine = fixLine;
+		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
 		boolean diff = false;
 		for (String line: wget) {
-			if (line.startsWith("@@") && line.endsWith("@@")) {
+			if (line.contains(err.getFileName())) {
 				diff = true;
+				continue;
+			} 
+			else if (line.startsWith("@@") && line.endsWith("@@")) {
+				//ignore
+				continue;
 			}
 			if (diff) {
 				String l = line.substring(1).trim();
-				if (line.startsWith("+")) {
-					newLine += 1;
-				} else if (line.startsWith("-")) {
-					newLine -= 1;
-				}
 				if (err.getLog().contains(l) && !l.equals("")) {
 					break;
-				}
+				} 					
+				newLine += 1;
 			}
 		}
 		return newLine;

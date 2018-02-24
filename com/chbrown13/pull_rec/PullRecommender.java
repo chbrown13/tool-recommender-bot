@@ -160,7 +160,7 @@ public class PullRecommender {
 						makeRecommendation(tool, pull, e, line, baseErrors);
 					} else {
 						rem += 1;
-						removed += e.getError() + "\n";
+						removed += "-" + e.getError() + "\n";
 					}
 				}	
 			}
@@ -176,7 +176,7 @@ public class PullRecommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests(int num) {
+	private ArrayList<Pull.Smart> getPullRequests() {
 		System.out.println("Getting new pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -189,7 +189,7 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}\nFixed but not exists: {sim}\n{simErr}"
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}Fixed but not exists: {sim}\n{simErr}"
 						.replace("{rec}", Integer.toString(recs))
 						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
@@ -218,7 +218,6 @@ public class PullRecommender {
 		RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		int pull = Integer.parseInt(args[2]);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests(pull);
+		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
 	}
 }
