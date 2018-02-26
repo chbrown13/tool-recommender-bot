@@ -1,5 +1,3 @@
-N = 100
-
 def jenkins(user, repo):
     with open("jenkins.xml") as f:
         config = f.read()
