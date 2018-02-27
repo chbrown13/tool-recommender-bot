@@ -1,13 +1,14 @@
-\documentclass[conference]{IEEEtran}
+\documentclass[sigconf,review,anonymous]{acmart}
+\acmConference[ESEC/FSE 2018]{The 26th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering}{4–9 November, 2018}{Lake Buena Vista, Florida, United States}
 \usepackage{pdftexcmds}
-\usepackage[pdftex]{graphicx}
-\usepackage{multirow}
-\usepackage{pgfplots}
+%\usepackage[pdftex]{graphicx}
+%\usepackage{multirow}
+%\usepackage{pgfplots}
 \usepackage{tikz}
 \usepackage{balance}
 \usepackage{amssymb, marvosym}
 \usepackage{threeparttable}
-\usepackage[bookmarks=false]{hyperref}
+%\usepackage[bookmarks=false]{hyperref}
 \usepackage{url}
 \PassOptionsToPackage{hyphens}{url}
 \hypersetup{colorlinks=true,breaklinks=true}
@@ -22,25 +23,24 @@
 \begin{document}
 
 % Copyright
-%\setcopyright{acmlicensed}
+\setcopyright{acmlicensed}
 
 \title{\tool}
 
-\author{\IEEEauthorblockN{Chris Brown and Emerson Murphy-Hill}
-\IEEEauthorblockA{Department of Computer Science\\
-North Carolina State University\\
-Raleigh, NC\\
-Email: dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
+\author{Chris Brown and Emerson Murphy-Hill}
+\affiliation{%
+	\institution{North Carolina State University}
+	\city{Raleigh}
+	\state{NC}
 }
+\email{dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
-\maketitle
 \begin{abstract}
 Toolsmiths have created many tools designed to increase worker productivity by automatically performing tasks, but these tools are often ignored or undiscovered. This lack of tool awareness can have significant consequences, especially in the software engineering industry. Automated recommendation systems were developed to help improve tool discovery, however these systems are less effective than user-to-user recommendations. To increase awareness of helpful development tools, we introduce \textit{\tool}, a new automated recommender system that integrates concepts from peer interactions and software engineering practices for researchers to increase discovery of their tools, and present an evaluation of how our system effectively recommends an open source static analysis tool to Java developers on GitHub projects.
 \end{abstract}
+\keywords{Software Engineering; Tool Recommendations; Tool Discovery; Open Source}
 
-\begin{IEEEkeywords}
-Software Engineering; Tool Recommendation; Tool Discovery; Open Source
-\end{IEEEkeywords}
+\maketitle
 
 \section{Introduction}
 
