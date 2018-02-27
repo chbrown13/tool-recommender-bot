@@ -204,15 +204,13 @@ Here's what our results say about improving tool recommendation systems...
 
 Internal\\
 
-An external threat to the validity of our study is that we only observed open source projects hosted on Github in our evaluation. Our results may not generalize to closed source software projects and their developers. To minimize this, we selected popular real-world software applications on Github owned by organizations to avoid the use of personal development projects. Additionally, our recommendation system has limited generalizablility due to the fact we currently only assess recommendations for the Error Prone static analysis tool on Java projects that build with Maven. Future work will look to extend \tool~to include different types of tools, programming languages, and build systems.
+An external threat to the validity of our study is that we only observed open source projects, and our results may not generalize to closed source software projects and their developers. To minimize this, we evaluated \tool~on popular GitHub software applications with a wide variety of goals. Additionally, our recommendation system has limited generalizablility due to the fact we currently only assess recommendations for the Error Prone static analysis tool on Java projects that build with Maven.
 
 \section{Future Work}
 
-More programming languages (Python, C, C++ etc.)...\\
+To improve discovery of software engineering tools, we aim to increase the practicality and convenience of \tool~for researchers to implement our system with their projects. \tool~currently only works for development tools for Java code. This disregards useful programming tools that focus on other languages such as...
 
-More types of tools to recommend (static analysis, security, debugging, etc.)... \\
-
-More build systems (ant, gradle, TravisCI, bazel)...\\
+Additionally, our system requires projects that build with Maven. This restriction ignores helpful software engineering tools that implement different build systems, for example,...
 
 \section{Conclusion}
 
