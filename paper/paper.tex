@@ -139,12 +139,14 @@ We used real-world open source software applications to evaluate \tool. To choos
 \item primariy written in Java,
 \item build using Maven,
 \item do not already use \textsc{Error Prone},
-\item have at least 100 stars,
-\item ranked among the top forked repositories, and
-\item have had 10 pull request opened in the last n days? %TODO: finalize project list
+\item have at least 100 stars, and
+\item ranked among the top forked repositories
 \end{itemize}
 
-\textsc{Error Prone} only analyzes Java code, so this evaluation was limited to Java projects. Maven is a build automation and dependency management system for Java projects. \tool~requires Maven to automatically modify the \textit{pom.xml} files and run the tool. We chose the most forked and starred repositories to retrieve the most popular GitHub projects in terms of developer activity. GitHub suggests forking repositories as a best practice for making contributions and pull requests to projects\footnote{https://help.github.com/articles/fork-a-repo/}. Stars represent a social aspect of GitHub for users to indicate their favorite projects and repositories they are interested in\footnote{https://help.github.com/articles/about-stars/}. Using a GitHub search API, we identified 2003 projects to use for our evaluation.\footnote{\url{https://docs.google.com/spreadsheets/d/1MRmVPiUeDlYMa0UODzMmFbGeYBbahzdeEv1YSgqC1oo/edit?usp=sharing}}
+Our evaluation was limited to Java projects since \textsc{Error Prone} only analyzes Java code. \tool~requires Maven, a build automation and dependency management system for Java projects, to run tools by automatically modifying the Project Object Model (\textit{pom.xml}) configuration file and building projects. We chose the most forked and starred repositories to study the most popular projects on GitHub. We target projects that don't use \textsc{Error Prone} to increase awareness for developers who are not knowledgeable about the tool. Stars are a social aspect of GitHub where users can indicate favorite projects and repositories of interest\footnote{https://help.github.com/articles/about-stars/}. GitHub suggests forking repositories as a best practice for making contributions and pull requests to projects\footnote{https://help.github.com/articles/fork-a-repo/}. 
+
+After compiling a list of repositories that met the above criteria, we selected the top 250 projects based on the creation date of their last 10 pull requests. We chose projects with more recent pull requests to provide more opportunities for \tool~to make recommendations. The evaluation repositories include a wide range of software applications with diversified functions and created by many different companies and developers. A list of projects used for this study is publicly available online.\footnote{\url{https://gist.github.com/tool-recommender-bot/1769ccd148508beabcd273a731723860}}
+%TODO: Maybe examples of projects?
 
 \subsection{Study Design}
 
