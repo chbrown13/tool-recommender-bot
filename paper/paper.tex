@@ -17,8 +17,6 @@
 \hyphenation{op-tical net-works semi-conduc-tor}
 \raggedbottom
 \newcommand{\tool}{\textsl{tool-recommender-bot}}
-\newcommand{\pseudosection}[1]{\vspace{2mm} \noindent {\bf #1}}
-\newcommand{\pseudosubsection}[1]{\vspace{2mm} \noindent{\it #1}}
 
 \begin{document}
 
@@ -76,20 +74,18 @@ Previous work has also explored the tool discovery problem and barriers preventi
 There are numerous existing technical approaches created to solve the tool discovery problem. Fischer and colleagues found that systems requiring users to explicitly seek help, or passive help systems, are ineffective and active help systems are more useful for increasing tool awareness~\cite{Fischer1984ActiveHelpSystems}. Gordon and colleagues developed Codepourri, a system using crowdsourcing to make recommendations for Python code~\cite{Gordon2015Codepourri}. Linton and colleagues designed a recommender system called OWL (organization-wide learning) to disseminate tool knowledge using logs throughout a company~\cite{Linton2000OWL}. ToolBox was developed as a ``community sensitive help system'' by Maltzahn to recommend Unix commands~\cite{Maltzahn1995Toolbox}. Answer Garden helps users discover new tools based on common questions asked by colleagues~\cite{Ackerman1990AnswerGarden}. SpyGlass automatically recommends tools to help users navigate code~\cite{Viriyakattiyaporn2010Spyglass}. We developed \tool~to actively suggest useful programming tools and increase awareness for software engineers. Our approach differs from existing recommendation systems in the design and implementation of our tool.
 
 \section{Tool}
-\tool aims to increase discovery and adoption of useful software engineering tools among developers. This section describes the design and implementation of our system for making recommendations similar to those from a peer and incorporating software engineering industry practices.
+\tool~aims to increase discovery and adoption of useful software engineering tools among developers. This section describes the design and implementation of our system for making recommendations similar to those from a peer and incorporating software engineering industry practices.
 
 \subsection{Peer Interactions}
 Previous research shows that recommendations between peers is an effective way to increase tool discovery and adoption~\cite{MurphyHill2011PeerInteraction}. Many existing help systems simulate user-to-user recommendations to increase awareness of application tools and features. 
 
-To better understand what makes peer interactions an effective mode of tool discovery, our prior work observed how colleagues recommend tools to each other while working on tasks. Our results found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation, while other characteristics, such as politeness and persuasiveness, do not significantly impact the outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
+To better understand what makes peer interactions an effective mode of tool discovery, prior work by Brown and colleagues observed how software users recommend tools to each other while completing tasks. They found that \emph{receptiveness} is a significant factor in determining the effectiveness of a tool recommendation while other characteristics, such as politeness and persuasiveness, do not significantly impact recommendation outcome~\cite{vlhcc17}. We designed \tool~to integrate user receptivity into our approach for making tool recommendations to increase awareness of programming tools.
 
-\pseudosubsection{Receptiveness}
-
-Previous work emphasizes the importance of receptivity. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. Our prior work defined receptiveness using two criteria introduced by Fogg: 1) demonstrating a desire and 2) familiarity with the target behavior and technology. Below we explain how \tool~was designed to recommend programming tools to software developers based on their desire and familiarity. \\
+Previous work emphasizes the importance of receptiveness. Fogg outlined best practicies for creating persuasive technology to change user behavior, and argued designers must choose a receptive audience~\cite{FoggPersuasive}. We define receptiveness using two criteria outlined by Fogg: 1) demonstrating desire and 2) familiarity with target behavior. Below we explain how we designed \tool~to recommend programming tools to software developers based on their desire and familiarity.
 
 \subsubsection{Desire}
 
-The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase tool discovery by recommending software engineering tools designed to improve software quality. \\
+The primary desire of software users is to have enjoyable and problem-free experiences with software. Developers of these applications also have similar desires, to create high-quality and functioning programs for users. A 2002 study revealed that software engineers demonstrate this desire by spending the majority of the software development process and 70-80\% of their time testing and debugging code~\cite{NIST}. To aid developers in finding, fixing, and preventing various issues in code, many different types of tools have been created to help accomplish these tasks. However, despite the existence of effective tools for detecting errors, the number of bugs in software is increasing~\cite{HaveThingsChanged}. We aim to increase tool discovery by recommending software engineering tools designed to improve software quality.
 
 \subsubsection{Familiarity}
 
@@ -99,13 +95,13 @@ Choosing an audience familiar with the target behavior is also vital to increasi
 
 \tool~incorporates key software engineering industry concepts to improve tool discovery among software developers.
 
-\pseudosubsection{Continuous Integration}
+\subsubsection{Continuous Integration}
 
 Our system utilizes continuous integration to recommend useful tools before pull request changes are integrated into the main repository, or merged. \tool~is implemented as a plugin for Jenkins, ``the leading open source automation server'' for source code deployment and delivery.\footnote{https://jenkins.io/} The system uses Jenkins to clone Github repositories and periodically check for newly-opened pull requests every 15 minutes. When a new pull request is found, our system uses Jenkins to automatically run our approach to recommend useful software engineering tools.
 
 To analyze the source code, we target projects that use the Maven~\footnote{https://maven.apache.org/} build automation and software management tool for Java applications. Our approach uses Maven to automatically handle dependencies and perform the static analysis when the project builds. We inject the desired software engineering tool as a Maven plugin to repository's \textit{pom.xml} project object model file to add it to the build process. \tool~then builds both the original version of the code before the proposed changes were made (base) and the changed version of the repository with the pull request modifications implemented (head) to inspect differences. Using Maven allows \tool~to run on a large number of Java projects that use the popular build tool and also makes our approach extendable to recommend other tools implemented as Maven plugins in future work. 
 
-\pseudosubsection{Fix Identification}
+\subsubsection{Fix Identification}
 
 After analyzing the base and head versions of the code, our approach parses the build output of each version to determine if any reported errors were fixed in the pull request. The software engineering tool identifies faults in the source code, and we take the tool's output and use it in an algorithm we developed to determine if pull request changes fix a reported bug. Our technique uses the code differencing tool GumTree~\cite{GumTree} to identify actions (addition, delete, insert, move, and update) performed between pull request versions and parse the code to convert the text into abstract syntax trees. 
 
@@ -115,7 +111,7 @@ To determine if an error was fixed, we take several things into consideration: F
 %TODO: Delete?
 %When a fix is identified in the pull request, \tool~then aims to find the location of the fix in the head version. To find the modified line that fixed a bug, we use GumTree to parse the Java file and convert it into abstract syntax trees. We look for the action closest to the offset of the error node calculated from the bug line number reported by the software engineering tool, if applicable. If the closest action is not a delete, then our approach take the location takes the location of that action. Otherwise, if the line was removed our algorithm searches for the closest sibling node or if none exists then the location of the parent. Additionally, the line of the fix had to be converted to the equivalent position in the pull request diff file displaying the changes between file versions, or number of lines below the "@@" header\footnote{https://developer.github.com/v3/pulls/comments/\#create-a-comment}, before moving on to the next phase.
 
-\pseudosubsection{Code Review}
+\subsubsection{Code Review}
 
 Code reviews from co-workers are often standard practice in software development~\cite{CBirdCodeReviewingTrenches}. Pull requests are the primary method of development contributions and code reviews on Github~\cite{PullRequestReview}. Our approach simulates peer reviews by making recommendations for static analysis tools as a comment to the pull request. \tool~automatically runs software engineering tools and analyzes the code changes, providing feedback to developers based on their changes based on the output from the tool. Github provides functionality for making comments at specific lines of code in a pull request, and \tool~recommends the tool as a comment at the fix location line from the previous step. Figure 1 presents an example recommendation from our system on a pull request. %TODO: Add screenshot 
 
@@ -152,13 +148,13 @@ After compiling a list of repositories that met the above criteria, we selected 
 
 We designed our evaluation to gather quantitative and qualitative data addressing our research questions.  To analyze 2000+ repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to generate Jenkins jobs with \tool~running on multiple virtual machines.
 
-\pseudosubsection{RQ1}
+\subsubsection{RQ1}
 
 To answer our first research question, we observed how often our approach makes recommendations on newly opened pull requests. In addition to the frequency of recommendations, we also tracked instances where \textsc{Error Prone} defects were removed but not reported as fixed according to our fix identification algorithm in Section III.B.2, the number of occurrences where errors were fixed but no other instances of that bug were found in the code, and the false positive rate.
 
 Johnson and colleagues discovered one of the primary barriers to static analysis tool usage among software engineers is false positives in the output~\cite{Johnson2013Why}. To prevent unnecessary recommendations from our system, we manually reviewed all instances where \tool~reported a recommendation should be made. After inspecting each reported pull request, we determined whether it was an appropriate case for our system to make a recommendation to developers. If so, we proceeded to post the comment recommending \textsc{Error Prone} on the pull request. Otherwise, we noted the instance of a false positive in our approach and did not make a recommendation.
 
-\pseudosubsection{RQ2}
+\subsubsection{RQ2}
 
 To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request. We asked developers about their awareness of \textsc{Error Prone} and how likely they are to use the tool in the future. The survey also included a free-response section to provide an opportunity for participants to add comments on the usefulness of the recommendation.
 
@@ -168,11 +164,11 @@ Developers voluntarily consented to complete the survey and provide feedback on 
 
 We analyzed the data collected in our study to determine effectiveness of our automated tool recommendation system.
 
-\pseudosubsection{RQ1}
+\subsubsection{RQ1}
 
 Effective tool recommendation systems should have ample opportunities to regularly make recommendations to users. To determine how often \tool~automatically recommends \textsc{Error Prone}, we observed the number of pull request comments made by our tool. Our evaluation lasted for [some period of time], and we calculated the amount of true positive recommendations during that time span to measure the recommendation rate for each GitHub repository used in our study. To calculate the false positive rate, we compared the number of unnecessary instances where our tool proposed a recommendation found by researchers to the total number of instances where a recommendation reported by \tool.
 
-\pseudosubsection{RQ2}
+\subsubsection{RQ2}
 
 For our second research question, we accumulated responses from developers in our follow-up survey to determine the usefulness of our system. We utilized a five-point Likert scale for participants to rank how knowledgeable they were about the existence of \textsc{Error Prone} before the recommendation and how likely they are to use \textsc{Error Prone} for future development tasks. An optional free response section was provided at the end for respondents to describe explain why or why not they found the recommendation useful. These responses were used to analyze developers' reactions to our automated recommendation. Finally, researchers analyzed and independently coded open-ended responses from participants to further analyze the effectiveness of our system based on developer feedback.
 
