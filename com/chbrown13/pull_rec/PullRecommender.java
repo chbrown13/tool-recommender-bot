@@ -22,6 +22,8 @@ public class PullRecommender {
 	private int noSim = 0;
 	private String removed = "";
 	private String noSimilar = "";
+	private int baseErrorCount = 0;
+	private int pullErrorCount = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -145,6 +147,8 @@ public class PullRecommender {
 			List<Error> pullErrors = Utils.checkout(pull, tool, false);
 			if(baseErrors != null && pullErrors != null) {
 				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
+				baseErrorCount = baseErrors.size();
+				pullErrorCount = pullErrors.size();
 				List<Error> fixed = new ArrayList<Error>();	
 				for (Error e: baseErrors) {
 					if (!pullErrors.contains(e)) {
@@ -196,6 +200,7 @@ public class PullRecommender {
 						.replace("{err}", removed)
 						.replace("{sim}", Integer.toString(noSim))
 						.replace("{simErr}", noSimilar);
+					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(pullErrorCount); 
 					sendEmail(out, "New Pull Request", pull.number());
 					System.out.println(out);
 					break;						
