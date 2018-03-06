@@ -439,7 +439,7 @@ public class Utils {
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
-						if(qName.equals("plugins")) {
+						if(qName.equals("plugins") && !myTool) {
 							writer.write(tool.getPlugin());
 							writer.write("\n</plugins>");	
 							myTool = true;			
