@@ -5,7 +5,7 @@ import com.jcabi.http.response.JsonResponse;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import javax.json.JsonObject;
+import javax.json.*;
 import org.apache.commons.mail.*;
 
 
@@ -20,10 +20,12 @@ public class PullRecommender {
 	private int rem = 0;
 	private int fix = 0;
 	private int noSim = 0;
+	private int intro = 0;
 	private String removed = "";
 	private String noSimilar = "";
+	private String introduced = "";
 	private int baseErrorCount = 0;
-	private int pullErrorCount = 0;
+	private int commErrorCount = 0;
 
 	public PullRecommender(Repo repo) {
 		this.repo = repo;
@@ -38,11 +40,11 @@ public class PullRecommender {
 	 * @param subject Subject of the email
 	 * @param pr	  Pull request number
 	 */
-	private static void sendEmail(String text, String subject, int pr) {
+	private static void sendEmail(String text, String subject, String hash) {
 		SimpleEmail email = new SimpleEmail();
 		String viewChanges = Comment.changes.replace("{user}", Utils.getProjectOwner())
 			.replace("{repo}", Utils.getProjectName())
-			.replace("{num}", Integer.toString(pr));
+			.replace("{num}", hash);
 		String[] emailAcct = Utils.getCredentials(".email.creds");
 		try {
 			email.setHostName("smtp.googlemail.com");
@@ -81,7 +83,7 @@ public class PullRecommender {
 				);
 
 				String run = Comment.cmd.replace("{args}", args);
-				sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", pull.number());
+				//sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", pull.number());
 				recs += 1;
 				prs.add(pull.number());
 			} else {
@@ -112,110 +114,117 @@ public class PullRecommender {
 	}
 
 	/**
-	 * Analyze code of files in pull request and compare to master branch.
+	 * Analyze code of files in commit and compare to master branch.
 	 *
-	 * @param pull   Current pull request
+	 * @param commit   Current commit
 	 * @return       Number of recommendations made
 	 */
-	private void analyze(Pull.Smart pull) {
-		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+	private void analyze(RepoCommit.Smart commit) {
+		System.out.println("Analyzing " + commit.sha() + "...");
 		removed = "";
 		Tool tool = new ErrorProne();		
 		String developer = "";
-		boolean pullRec = false;
-		List<String> javaFiles = new ArrayList<String>();
-		Iterator<JsonObject> files = null;
+		boolean java = false;
+		ArrayList<String> javaFiles = new ArrayList<String>();
 		try {
-			files = pull.files().iterator();			
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-		while (files.hasNext()) {
-			JsonObject f = files.next();
-			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
-				javaFiles.add(f.getString("filename"));
-				pullRec = true;
-			}		
-		}
-		if (!pullRec) {
-			System.out.println("No java changes.");
-			return;
-		}
-		try {
-			List<Error> baseErrors = Utils.checkout(pull, tool, true);
-			List<Error> pullErrors = Utils.checkout(pull, tool, false);
-			if(baseErrors != null && pullErrors != null) {
-				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
-				baseErrorCount = baseErrors.size();
-				pullErrorCount = pullErrors.size();
-				List<Error> fixed = new ArrayList<Error>();	
-				for (Error e: baseErrors) {
-					if (!pullErrors.contains(e)) {
-						fixed.add(e);
+			JsonArray files = commit.json().getJsonArray("files");
+			System.out.println(files.size());
+			for (int i = 0; i < files.size(); i++) {
+				if (files.getJsonObject(i).getString("filename").endsWith(".java")) {
+					java = true;
+					javaFiles.add(files.getJsonObject(i).getString("filename"));
+				}
+			}           
+			if (!java) {
+				System.out.println("No java changes.");
+				return;
+			} else {
+				List<Error> baseErrors = Utils.checkout(commit, tool, true);
+				List<Error> commErrors = Utils.checkout(commit, tool, false);
+				if(baseErrors != null && commErrors != null) {
+					System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(commErrors.size()));				
+					baseErrorCount = baseErrors.size();
+					commErrorCount = commErrors.size();
+					List<Error> fixed = new ArrayList<Error>();	
+					List<Error> added = new ArrayList<Error>();
+					for (Error e: baseErrors) {
+						System.out.println(e.getKey());
+						if (!commErrors.contains(e)) {
+							fixed.add(e);
+						}
+					}
+					for (Error e: commErrors) {
+						System.out.println(e.getKey());
+						if (!baseErrors.contains(e)) {
+							added.add(e);
+							intro += 1;
+							introduced += "-" + e.getError() + "\n";
+						}
+					}
+					for (Error e: fixed) {
+						if (isFix(baseErrors, commErrors, e, javaFiles)) {
+							fix += 1;			
+							int line = 0;//Utils.getFix(commit, e);			
+							System.out.println("Fixed "+ e.getKey() + " in commit " + commit.sha()
+								+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
+							//makeRecommendation(tool, commit, e, line, baseErrors);
+						} else {
+							rem += 1;
+							removed += "-" + e.getError() + "\n";
+						}
 					}
 				}
-				for (Error e: fixed) {
-					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
-						fix += 1;			
-						int line = Utils.getFix(pull, e);			
-						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
-							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
-						makeRecommendation(tool, pull, e, line, baseErrors);
-					} else {
-						rem += 1;
-						removed += "-" + e.getError() + "\n";
-					}
-				}	
-			}
-			Utils.cleanup();
+				Utils.cleanup();
+			} 
 		} catch (IOException e) {
-			e.printStackTrace();
-			Utils.cleanup();
+				e.printStackTrace();
+				//Utils.cleanup();
 		}	
 	}
 
 	/**
-	 * Searches for new pull requests opened for a Github repository every 15 minutes.
+	 * Searches for new commits opened for a Github repository every 15 minutes.
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
-		System.out.println("Getting new pull requests...");
-		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
+	private ArrayList<RepoCommit.Smart> getChanges() {
+		System.out.println("Getting new commits...");
+		ArrayList<RepoCommit.Smart> commits = new ArrayList<RepoCommit.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "all");
-		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
+		//params.put("state", "all");
+		Iterator<RepoCommit> it = this.repo.commits().iterate(params).iterator();
 		int i = 0;
-		while (pullit.hasNext()) {
-			Pull.Smart pull = new Pull.Smart(pullit.next());
-			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
-					analyze(pull);					
-					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}Fixed but not exists: {sim}\n{simErr}"
+		while (it.hasNext()) {
+			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
+			//try {
+				if (i < 10) { //new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+					analyze(commit);					
+					commits.add(commit);
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}\nFixed but so similar: {sim}\n{simErr}\nIntroduced: {intro}\n {new}"
 						.replace("{rec}", Integer.toString(recs))
 						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
 						.replace("{err}", removed)
 						.replace("{sim}", Integer.toString(noSim))
-						.replace("{simErr}", noSimilar);
-					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(pullErrorCount); 
-					sendEmail(out, "New Pull Request", pull.number());
+						.replace("{simErr}", noSimilar)
+						.replace("{intro}", Integer.toString(intro))
+						.replace("{new}", introduced);
+					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(commErrorCount); 
+					// sendEmail(out, "New Commit", commit.sha());
 					System.out.println(out);
 					break;						
 				} else {
-					if (requests.isEmpty()) {
-						System.out.println("No new pull requests");
+					if (commits.isEmpty()) {
+						System.out.println("No new commits");
 					}
 					break;
 				}
-			} catch (IOException e) {
+			/*} catch (IOException e) {
 				e.printStackTrace();
 				return null;
-			}
+			}*/
 		}
-		return requests;
+		return commits;
 	}
 
 	public static void main(String[] args) {
@@ -223,6 +232,16 @@ public class PullRecommender {
 		RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		PullRecommender recommender = new PullRecommender(repo);
-		ArrayList<Pull.Smart> requests = recommender.getPullRequests();
+		//recommender.getChanges();
+		try {
+			final JsonResponse jr = github.entry().uri().path("repos/chbrown13/RecommenderTest/commits/4c2c3ec0a00f92083533cf72eccc90ca742a3939/comments")
+				.queryParam("body", "Java Test")
+				.queryParam("path", "com/chbrown13/pull_rec/PullRecommender")
+				.queryParam("position", 1)
+				.back().method("POST").fetch().as(JsonResponse.class);
+			System.out.println(jr);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

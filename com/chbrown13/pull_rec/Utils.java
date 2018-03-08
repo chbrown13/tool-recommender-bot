@@ -9,6 +9,7 @@ import com.github.gumtreediff.matchers.*;
 import com.github.gumtreediff.matchers.heuristic.gt.*;
 import com.github.gumtreediff.tree.*;
 import com.jcabi.github.Pull;
+import com.jcabi.github.RepoCommit;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
@@ -494,36 +495,27 @@ public class Utils {
 	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
-	 * @param hash   Git SHA value
-	 * @param author Creator of pull request
+	 * @param commit Current GitHub commit
 	 * @param tool   Tool to perform analysis and recommend
-	 * @param base   True if checking base repo, false if PR version
+	 * @param base   True if parent of commit, false if commit version
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
+	public static List<Error> checkout(RepoCommit.Smart commit, Tool tool, boolean base) throws IOException {
 		String dirName = projectName;
 		String hash, owner, branch, repo;
-		JsonObject json = pull.json();
+		JsonObject json = commit.json();
 		Git git = null;
+		owner = projectOwner;
+		repo = projectName;
+		branch = "";
 		try {
 			if(base) {
-				hash = json.getJsonObject("base").getString("sha");
-				dirName += "1";
-				owner = projectOwner;
-				repo = projectName;
-				branch = "";
-			} else {
-				JsonObject head = json.getJsonObject("head");
-				hash = head.getString("sha");
+				JsonArray ja = json.getJsonArray("parents");
+				hash = ja.getJsonObject(ja.size() - 1).getString("sha");
 				dirName += "2";
-				try {
-					owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
-					repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-				} catch (NullPointerException|ClassCastException pulle) { //unknown repository
-					owner = head.getJsonObject("user").getString("login");
-					repo = projectName;
-				}
-				branch = head.getString("ref");
+			} else {
+				hash = json.getString("sha");
+				dirName += "1";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -547,7 +539,7 @@ public class Utils {
 		if (log == null) {
 			return null;
 		}
-		System.out.println(log);
+		//System.out.println(log);
 		return tool.parseOutput(log);
 	}
 
