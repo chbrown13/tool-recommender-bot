@@ -14,7 +14,6 @@ public class Error {
 	public Error(String name, String path, String line, String error, String msg, String log) {
 		String project = Utils.getProjectName();
 		String realPath = path.replace(project+"1", project).replace(project+"2", project);
-		this.key = String.join(":", realPath, error);
 		this.filename = name;
 		this.filepath = path;
 		this.line = Integer.parseInt(line);
@@ -47,7 +46,7 @@ public class Error {
 	 * @return   String key for error
 	 */
 	public String getKey() {
-		return this.key;
+		return String.join(":", getLocalFilePath(), this.error);
 	}
 
 	/**

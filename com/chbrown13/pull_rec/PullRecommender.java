@@ -16,10 +16,9 @@ public class PullRecommender {
 
 	private Repo repo;
 	private Set<Integer> prs = new HashSet<Integer>();	
-	private int recs = 0;;
+	private int recs = 0;
 	private int rem = 0;
 	private int fix = 0;
-	private int noSim = 0;
 	private int intro = 0;
 	private String removed = "";
 	private String introduced = "";
@@ -31,6 +30,21 @@ public class PullRecommender {
 		this.repo = repo;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
+	}
+
+	/**
+	 * Reset class variables for each PR
+	 */
+	private void reset() {
+		removed = "";
+		introduced = "";
+		noSimilar = "";
+		baseErrorCount = 0;
+		pullErrorCount = 0;
+		intro = 0;
+		recs = 0;
+		rem = 0;
+		fix = 0;
 	}
 
 	/**
@@ -87,7 +101,7 @@ public class PullRecommender {
 				recs += 1;
 				prs.add(pull.number());
 			} else {
-				noSim += 1;
+				fix += 1;
 				noSimilar += error.getLog() + "\n";
 			}
 		} catch (IOException e) {
@@ -121,7 +135,7 @@ public class PullRecommender {
 	 */
 	private void analyze(Pull.Smart pull) {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
-		removed = "";
+		reset();
 		Tool tool = new ErrorProne();		
 		String developer = "";
 		boolean pullRec = false;
@@ -148,26 +162,28 @@ public class PullRecommender {
 			List<Error> baseErrors = Utils.checkout(pull, tool, true);
 			List<Error> pullErrors = Utils.checkout(pull, tool, false);
 			if(baseErrors != null && pullErrors != null) {
-				System.out.println(Integer.toString(baseErrors.size()) +"------"+Integer.toString(pullErrors.size()));				
-				baseErrorCount = baseErrors.size();
-				pullErrorCount = pullErrors.size();
 				List<Error> fixed = new ArrayList<Error>();	
 				List<Error> added = new ArrayList<Error>();
 				for (Error e: baseErrors) {
-					if ((!pullErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(pullErrors, e)) && !fixed.contains(e)) {
-						fixed.add(e);
+					if (javaFiles.contains(e.getLocalFilePath())) {
+						baseErrorCount += 1;
+						if ((!pullErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(pullErrors, e)) && !fixed.contains(e)) {
+							fixed.add(e);
+						}
 					}
 				}
 				for (Error e: pullErrors) {
-					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(pullErrors, e)) && !added.contains(e)) {
-						added.add(e);
-						intro += 1;
-						introduced += "-" + e.getKey() + "\n";
+					if (javaFiles.contains(e.getLocalFilePath())) {
+						pullErrorCount += 1;
+						if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(pullErrors, e)) && !added.contains(e)) {
+							added.add(e);
+							intro += 1;
+							introduced += "-" + e.getKey() + "\n";
+						}
 					}
 				}
 				for (Error e: fixed) {
 					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
-						fix += 1;			
 						int line = Utils.getFix(pull, e);			
 						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
 							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
@@ -203,19 +219,17 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}Fixed but not exists: {sim}\n{simErr}\nIntroduced: {intro}\n{new}"
+					String out = "Recommendations: {rec}\nRemoved: {rem}\n{err}Fixes: {sim}\n{simErr}Introduced: {intro}\n{new}"
 						.replace("{rec}", Integer.toString(recs))
-						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
 						.replace("{err}", removed)
-						.replace("{sim}", Integer.toString(noSim))
+						.replace("{sim}", Integer.toString(fix))
 						.replace("{simErr}", noSimilar)
 						.replace("{intro}", Integer.toString(intro))
 						.replace("{new}", introduced);
 					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(pullErrorCount); 
 					sendEmail(out, "New Pull Request", pull.number());
 					System.out.println(out);
-					break;						
 				} else {
 					if (requests.isEmpty()) {
 						System.out.println("No new pull requests");
