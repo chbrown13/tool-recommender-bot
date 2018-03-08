@@ -20,7 +20,9 @@ public class PullRecommender {
 	private int rem = 0;
 	private int fix = 0;
 	private int noSim = 0;
+	private int intro = 0;
 	private String removed = "";
+	private String introduced = "";
 	private String noSimilar = "";
 	private int baseErrorCount = 0;
 	private int pullErrorCount = 0;
@@ -150,9 +152,17 @@ public class PullRecommender {
 				baseErrorCount = baseErrors.size();
 				pullErrorCount = pullErrors.size();
 				List<Error> fixed = new ArrayList<Error>();	
+				List<Error> added = new ArrayList<Error>();
 				for (Error e: baseErrors) {
-					if (!pullErrors.contains(e)) {
+					if ((!pullErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(pullErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
+					}
+				}
+				for (Error e: pullErrors) {
+					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(pullErrors, e)) && !added.contains(e)) {
+						added.add(e);
+						intro += 1;
+						introduced += "-" + e.getError() + "\n";
 					}
 				}
 				for (Error e: fixed) {
@@ -193,13 +203,15 @@ public class PullRecommender {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
-					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}Fixed but not exists: {sim}\n{simErr}"
+					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}Fixed but not exists: {sim}\n{simErr}\nIntroduced: {intro}\n{new}"
 						.replace("{rec}", Integer.toString(recs))
 						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
 						.replace("{err}", removed)
 						.replace("{sim}", Integer.toString(noSim))
-						.replace("{simErr}", noSimilar);
+						.replace("{simErr}", noSimilar)
+						.replace("{intro}", Integer.toString(intro))
+						.replace("{new}", introduced);
 					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(pullErrorCount); 
 					sendEmail(out, "New Pull Request", pull.number());
 					System.out.println(out);

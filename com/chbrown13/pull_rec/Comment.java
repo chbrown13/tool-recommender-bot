@@ -35,7 +35,7 @@ public class Comment {
      *      pull# hash filepath line#
      */
     public static void main(String[] args) {
-		RtGithub github = new RtGithub("tool-recommender-bot", "bot-recommender-tool");
+		RtGithub github = new RtGithub("<username>", "<password>");
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
         Pull pull = repo.pulls().get(Integer.parseInt(args[2]));
         comment(new Pull.Smart(pull), args[3], args[4], args[5], Integer.parseInt(args[6]));
