@@ -162,7 +162,7 @@ public class PullRecommender {
 					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(pullErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;
-						introduced += "-" + e.getError() + "\n";
+						introduced += "-" + e.getKey() + "\n";
 					}
 				}
 				for (Error e: fixed) {
@@ -174,7 +174,7 @@ public class PullRecommender {
 						makeRecommendation(tool, pull, e, line, baseErrors);
 					} else {
 						rem += 1;
-						removed += "-" + e.getError() + "\n";
+						removed += "-" + e.getKey() + "\n";
 					}
 				}	
 			}
