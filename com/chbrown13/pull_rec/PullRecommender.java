@@ -16,12 +16,12 @@ public class PullRecommender {
 
 	private Repo repo;
 	private Set<Integer> prs = new HashSet<Integer>();	
-	private int recs = 0;;
+	private int recs = 0;
 	private int rem = 0;
 	private int fix = 0;
-	private int noSim = 0;
 	private int intro = 0;
 	private String removed = "";
+	private String introduced = "";
 	private String noSimilar = "";
 	private String introduced = "";
 	private int baseErrorCount = 0;
@@ -31,6 +31,21 @@ public class PullRecommender {
 		this.repo = repo;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
+	}
+
+	/**
+	 * Reset class variables for each PR
+	 */
+	private void reset() {
+		removed = "";
+		introduced = "";
+		noSimilar = "";
+		baseErrorCount = 0;
+		pullErrorCount = 0;
+		intro = 0;
+		recs = 0;
+		rem = 0;
+		fix = 0;
 	}
 
 	/**
@@ -87,7 +102,7 @@ public class PullRecommender {
 				recs += 1;
 				prs.add(pull.number());
 			} else {
-				noSim += 1;
+				fix += 1;
 				noSimilar += error.getLog() + "\n";
 			}
 		} catch (IOException e) {
@@ -122,12 +137,15 @@ public class PullRecommender {
 	private void analyze(RepoCommit.Smart commit) {
 		System.out.println("Analyzing " + commit.sha() + "...");
 		removed = "";
+	private void analyze(Pull.Smart pull) {
+		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		reset();
 		Tool tool = new ErrorProne();		
 		String developer = "";
 		boolean java = false;
 		ArrayList<String> javaFiles = new ArrayList<String>();
 		try {
-			JsonArray files = commit.json().getJsonArray("files");
+			/*JsonArray files = commit.json().getJsonArray("files");
 			System.out.println(files.size());
 			for (int i = 0; i < files.size(); i++) {
 				if (files.getJsonObject(i).getString("filename").endsWith(".java")) {
@@ -151,7 +169,56 @@ public class PullRecommender {
 						System.out.println(e.getKey());
 						if (!commErrors.contains(e)) {
 							fixed.add(e);
+						}*/
+			files = pull.files().iterator();			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+		while (files.hasNext()) {
+			JsonObject f = files.next();
+			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
+				javaFiles.add(f.getString("filename"));
+				pullRec = true;
+			}		
+		}
+		if (!pullRec) {
+			System.out.println("No java changes.");
+			return;
+		}
+		try {
+			List<Error> baseErrors = Utils.checkout(pull, tool, true);
+			List<Error> pullErrors = Utils.checkout(pull, tool, false);
+			if(baseErrors != null && pullErrors != null) {
+				List<Error> fixed = new ArrayList<Error>();	
+				List<Error> added = new ArrayList<Error>();
+				for (Error e: baseErrors) {
+					if (javaFiles.contains(e.getLocalFilePath())) {
+						baseErrorCount += 1;
+						if ((!pullErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(pullErrors, e)) && !fixed.contains(e)) {
+							fixed.add(e);
 						}
+					}
+				}
+				for (Error e: pullErrors) {
+					if (javaFiles.contains(e.getLocalFilePath())) {
+						pullErrorCount += 1;
+						if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(pullErrors, e)) && !added.contains(e)) {
+							added.add(e);
+							intro += 1;
+							introduced += "-" + e.getKey() + "\n";
+						}
+					}
+				}
+				for (Error e: fixed) {
+					if (isFix(baseErrors, pullErrors, e, javaFiles)) {
+						int line = Utils.getFix(pull, e);			
+						System.out.println("Fixed "+ e.getKey() +" in PR #"+Integer.toString(pull.number())
+							+ " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
+						makeRecommendation(tool, pull, e, line, baseErrors);
+					} else {
+						rem += 1;
+						removed += "-" + e.getKey() + "\n";
 					}
 					for (Error e: commErrors) {
 						System.out.println(e.getKey());
@@ -194,25 +261,31 @@ public class PullRecommender {
 		//params.put("state", "all");
 		Iterator<RepoCommit> it = this.repo.commits().iterate(params).iterator();
 		int i = 0;
-		while (it.hasNext()) {
+		/*while (it.hasNext()) {
 			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
 			//try {
 				if (i < 10) { //new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(commit);					
 					commits.add(commit);
 					String out = "Recommendations: {rec}\nFixes: {fix}\nRemoved: {rem}\n{err}\nFixed but so similar: {sim}\n{simErr}\nIntroduced: {intro}\n {new}"
+		*/
+		while (pullit.hasNext()) {
+			Pull.Smart pull = new Pull.Smart(pullit.next());
+			try {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+					analyze(pull);					
+					requests.add(pull);
+					String out = "Recommendations: {rec}\nRemoved: {rem}\n{err}Fixes: {sim}\n{simErr}Introduced: {intro}\n{new}"
 						.replace("{rec}", Integer.toString(recs))
-						.replace("{fix}", Integer.toString(fix - recs))
 						.replace("{rem}", Integer.toString(rem))
 						.replace("{err}", removed)
-						.replace("{sim}", Integer.toString(noSim))
+						.replace("{sim}", Integer.toString(fix))
 						.replace("{simErr}", noSimilar)
 						.replace("{intro}", Integer.toString(intro))
 						.replace("{new}", introduced);
-					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(commErrorCount); 
-					// sendEmail(out, "New Commit", commit.sha());
+					out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(pullErrorCount); 
+					sendEmail(out, "New Pull Request", pull.number());
 					System.out.println(out);
-					break;						
 				} else {
 					if (commits.isEmpty()) {
 						System.out.println("No new commits");
