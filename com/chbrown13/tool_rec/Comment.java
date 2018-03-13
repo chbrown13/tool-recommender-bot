@@ -26,7 +26,7 @@ public class Comment {
      * @param line     Line number of fix to post comment on
      */
     private static void comment(RtGithub github, String hash, String comment, String file, int line) {
-        path = commitPath.replace("{sha}", hash);
+        String path = commitPath.replace("{sha}", hash);
         try {
             final JsonStructure args = Json.createObjectBuilder()
                 .add("body", comment)
