@@ -72,7 +72,8 @@ public class Comment {
      * user repo type hash comment filepath line#
      */
     public static void main(String[] args) {
-        RtGithub github = new RtGithub("tool-recommender-bot", "bot-recommender-tool");
+        String[] gitAcct = Utils.getCredentials(".github.creds");
+        RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
         Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
         if (args[2].equals(Recommender.PULL)) {
             Pull pull = repo.pulls().get(Integer.parseInt(args[3]));
