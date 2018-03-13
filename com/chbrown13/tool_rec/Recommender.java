@@ -131,6 +131,9 @@ public class Recommender {
 		if(baseErrors != null && changeErrors != null) {
 			List<Error> fixed = new ArrayList<Error>();	
 			List<Error> added = new ArrayList<Error>();
+			System.out.println("sizes");
+			System.out.println(baseErrors.size());
+			System.out.println(changeErrors.size());
 			for (Error e: baseErrors) {
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCount += 1;
