@@ -134,7 +134,7 @@ public class Recommender {
 			for (Error e: baseErrors) {
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCount += 1;
-					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
+					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) >= Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
 					}
 				}
@@ -142,7 +142,7 @@ public class Recommender {
 			for (Error e: changeErrors) {
 				if (files.contains(e.getLocalFilePath())) {
 					newErrorCount += 1;
-					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
+					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) <= Collections.frequency(changeErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;
 						introduced += "-" + e.getKey() + "\n";
