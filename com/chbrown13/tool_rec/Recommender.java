@@ -133,20 +133,20 @@ public class Recommender {
 			List<Error> added = new ArrayList<Error>();
 			System.out.println("base");
 			for (Error e: baseErrors) {
-				System.out.println(e.getKey());
+				System.out.println(e.getKey() + " " + changeErrors.contains(e));
 				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) >= Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
+					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
 					}
 				}
 			}
 			System.out.println("change");
 			for (Error e: changeErrors) {
-				System.out.println(e.getKey());
+				System.out.println(e.getKey() + " " + baseErrors.contains(e));
 				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) <= Collections.frequency(changeErrors, e)) && !added.contains(e)) {
+					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;
 						introduced += "-" + e.getKey() + "\n";
@@ -165,7 +165,7 @@ public class Recommender {
 					rem += 1;
 					removed += "-" + e.getKey() + "\n";
 				}
-			}	
+			}
 		}
 		return fix;
 	}

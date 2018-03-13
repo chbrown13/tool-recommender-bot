@@ -21,6 +21,7 @@ public class Error {
 		this.error = error;
 		this.message = msg;
 		this.log = log;
+		this.key = String.join(":", getLocalFilePath(), this.error);
     }
 
     /**
@@ -47,7 +48,7 @@ public class Error {
 	 * @return   String key for error
 	 */
 	public String getKey() {
-		return String.join(":", getLocalFilePath(), this.error);
+		return this.key;
 	}
 
 	/**
