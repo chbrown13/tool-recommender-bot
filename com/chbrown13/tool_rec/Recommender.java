@@ -131,23 +131,19 @@ public class Recommender {
 		if(baseErrors != null && changeErrors != null) {
 			List<Error> fixed = new ArrayList<Error>();	
 			List<Error> added = new ArrayList<Error>();
-			System.out.println("sizes");
-			System.out.println(baseErrors.size());
-			System.out.println(changeErrors.size());
-			for (String s: files) {
-				System.out.println(s);
-			}
+			System.out.println("base");
 			for (Error e: baseErrors) {
+				System.out.println(e.getKey());
 				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					System.out.println(e.getKey());
-					System.out.println(changeErrors.contains(e));
 					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) >= Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
 					}
 				}
 			}
+			System.out.println("change");
 			for (Error e: changeErrors) {
+				System.out.println(e.getKey());
 				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
 					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) <= Collections.frequency(changeErrors, e)) && !added.contains(e)) {
