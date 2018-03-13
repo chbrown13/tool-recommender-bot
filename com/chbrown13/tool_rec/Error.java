@@ -1,4 +1,4 @@
-package com.chbrown13.pull_rec;
+package com.chbrown13.tool_rec;
 
 import java.util.*;
 
@@ -132,7 +132,7 @@ public class Error {
 	}
     
     /**
-	 * Creates comment to recommend tool from error for a Github pull request.
+	 * Creates comment to recommend tool from error for a Github code change.
 	 *
 	 * @return   Message with fixed error and tool recommendation
 	 */

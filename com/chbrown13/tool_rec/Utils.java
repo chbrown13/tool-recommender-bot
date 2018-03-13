@@ -1,4 +1,4 @@
-package com.chbrown13.pull_rec;
+package com.chbrown13.tool_rec;
 
 import com.github.gumtreediff.actions.*;
 import com.github.gumtreediff.actions.model.Action;
@@ -9,6 +9,7 @@ import com.github.gumtreediff.matchers.*;
 import com.github.gumtreediff.matchers.heuristic.gt.*;
 import com.github.gumtreediff.tree.*;
 import com.jcabi.github.Pull;
+import com.jcabi.github.RepoCommit;
 import java.io.*;
 import java.lang.*;
 import java.net.*;
@@ -28,7 +29,7 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * The Utils class contains various helper methods and variables for the PullRecommender project.
+ * The Utils class contains various helper methods and variables for tool-recommender-bot
  */
 public class Utils {
 
@@ -38,11 +39,13 @@ public class Utils {
 	
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	
-	private static String DIFF_URL = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{pr}.diff";
+	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
+
+	private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
 	
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
-	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
+	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
@@ -57,6 +60,8 @@ public class Utils {
 	private static String username = "";
 
 	private static String password = "";
+
+	private static String diff = "";
 
 	private static int fixLine = -1;
 
@@ -242,11 +247,11 @@ public class Utils {
 	 * Parse changes in file to determine if a fix was made
 	 * 
 	 * @param base     Name of source file
-	 * @param pull     Name of destination file
+	 * @param head     Name of destination file
 	 * @param errorPos Character offset of error
 	 * @return		   Changed line number
 	 */
-	private static int findFix(String base, String pull, int errorPos) {
+	private static int findFix(String base, String head, int errorPos) {
 		Run.initGenerators();		
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
@@ -259,9 +264,9 @@ public class Utils {
 		boolean deleteOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
-			tree2 = jdt2.generateFromFile(pull);
+			tree2 = jdt2.generateFromFile(head);
 			src = Generators.getInstance().getTree(base).getRoot();
-			dst = Generators.getInstance().getTree(pull).getRoot();
+			dst = Generators.getInstance().getTree(head).getRoot();
 			m = Matchers.getInstance().getMatcher(src, dst);
 			m.match();
 			g = new ActionGenerator(src, dst, m.getMappings());
@@ -315,20 +320,18 @@ public class Utils {
 		if (temp == null) {
 			return -1;
 		}
-		return posToLine(temp.getPos(), pull);
+		return posToLine(temp.getPos(), head);
 	}
 	
 	/**
 	 * Returns line number of code fix
 	 * 
-	 * @param pull Pull request of fix
+	 * @param id   ID of code change (pullrequest number or commit hash)
 	 * @param err  Error fixed by user
 	 * @return     Line number of what is considered a fix or null if none
      */
-	public static int getFix(Pull.Smart pull, Error err) {
-		String url = DIFF_URL.replace("{user}", projectOwner)
-			.replace("{repo}", projectName)
-			.replace("{pr}", Integer.toString(pull.number()));
+	public static int getFix(String id, Error err) {
+		String url = diff.replace("{id}", id);
 		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
 		boolean diff = false;
@@ -365,12 +368,12 @@ public class Utils {
 		String content1 = "";
 		String content2 = "";
 		File base = new File(file1);
-		File pull = new File(file2);
-		if (!base.isFile() || !pull.isFile()) {
+		File head = new File(file2);
+		if (!base.isFile() || !head.isFile()) {
 			return false;
 		} else {
 			try {
-				noChange = FileUtils.contentEquals(base, pull);	
+				noChange = FileUtils.contentEquals(base, head);	
 				content1 = new String(Files.readAllBytes(Paths.get(file1)));
 				content2 = new String(Files.readAllBytes(Paths.get(file2)));			
 			} catch (IOException e) {
@@ -491,39 +494,39 @@ public class Utils {
 		}
 	}
 
+	public static List<Error> checkout(String hash, Tool tool, boolean base, String type) {
+		String owner = projectOwner;
+		String repo = projectName;
+		try {
+			return checkout(hash, projectOwner, projectName, tool, base, type);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
-	 * @param hash   Git SHA value
-	 * @param author Creator of pull request
+	 * @param commit Current GitHub commit
 	 * @param tool   Tool to perform analysis and recommend
-	 * @param base   True if checking base repo, false if PR version
+	 * @param base   True if parent of commit, false if commit version
+	 * @param type   Type of code change ("pull" or "commit")
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(Pull.Smart pull, Tool tool, boolean base) throws IOException {
+	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
 		String dirName = projectName;
-		String hash, owner, branch, repo;
-		JsonObject json = pull.json();
 		Git git = null;
 		try {
 			if(base) {
-				hash = json.getJsonObject("base").getString("sha");
 				dirName += "1";
-				owner = projectOwner;
-				repo = projectName;
-				branch = "";
 			} else {
-				JsonObject head = json.getJsonObject("head");
-				hash = head.getString("sha");
 				dirName += "2";
-				try {
-					owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
-					repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-				} catch (NullPointerException|ClassCastException pulle) { //unknown repository
-					owner = head.getJsonObject("user").getString("login");
-					repo = projectName;
+				if (type.equals(Recommender.PULL)) {
+					diff = PULL_DIFF.replace("{user}", owner).replace("{repo}", repo);
+				} else {
+					diff = COMMIT_DIFF.replace("{user}", owner).replace("{repo}", repo);
 				}
-				branch = head.getString("ref");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
