@@ -321,7 +321,8 @@ public class Recommender {
 			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
 			try {
 				String date = commit.json().getJsonObject("commit").getJsonObject("author").getString("date");
-				DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH);
+				DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+				format.setTimeZone(TimeZone.getTimeZone("GMT"));
 				Date created = format.parse(date);
 				if (new Date().getTime() - created.getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(commit);					
