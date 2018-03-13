@@ -39,11 +39,13 @@ public class Utils {
 	
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	
-	private static String DIFF_URL = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{pr}.diff";
+	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
+
+	private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
 	
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 
-	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={pull})";
+	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
 
@@ -58,6 +60,8 @@ public class Utils {
 	private static String username = "";
 
 	private static String password = "";
+
+	private static String diff = "";
 
 	private static int fixLine = -1;
 
@@ -322,14 +326,12 @@ public class Utils {
 	/**
 	 * Returns line number of code fix
 	 * 
-	 * @param pull Pull request of fix
+	 * @param id   ID of code change (Pull request number or commit hash)
 	 * @param err  Error fixed by user
 	 * @return     Line number of what is considered a fix or null if none
      */
-	public static int getFix(Pull.Smart pull, Error err) {
-		String url = DIFF_URL.replace("{user}", projectOwner)
-			.replace("{repo}", projectName)
-			.replace("{pr}", Integer.toString(pull.number()));
+	public static int getFix(String id, Error err) {
+		String url = diff.replace("{id}", id);
 		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
 		boolean diff = false;
@@ -492,49 +494,39 @@ public class Utils {
 		}
 	}
 
+	public static List<Error> checkout(String hash, Tool tool, boolean base, String type) {
+		String owner = projectOwner;
+		String repo = projectName;
+		try {
+			return checkout(hash, projectOwner, projectName, tool, base, type);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
 	 * @param commit Current GitHub commit
 	 * @param tool   Tool to perform analysis and recommend
 	 * @param base   True if parent of commit, false if commit version
+	 * @param type   Type of code change ("pull" or "commit")
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(Pull.Smart commit, Tool tool, boolean base) throws IOException {
+	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
 		String dirName = projectName;
-		String hash, owner, branch, repo;
-		JsonObject json = commit.json();
 		Git git = null;
-		owner = projectOwner;
-		repo = projectName;
-		branch = "";
 		try {
-			/*if(base) {
-				JsonArray ja = json.getJsonArray("parents");
-				hash = ja.getJsonObject(ja.size() - 1).getString("sha");
-				dirName += "2";
-			} else {
-				hash = json.getString("sha");
-				dirName += "1";
-			}*/
 			if(base) {
-				hash = json.getJsonObject("base").getString("sha");
 				dirName += "1";
-				owner = projectOwner;
-				repo = projectName;
-				branch = "";
 			} else {
-				JsonObject head = json.getJsonObject("head");
-				hash = head.getString("sha");
 				dirName += "2";
-				try {
-					owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
-					repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-				} catch (NullPointerException|ClassCastException pulle) { //unknown repository
-					owner = head.getJsonObject("user").getString("login");
-					repo = projectName;
+				if (type.equals(Recommender.PULL)) {
+					diff = PULL_DIFF.replace("{user}", owner).replace("{repo}", repo);
+				} else {
+					diff = COMMIT_DIFF.replace("{user}", owner).replace("{repo}", repo);
 				}
-				branch = head.getString("ref");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -558,7 +550,7 @@ public class Utils {
 		if (log == null) {
 			return null;
 		}
-		//System.out.println(log);
+		System.out.println(log);
 		return tool.parseOutput(log);
 	}
 
