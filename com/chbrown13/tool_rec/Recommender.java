@@ -138,18 +138,18 @@ public class Recommender {
 				System.out.println(s);
 			}
 			for (Error e: baseErrors) {
-				System.out.println(e.getLocalFilePath());
-				System.out.println(files.contains(e.getLocalFilePath()));
+				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					baseErrorCount += 1;
+					System.out.println(e.getKey());
+					System.out.println(changeErrors.contains(e));
 					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) >= Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
 					}
 				}
 			}
 			for (Error e: changeErrors) {
+				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					newErrorCount += 1;
 					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) <= Collections.frequency(changeErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;

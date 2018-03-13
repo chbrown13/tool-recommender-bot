@@ -47,7 +47,7 @@ public class Error {
 	 * @return   String key for error
 	 */
 	public String getKey() {
-		return String.join(":", this.realPath, this.error);
+		return String.join(":", getLocalFilePath(), this.error);
 	}
 
 	/**
