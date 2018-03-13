@@ -29,7 +29,7 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * The Utils class contains various helper methods and variables for the PullRecommender project.
+ * The Utils class contains various helper methods and variables for tool-recommender-bot
  */
 public class Utils {
 
@@ -247,11 +247,11 @@ public class Utils {
 	 * Parse changes in file to determine if a fix was made
 	 * 
 	 * @param base     Name of source file
-	 * @param pull     Name of destination file
+	 * @param head     Name of destination file
 	 * @param errorPos Character offset of error
 	 * @return		   Changed line number
 	 */
-	private static int findFix(String base, String pull, int errorPos) {
+	private static int findFix(String base, String head, int errorPos) {
 		Run.initGenerators();		
 		JdtTreeGenerator jdt1 = new JdtTreeGenerator();
 		JdtTreeGenerator jdt2 = new JdtTreeGenerator();
@@ -264,9 +264,9 @@ public class Utils {
 		boolean deleteOnly = true;
 		try {
 			tree1 = jdt1.generateFromFile(base);
-			tree2 = jdt2.generateFromFile(pull);
+			tree2 = jdt2.generateFromFile(head);
 			src = Generators.getInstance().getTree(base).getRoot();
-			dst = Generators.getInstance().getTree(pull).getRoot();
+			dst = Generators.getInstance().getTree(head).getRoot();
 			m = Matchers.getInstance().getMatcher(src, dst);
 			m.match();
 			g = new ActionGenerator(src, dst, m.getMappings());
@@ -320,13 +320,13 @@ public class Utils {
 		if (temp == null) {
 			return -1;
 		}
-		return posToLine(temp.getPos(), pull);
+		return posToLine(temp.getPos(), head);
 	}
 	
 	/**
 	 * Returns line number of code fix
 	 * 
-	 * @param id   ID of code change (Pull request number or commit hash)
+	 * @param id   ID of code change (pullrequest number or commit hash)
 	 * @param err  Error fixed by user
 	 * @return     Line number of what is considered a fix or null if none
      */
@@ -368,12 +368,12 @@ public class Utils {
 		String content1 = "";
 		String content2 = "";
 		File base = new File(file1);
-		File pull = new File(file2);
-		if (!base.isFile() || !pull.isFile()) {
+		File head = new File(file2);
+		if (!base.isFile() || !head.isFile()) {
 			return false;
 		} else {
 			try {
-				noChange = FileUtils.contentEquals(base, pull);	
+				noChange = FileUtils.contentEquals(base, head);	
 				content1 = new String(Files.readAllBytes(Paths.get(file1)));
 				content2 = new String(Files.readAllBytes(Paths.get(file2)));			
 			} catch (IOException e) {

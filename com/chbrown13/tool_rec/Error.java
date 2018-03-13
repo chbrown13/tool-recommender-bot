@@ -132,7 +132,7 @@ public class Error {
 	}
     
     /**
-	 * Creates comment to recommend tool from error for a Github pull request.
+	 * Creates comment to recommend tool from error for a Github code change.
 	 *
 	 * @return   Message with fixed error and tool recommendation
 	 */

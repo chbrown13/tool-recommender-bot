@@ -61,7 +61,7 @@ public class Recommender {
 	 * 
 	 * @param text    Contents of email message
 	 * @param subject Subject of the email
-	 * @param pr	  Pull request number
+	 * @param id	  Code change id (PR number or commit hash)
 	 */
 	private static void sendEmail(String text, String subject, String id) {
 		SimpleEmail email = new SimpleEmail();
@@ -89,13 +89,13 @@ public class Recommender {
 	}
 	
 	/**
-	 * Post message recommending ErrorProne to Github on pull request fixing error.
+	 * Create message recommending ErrorProne to Github code changes.
 	 *
 	 * @param tool   Tool to recommend
 	 * @param id	 Code change id (PR number or commit hash)
 	 * @param error  Fixed error 
 	 * @param line   Line number of fix
-	 * @param errors Errors found in changed code
+	 * @param errors List of errors
 	 * @param base   Original hash
 	 * @param head   Hash of code changes
 	 */
@@ -203,7 +203,7 @@ public class Recommender {
 			try {
 				owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
 				repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-			} catch (NullPointerException|ClassCastException pulle) { //unknown repository
+			} catch (NullPointerException|ClassCastException exc) { //unknown repository
 				owner = head.getJsonObject("user").getString("login");
 				repo = Utils.getProjectName();
 			}
