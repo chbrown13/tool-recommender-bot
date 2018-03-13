@@ -1,4 +1,4 @@
-package com.chbrown13.pull_rec;
+package com.chbrown13.tool_rec;
 
 import com.jcabi.github.*;
 import com.jcabi.http.response.JsonResponse;
@@ -10,9 +10,9 @@ import javax.json.*;
 
 
 /**
- * PullRecommender is the main class for this project and handles interactions with Github repositories.
+ * Search for projects to use for the tool-recommender-bot evaluation
  */
-public class PullRecommender {
+public class Recommender {
 
 	private static int year = 2008;
 	private static String url = "https://raw.githubusercontent.com/{user}/{repo}/master/pom.xml";
