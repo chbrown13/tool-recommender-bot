@@ -349,20 +349,5 @@ public class Recommender {
 		Recommender toolBot = new Recommender(repo);
 		toolBot.getCommits();
 		toolBot.getPullRequests();
-		/*try {
-			final JsonStructure apiArgs = Json.createObjectBuilder()
-            .add("body", "java test")
-            .add("path", "src/main/java/ShortList.java")
-            .add("position", 1).build();
-			System.out.println(apiArgs);
-			System.out.println(github.entry().method(Request.POST).uri()
-				.path("/repos/chbrown13/RecommenderTest/commits/4c2c3ec0a00f92083533cf72eccc90ca742a3939/comments")
-				.back().body().set(apiArgs).back().fetch().as(RestResponse.class)
-                .assertStatus(HttpURLConnection.HTTP_CREATED)
-                .as(JsonResponse.class)
-				.json().readObject().getInt("id"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
 	}
 }
