@@ -134,12 +134,12 @@ public class Recommender {
 			System.out.println("sizes");
 			System.out.println(baseErrors.size());
 			System.out.println(changeErrors.size());
+			for (String s: files) {
+				System.out.println(s);
+			}
 			for (Error e: baseErrors) {
 				System.out.println(e.getLocalFilePath());
 				System.out.println(files.contains(e.getLocalFilePath()));
-				for (String s: files) {
-					System.out.println(s);
-				}
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCount += 1;
 					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) >= Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
