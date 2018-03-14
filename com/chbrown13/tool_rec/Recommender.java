@@ -131,17 +131,21 @@ public class Recommender {
 		if(baseErrors != null && changeErrors != null) {
 			List<Error> fixed = new ArrayList<Error>();	
 			List<Error> added = new ArrayList<Error>();
+			System.out.println("base");
 			for (Error e: baseErrors) {
+				System.out.println(e.getKey() + " " + changeErrors.contains(e));
+				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					baseErrorCount += 1;
 					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
 						fixed.add(e);
 					}
 				}
 			}
+			System.out.println("change");
 			for (Error e: changeErrors) {
+				System.out.println(e.getKey() + " " + baseErrors.contains(e));
+				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					newErrorCount += 1;
 					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;
@@ -161,7 +165,7 @@ public class Recommender {
 					rem += 1;
 					removed += "-" + e.getKey() + "\n";
 				}
-			}	
+			}
 		}
 		return fix;
 	}
@@ -191,7 +195,7 @@ public class Recommender {
 			}		
 		}
 		if (javaFiles.size() == 0) {
-			System.out.println("No java changes.");
+			introduced += "\n\nNo java changes.";
 			return;
 		}
 		try {
@@ -237,7 +241,7 @@ public class Recommender {
 				}
 			}
 			if (javaFiles.size() == 0) {
-				System.out.println("No java changes.");
+				introduced += "\n\nNo java changes.";
 				return;
 			}
 			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
@@ -316,7 +320,6 @@ public class Recommender {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "all");
 		Iterator<RepoCommit> it = this.repo.commits().iterate(params).iterator();
-		int i = 0;
 		while (it.hasNext()) {
 			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
 			try {
@@ -328,7 +331,6 @@ public class Recommender {
 					analyze(commit);					
 					commits.add(commit);
 					String out = results(commit.sha());
-					i += 1;
 				} else {
 					if (commits.isEmpty()) {
 						System.out.println("No new commits");
