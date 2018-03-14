@@ -153,6 +153,7 @@ public class Recommender {
 					}
 				}
 			}
+			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount); 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
 				if (Utils.isFix(e)) {
@@ -270,7 +271,6 @@ public class Recommender {
 			.replace("{simErr}", noSimilar)
 			.replace("{intro}", Integer.toString(intro))
 			.replace("{new}", introduced);
-		out += "\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount); 
 		sendEmail(out, "New " + type, id);
 		System.out.println(out);
 		reset();
