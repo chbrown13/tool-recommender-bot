@@ -195,7 +195,7 @@ public class Recommender {
 			}		
 		}
 		if (javaFiles.size() == 0) {
-			System.out.println("No java changes.");
+			introduced += "\n\n\nNo java changes.";
 			return;
 		}
 		try {
@@ -320,7 +320,6 @@ public class Recommender {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "all");
 		Iterator<RepoCommit> it = this.repo.commits().iterate(params).iterator();
-		int i = 0;
 		while (it.hasNext()) {
 			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
 			try {
@@ -332,7 +331,6 @@ public class Recommender {
 					analyze(commit);					
 					commits.add(commit);
 					String out = results(commit.sha());
-					i += 1;
 				} else {
 					if (commits.isEmpty()) {
 						System.out.println("No new commits");
