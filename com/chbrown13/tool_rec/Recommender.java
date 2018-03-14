@@ -195,7 +195,7 @@ public class Recommender {
 			}		
 		}
 		if (javaFiles.size() == 0) {
-			introduced += "\n\n\nNo java changes.";
+			introduced += "\n\nNo java changes.";
 			return;
 		}
 		try {
@@ -241,7 +241,7 @@ public class Recommender {
 				}
 			}
 			if (javaFiles.size() == 0) {
-				System.out.println("No java changes.");
+				introduced += "\n\nNo java changes.";
 				return;
 			}
 			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
