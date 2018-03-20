@@ -86,6 +86,7 @@ public class ErrorProne extends Tool {
 				}
 				String errorMessage = error[3];
 				temp = new Error(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, "");
+				temp.addLog(line);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}

@@ -119,7 +119,7 @@ public class Recommender {
 			fixes.add(id);
 		} else {
 			fix += 1;
-			noSimilar += error.getLog() + "\n";
+			noSimilar += error.getKey() + ": " + error.getLog() + "\n";
 		}
 	}
 
@@ -135,23 +135,23 @@ public class Recommender {
 			for (Error e: baseErrors) {
 				System.out.println(e.getKey() + " " + changeErrors.contains(e));
 				baseErrorCount += 1;
-				if (files.contains(e.getLocalFilePath())) {
-					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
-						fixed.add(e);
-					}
+				//if (files.contains(e.getLocalFilePath())) {
+				if ((!changeErrors.contains(e) && !fixed.contains(e))) {//|| Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
+					fixed.add(e);
 				}
+				//}
 			}
 			System.out.println("change");
 			for (Error e: changeErrors) {
 				System.out.println(e.getKey() + " " + baseErrors.contains(e));
 				newErrorCount += 1;
-				if (files.contains(e.getLocalFilePath())) {
-					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
+				//if (files.contains(e.getLocalFilePath())) {
+					if ((!baseErrors.contains(e) && !added.contains(e))) { //|| Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
 						added.add(e);
 						intro += 1;
 						introduced += "-" + e.getKey() + "\n";
 					}
-				}
+				//}
 			}
 			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount); 
 			for (Error e: fixed) {
@@ -215,10 +215,10 @@ public class Recommender {
 			List<Error> baseErrors = Utils.checkout(hash, tool, true, PULL);
 			List<Error> changeErrors = Utils.checkout(newHash, owner, repo, tool, false, PULL);
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, Integer.toString(pull.number()));
-			Utils.cleanup();
+			// Utils.cleanup();
 		} catch (IOException e) {
 			e.printStackTrace();
-			Utils.cleanup();
+			// Utils.cleanup();
 		}	
 	}
 
@@ -250,10 +250,10 @@ public class Recommender {
 			List<Error> baseErrors = Utils.checkout(hash, tool, true, COMMIT);
 			List<Error> changeErrors = Utils.checkout(newHash, tool, false, COMMIT);
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, newHash);
-			Utils.cleanup();
+			// Utils.cleanup();
 		} catch (IOException e) {
 			e.printStackTrace();
-			Utils.cleanup();
+			// Utils.cleanup();
 		}
 	}
 
@@ -311,7 +311,7 @@ public class Recommender {
 
 	/**
 	 * Searches for new commits made to Github repositories every 15 minutes.
-	 *
+	 * 
 	 * @return  List of new commits
 	 */
 	private ArrayList<RepoCommit.Smart> getCommits() {

@@ -53,6 +53,12 @@ public class Utils {
 
 	private static boolean myTool = false;
 
+	private static boolean xmlProfile = false;
+
+	private static boolean xmlPluginMgmt = false;
+
+	private static boolean xmlReporting = false;
+
 	private static String projectName = "";
 	
 	private static String projectOwner = "";
@@ -433,6 +439,13 @@ public class Utils {
 							Attributes attributes) throws SAXException {
 					try {
 						writer.write("<" + qName + ">");
+						if(qName.equals("pluginManagement")) {
+							xmlPluginMgmt = true;
+						} else if (qName.equals("profiles")) {
+							xmlProfile = true;
+						} else if (qName.equals("reporting")) {
+							xmlReporting = true;
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -442,18 +455,17 @@ public class Utils {
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
-						if(qName.equals("plugins") && !myTool) {
+						if (qName.equals("plugins") && !xmlReporting) {
 							writer.write(tool.getPlugin());
-							writer.write("\n</plugins>");	
 							myTool = true;			
-							//System.out.println(tool.getPlugin());				
 						} else if (qName.equals("project") && !myTool) {
 							writer.write(String.join("\n", "<build>", "<plugins>", 
-								tool.getPlugin(), "</plugins>", "</build>", "</project>"));
+								tool.getPlugin(), "</plugins>", "</build>"));
 							myTool = true;
-						} else {
-							writer.write("</" + qName + ">");
+						} else if (qName.equals("reporting")) {
+							xmlReporting = false;
 						}
+						writer.write("</" + qName + ">");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
