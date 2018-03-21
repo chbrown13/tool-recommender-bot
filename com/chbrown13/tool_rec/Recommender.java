@@ -28,6 +28,8 @@ public class Recommender {
 	private String noSimilar = "";
 	private int baseErrorCount = 0;
 	private int newErrorCount = 0;
+	private int baseErrorCountFiles = 0;
+	private int newErrorCountFiles = 0;
 	private Tool tool = null;
 	private Object change = null;
 	private static String type = "";
@@ -133,8 +135,9 @@ public class Recommender {
 			List<Error> added = new ArrayList<Error>();
 			System.out.println("base");
 			for (Error e: baseErrors) {
+				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					baseErrorCount += 1;
+					baseErrorCountFiles += 1;
 					System.out.println(e.getLog());
 					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
@@ -143,8 +146,9 @@ public class Recommender {
 			}
 			System.out.println("change");
 			for (Error e: changeErrors) {
+				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					newErrorCount += 1;
+					newErrorCountFiles += 1;
 					System.out.println(e.getLog());
 					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
@@ -153,7 +157,8 @@ public class Recommender {
 					}
 				}
 			}
-			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount); 
+			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
+			introduced += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
 				if (Utils.isFix(e)) {
