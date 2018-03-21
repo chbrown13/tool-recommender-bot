@@ -34,43 +34,24 @@ import org.xml.sax.helpers.DefaultHandler;
 public class Utils {
 
 	public static String MARKDOWN_LINK = "[{src}]({url})";
-	
 	public static String LINK_URL = "https://github.com/{user}/{repo}/blob/{sha}/{path}#L{line}";
-	
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
-	
 	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
-
-	private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
-	
+    private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
-
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
-
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
-
 	private static String currentDir = System.getProperty("user.dir");
-
 	private static boolean myTool = false;
-
 	private static boolean xmlProfile = false;
-
 	private static boolean xmlPluginMgmt = false;
-
 	private static boolean xmlReporting = false;
-
 	private static String projectName = "";
-	
 	private static String projectOwner = "";
-
 	private static String username = "";
-
 	private static String password = "";
-
 	private static String diff = "";
-
 	private static int fixLine = -1;
-
 	private static int fixType = -1;
 
 	/**
@@ -340,17 +321,17 @@ public class Utils {
 		String url = diff.replace("{id}", id);
 		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
-		boolean diff = false;
+		boolean found = false;
 		for (String line: wget) {
 			if (line.contains(err.getFileName())) {
-				diff = true;
+				found = true;
 				continue;
 			} 
 			else if (line.startsWith("@@") && line.endsWith("@@")) {
 				//ignore
 				continue;
 			}
-			if (diff) {
+			if (found) {
 				String l = line.substring(1).trim();
 				if (err.getLog().contains(l) && !l.equals("")) {
 					break;
@@ -358,6 +339,7 @@ public class Utils {
 				newLine += 1;
 			}
 		}
+		System.out.println(url);
 		return newLine;
 	}
 
@@ -407,7 +389,6 @@ public class Utils {
 	public static String compile(String path) {
 		String output = "";
 		String cmd = MVN_COMPILE.replace("{dir}", path);
-		System.out.println(cmd);
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);	
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -506,6 +487,15 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Checkout git repository with same user and project
+	 * 
+	 * @param hash   Hash of GitHub change
+	 * @param tool   Tool to recommend
+	 * @param base   True if original version of repo
+	 * @param type   Type of code change (PULL or COMMIT)
+	 * @return       List of errors reported from tool
+	 */
 	public static List<Error> checkout(String hash, Tool tool, boolean base, String type) {
 		String owner = projectOwner;
 		String repo = projectName;
@@ -520,10 +510,12 @@ public class Utils {
 	/**
 	 * Checkout specific version of a git repository to analyze
 	 * 
-	 * @param commit Current GitHub commit
-	 * @param tool   Tool to perform analysis and recommend
-	 * @param base   True if parent of commit, false if commit version
-	 * @param type   Type of code change ("pull" or "commit")
+	 * @param hash   Hash of GitHub change
+	 * @param owner  GitHub user
+	 * @param repo   Name of repository
+	 * @param tool   Tool to recommend
+	 * @param base   True if original version of repo
+	 * @param type   Type of code change (PULL or COMMIT)
 	 * @return       List of errors reported from tool
 	 */
 	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
@@ -532,13 +524,13 @@ public class Utils {
 		try {
 			if(base) {
 				dirName += "1";
-			} else {
-				dirName += "2";
 				if (type.equals(Recommender.PULL)) {
 					diff = PULL_DIFF.replace("{user}", owner).replace("{repo}", repo);
 				} else {
 					diff = COMMIT_DIFF.replace("{user}", owner).replace("{repo}", repo);
 				}
+			} else {
+				dirName += "2";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -562,7 +554,7 @@ public class Utils {
 		if (log == null) {
 			return null;
 		}
-		System.out.println(log);
+		//System.out.println(log);
 		return tool.parseOutput(log);
 	}
 

@@ -3,6 +3,7 @@ package com.chbrown13.tool_rec;
 import java.util.*;
 
 public class Error {
+	
     private String key;
 	private String filename;
 	private String filepath;
