@@ -55,8 +55,9 @@ public class ErrorProne extends Tool {
 	 * Parses output from ErrorProne static analysis of code and creates Errors.
 	 *
 	 * @param msg    ErrorProne output
+	 * 
 	 * @return       List of Error objects
-	  */
+	 */
 	@Override
 	public List<Error> parseOutput(String msg) {
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
@@ -86,6 +87,7 @@ public class ErrorProne extends Tool {
 				}
 				String errorMessage = error[3];
 				temp = new Error(errorFileName, errorFilePath, errorLine, errorProne, errorMessage, "");
+				temp.addLog(line);
 			} else if (temp != null) {
 				temp.addLog(line);
 			}

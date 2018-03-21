@@ -28,6 +28,8 @@ public class Recommender {
 	private String noSimilar = "";
 	private int baseErrorCount = 0;
 	private int newErrorCount = 0;
+	private int baseErrorCountFiles = 0;
+	private int newErrorCountFiles = 0;
 	private Tool tool = null;
 	private Object change = null;
 	private static String type = "";
@@ -119,7 +121,7 @@ public class Recommender {
 			fixes.add(id);
 		} else {
 			fix += 1;
-			noSimilar += error.getLog() + "\n";
+			noSimilar += "None similar to " + error.getLog() + "\n";
 		}
 	}
 
@@ -133,27 +135,30 @@ public class Recommender {
 			List<Error> added = new ArrayList<Error>();
 			System.out.println("base");
 			for (Error e: baseErrors) {
-				System.out.println(e.getKey() + " " + changeErrors.contains(e));
 				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					if ((!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) && !fixed.contains(e)) {
+					baseErrorCountFiles += 1;
+					System.out.println(e.getLog());
+					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
 					}
 				}
 			}
 			System.out.println("change");
 			for (Error e: changeErrors) {
-				System.out.println(e.getKey() + " " + baseErrors.contains(e));
 				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
-					if ((!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) && !added.contains(e)) {
+					newErrorCountFiles += 1;
+					System.out.println(e.getLog());
+					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
 						intro += 1;
-						introduced += "-" + e.getKey() + "\n";
+						introduced += "-" + e.getLog() + "\n";
 					}
 				}
 			}
-			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount); 
+			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
+			introduced += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
 				if (Utils.isFix(e)) {
@@ -164,7 +169,7 @@ public class Recommender {
 					makeRecommendation(tool, id, e, line, changeErrors, base, head);
 				} else {
 					rem += 1;
-					removed += "-" + e.getKey() + "\n";
+					removed += "-" + e.getLog() + "\n";
 				}
 			}
 		}

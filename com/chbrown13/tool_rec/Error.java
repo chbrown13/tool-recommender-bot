@@ -3,6 +3,7 @@ package com.chbrown13.tool_rec;
 import java.util.*;
 
 public class Error {
+	
     private String key;
 	private String filename;
 	private String filepath;
@@ -142,7 +143,7 @@ public class Error {
 		String comment = Utils.BASE_COMMENT.replace("{desc}", tool.getDescription())
 			.replace("{tool}", tool.getName())
 			.replace("{link}", tool.getLink());
-		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName()); //TODO replace with tool
+		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName());
 		comment = comment.replace("{fixed}", "\\`\\`\\`" + String.join(":", this.filename, getLineNumberStr(), " ") + this.message + this.log + "\\`\\`\\`");
 		List<Error> simList = new ArrayList<Error>();
 		Error sim;
