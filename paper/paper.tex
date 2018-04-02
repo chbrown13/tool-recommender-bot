@@ -34,15 +34,15 @@
 \email{dcbrow10@ncsu.edu, emerson@csc.ncsu.edu}
 
 \begin{abstract}
-Toolsmiths have created many tools designed to increase worker productivity by automatically performing tasks, but these tools are often ignored or undiscovered. This lack of tool awareness can have significant consequences, especially in the software engineering industry. Automated recommendation systems were developed to help improve tool discovery, however these systems are less effective than user-to-user recommendations. To increase awareness of helpful development tools, we introduce \textit{\tool}, a new automated recommender system that integrates concepts from peer interactions and software engineering practices for researchers to increase discovery of their tools, and present an evaluation of how our system effectively recommends an open source static analysis tool to Java developers on GitHub projects.
+To increase software user productivity, toolsmiths create tools and features to automatically complete software tasks. However, these useful tools are often undiscovered or ignored by users, which can be problematic for industries that rely on worker efficiency and correctness, such as software engineering. This paper introduces \tool, a novel automated recommendation system developed for researchers to make recommendations and increase awareness of their products. To help improve tool adoption among software engineers, \tool~integrates concepts from peer interactions and software engineering industry practices to suggest tools to developers, and our results suggest that this approach is effective in making tool recommendations to software developers on GitHub repositories.
 \end{abstract}
-\keywords{Software Engineering; Tool Recommendations; Tool Discovery; Open Source}
+\keywords{Software Engineering; Tool Recommendations; Tool Discovery;}
 
 \maketitle
 
 \section{Introduction}
 
-Software is becoming increasingly prevalent in our society. To keep up with rising demands for technology, software engineers have made efforts to emphasize \textit{software quality}. Throughout the software development life cycle, companies focus on metric that impact both software producers and consumers such as functionality, reliability, usability, efficiency, maintainability, and portability~\cite{KitchenhamQualityTarget}. However, despite increased attention to software quality, defective code remains a persisting and escalating problem. 
+Software is increasingly prevalent in our society. To keep up with rising demands for new technology, software engineers are making efforts to emphasize \textit{software quality}. Throughout the software development life cycle, companies focus on metrics that impact both software producers and consumers such as functionality, reliability, usability, efficiency, maintainability, and portability~\cite{KitchenhamQualityTarget}. However, despite increased attention to improving software quality, buggy code remains a persisting and escalating problem. 
 
 The Software Fail Watch by Tricentis discovered that software failures impacted approximaltely half of the world's population (3.7 billion users) and caused \$1.7 trillion in financial losses in 2017.\footnote{https://www.tricentis.com/software-fail-watch/} Additionally, the process of finding and fixing bugs in code, or debugging, is becoming increasingly time-consuming and costly.  A study by the National Institute of Standards and Technology reported that software engineers spend 70-80\% of their time debugging at work, and one error takes an average of 17.4 hours to debug~\cite{NIST}. Studies also show the cost of fixing an error becomes more expensive the longer it exists in source code~\cite{SEEconomics, SoftwareAssuranceSDLC}.
 
@@ -64,7 +64,7 @@ To answer these questions, we evaluated \tool~with \textsc{Error Prone}\footnote
  \end{itemize}
 
 \section{Related Work}
-%TODO: Use related work from FSE committee
+%TODO: Use related work from whatever conference committee
 Our implementation of \tool~builds on previous research examining tool discovery, lack of tool adoption among software engineers, and automated recommendation systems.
 
 Researchers have explored how humans learn about new tools. There are various methods to discover tools in software, and research suggests recommendations between peers is the most effective way to increase tool awareness. Murphy-Hill found that peer interactions were the most effective mode of tool discovery compared to tool encounters, tutorials, descriptions, social media, and discussion threads~\cite{MurphyHill2011PeerInteraction}~\cite{Murphy-Hill2015HowDoUsers}. Similarly, Welty discovered that software users sought help from colleagues more often than search engines and help menus~\cite{Welty2011Help}. To improve the effectiveness of recommendations from our system, we integrate qualities of peer interactions into \tool.
