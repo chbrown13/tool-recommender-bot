@@ -352,7 +352,12 @@ public class Recommender {
 
 	public static void main(String[] args) {
 		String[] gitAcct = Utils.getCredentials(".github.creds");
-		RtGithub github = new RtGithub(gitAcct[0], gitAcct[1]);
+		RtGithub github = null;
+		if (gitAcct[1] != null) {
+			github = new RtGithub(gitAcct[0], gitAcct[1]);
+		} else {
+			github = new RtGithub(gitAcct[0]);
+		}
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		Recommender toolBot = new Recommender(repo);
 		toolBot.getCommits();

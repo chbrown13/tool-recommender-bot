@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+  - name: delete-jobs 
+    shell: "java -jar jenkins-cli.jar -s http://localhost:8080/ delete-job {{item}}"
+    with_lines: cat configs.txt
