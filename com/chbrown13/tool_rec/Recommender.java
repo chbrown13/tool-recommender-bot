@@ -26,6 +26,7 @@ public class Recommender {
 	private String removed = "";
 	private String introduced = "";
 	private String noSimilar = "";
+	private static String log = "";
 	private int baseErrorCount = 0;
 	private int newErrorCount = 0;
 	private int baseErrorCountFiles = 0;
@@ -84,7 +85,8 @@ public class Recommender {
 			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
-			System.out.println("Email sent for review: " + subject);	
+			System.out.println("Email sent for review: " + subject);
+			log += "Email sent for review: " + subject + "\n";	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -134,22 +136,26 @@ public class Recommender {
 			List<Error> fixed = new ArrayList<Error>();	
 			List<Error> added = new ArrayList<Error>();
 			System.out.println("base");
+			log += "\nbase";
 			for (Error e: baseErrors) {
 				baseErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCountFiles += 1;
 					System.out.println(e.getLog());
+					log += e.getLog();
 					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
 					}
 				}
 			}
 			System.out.println("change");
+			log += "\n\nchange";
 			for (Error e: changeErrors) {
 				newErrorCount += 1;
 				if (files.contains(e.getLocalFilePath())) {
 					newErrorCountFiles += 1;
 					System.out.println(e.getLog());
+					log += e.getLog();
 					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
 						intro += 1;
@@ -161,11 +167,13 @@ public class Recommender {
 			introduced += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
+				log += e.getFilePath() + "\n";
 				if (Utils.isFix(e)) {
 					fix = true;
 					int line = Utils.getFix(id, e);			
 					System.out.println("Fixed "+ e.getKey() + " reported at line " + 
 					e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
+					log += "Fixed "+ e.getKey() + " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line) + "\n";
 					makeRecommendation(tool, id, e, line, changeErrors, base, head);
 				} else {
 					rem += 1;
@@ -183,6 +191,7 @@ public class Recommender {
 	 */
 	private void analyze(Pull.Smart pull) {
 		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
+		log += "Analyzing PR #" + Integer.toString(pull.number()) + "...\n";
 		this.type = PULL;
 		this.change = pull;
 		tool = new ErrorProne();		
@@ -234,6 +243,7 @@ public class Recommender {
 	 */
 	private void analyze (RepoCommit.Smart commit) {
 		System.out.println("Analyzing commit #" + commit.sha() + "...");
+		log += "Analyzing commit #" + commit.sha() + "...\n";
 		this.type = COMMIT;
 		this.change = commit;
 		tool = new ErrorProne();		
@@ -276,6 +286,7 @@ public class Recommender {
 			.replace("{simErr}", noSimilar)
 			.replace("{intro}", Integer.toString(intro))
 			.replace("{new}", introduced);
+		out += "\n" + log;
 		sendEmail(out, "New " + type, id);
 		System.out.println(out);
 		reset();
@@ -289,6 +300,7 @@ public class Recommender {
 	 */
 	private ArrayList<Pull.Smart> getPullRequests() {
 		System.out.println("Getting new pull requests...");
+		log += "Getting new pull requests...\n";
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "all");
@@ -303,6 +315,7 @@ public class Recommender {
 				} else {
 					if (requests.isEmpty()) {
 						System.out.println("No new pull requests");
+						log += "No new pull requests\n";
 					}
 					break;
 				}
@@ -321,6 +334,7 @@ public class Recommender {
 	 */
 	private ArrayList<RepoCommit.Smart> getCommits() {
 		System.out.println("Getting new commits...");
+		log += "Getting new commits...\n";
 		ArrayList<RepoCommit.Smart> commits = new ArrayList<RepoCommit.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "all");
@@ -339,6 +353,7 @@ public class Recommender {
 				} else {
 					if (commits.isEmpty()) {
 						System.out.println("No new commits");
+						log += "No new commits\n";
 					}
 					break;
 				}
