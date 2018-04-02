@@ -118,7 +118,7 @@ public class Recommender {
 				id, "\""+comment+"\"", error.getLocalFilePath(), Integer.toString(line));
 			}
 			String run = Comment.cmd.replace("{args}", args);
-			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", id);
+			sendEmail(String.join("\n", Comment.compile, run, "\n" + log), "Recommendation Review", id);
 			recs += 1;
 			fixes.add(id);
 		} else {
