@@ -109,7 +109,7 @@ To analyze the source code, we target projects that use the Maven~\footnote{http
 
 After analyzing the base and head versions of the code, our approach parses the build output of each version to determine if any reported errors were fixed in the code modifications. The software engineering tool identifies faults in the source code, and we take the tool's output and use it in an algorithm we developed to determine if GitHub user code changes fix a reported bug. Our technique uses the code differencing tool GumTree~\cite{GumTree} to identify actions (addition, delete, insert, move, and update) performed between altered code versions and parse the source code to convert the text into abstract syntax trees. 
 
-To determine if an error was fixed, we take several things into consideration: First, our approach ignores instances where only delete actions were detected between the base and head versions of a file. This avoids making recommendations in situations where bugs were removed but not necessarily fixed in refactoring tasks, such as deleting and moving code, renaming classes, etc. Second, we ignore occurrences of deprecated classes because, similarly, the error reported was not fixed but removed. Third, we do not consider error fixes that were made by changes to a different file because we want to make recommendations where the developer is familiar with the changes that occurred. These help us minimize the number of false positives and errant recommendations in our approach.
+To determine if an error was fixed, we take several things into consideration: First, our approach ignores errors that are reported as fixed but were not located in files modified by the developer. This ensures that the GitHub user will be familiar with the code change and error fix. Second, we ignore instances where only delete actions were detected between the base and head versions of a file. This avoids making recommendations in situations where bugs are removed but not fixed. For example, a refactoring task such as renaming a class is presented in the GitHub diff as removing code from the original file. This can eliminate bugs reported by Error Prone between code versions, but may also just move the error to another location in the source code. Similarly, we also ignore deprecated classes because the error reported was not fixed. These conditions help us minimize the number of false positives and prevent errant recommendations in our approach.
 
 %\pseudosubsection{Fix Localizaton}
 %TODO: Delete?
@@ -133,18 +133,17 @@ We used real-world open source software applications to evaluate \tool. To choos
 \item primariy written in Java,
 \item build using Maven,
 \item do not already use \textsc{Error Prone},
-\item have at least 100 stars, and
-\item ranked among the top forked repositories
+\item ranked among the top starred repositories
 \end{itemize}
 
-Our evaluation was limited to Java projects since \textsc{Error Prone} only analyzes Java code. \tool~requires Maven, a build automation and dependency management system for Java projects, to run tools by automatically modifying the Project Object Model (\textit{pom.xml}) configuration file and building projects. We chose the most forked and starred repositories to study the most popular projects on GitHub. We target projects that don't use \textsc{Error Prone} to increase awareness for developers who are not knowledgeable about the tool. Stars are a social aspect of GitHub where users can indicate favorite projects and repositories of interest\footnote{https://help.github.com/articles/about-stars/}. 
+Our evaluation was limited to Java projects since \textsc{Error Prone} only analyzes Java code. \tool~requires Maven, a build automation and dependency management system for Java projects, to run tools by automatically modifying the Project Object Model (\textit{pom.xml}) configuration file and building projects.  Our approach targets projects that don't use \textsc{Error Prone} to increase awareness for developers who are not already knowledgeable about the tool. We chose the most starred repositories to study the most popular projects on GitHub.Stars are a social aspect of GitHub where users can indicate favorite projects and repositories of interest\footnote{https://help.github.com/articles/about-stars/}. 
 
-After using a GitHub search API to find projects that met the above criteria, we compiled a list of 789 code repositories. The evaluation projects include a wide range of software applications with diversified functions and created by many different companies and developers. A list of projects used for this study is publicly available online.\footnote{\url{https://gist.github.com/tool-recommender-bot/1769ccd148508beabcd273a731723860}}
+To get the most popular repositories, we filtered GitHub projects by separating them based on the amount of stars between numbers in the Fibonnaci sequence. This allowed us to get a higher concentration of projects with lower number of stars while less projects will have a large number of stars. For filtering of repositories, we sorted the top 100 projects by the most recently updated. After using a GitHub search API to find projects that met the above criteria, we compiled a list of 789 code repositories. The projects used for our evaluation include a wide range of software applications providing a variety of services. A list of projects used for this study is publicly available online.\footnote{\url{https://gist.github.com/tool-recommender-bot/1769ccd148508beabcd273a731723860}}
 %TODO: Maybe examples of projects?
 
 \subsection{Study Design}
 
-We designed our evaluation to gather quantitative and qualitative data addressing our research questions.  To analyze 2000+ repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to generate Jenkins jobs with \tool~running on multiple virtual machines.
+We designed our evaluation to gather quantitative and qualitative data addressing our research questions.  To analyze 700+ repositories simultaneously, we used Ansible\footnote{https://www.ansible.com/} to generate Jenkins jobs with \tool~running on multiple virtual machines.
 
 \subsubsection{RQ1}
 
@@ -156,7 +155,9 @@ Johnson and colleagues discovered one of the primary barriers to static analysis
 
 To gather data on the usefulness of our system, we sent a follow-up survey to developers. Survey participants were users who received a recommendation from \tool~on their pull request or commit. We asked developers about their awareness of \textsc{Error Prone} and how likely they are to use the tool in the future. The survey also included a free-response section to provide an opportunity for participants to add comments on the usefulness of the recommendation.
 
-Developers voluntarily consented to complete the survey and provide feedback on our system. To ensure developers answered honestly, we notified respondents that their answers will be used for research purposes. Previous research has shown that survey participants are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}.
+Developers voluntarily consented to complete the survey and provide feedback on our system. To ensure developers answered honestly, we notified respondents that their answers will be used for research purposes. Previous research has shown that survey participants are more motivated to answer truthfullly if they know they are contributing to research~\cite{Krosnick1991Research}. 
+
+To futher examine the effectiveness of \tool, we compared our approach to sending email recommendations to developers. To study this, we found similar instances of code fixes by GitHub users where our system would recommend a tool and, instead of making the recommendation with \tool~on the pull request or commit, send an email suggesting \textsc{Error Prone} to the developers. The emails also contained the recommendation feedback survey for developers, and we compared results to see how software engineers responded to receiving a recommendation by email vs. on GitHub from \tool.
 
 \subsection{Data Analysis}
 
