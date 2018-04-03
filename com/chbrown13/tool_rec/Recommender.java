@@ -75,6 +75,7 @@ public class Recommender {
 			viewChanges += "files/";
 		}
 		String[] emailAcct = Utils.getCredentials(".email.creds");
+		text += "\n" + log;
 		try {
 			email.setHostName("smtp.googlemail.com");
 			email.setSmtpPort(465);
@@ -118,7 +119,7 @@ public class Recommender {
 				id, "\""+comment+"\"", error.getLocalFilePath(), Integer.toString(line));
 			}
 			String run = Comment.cmd.replace("{args}", args);
-			sendEmail(String.join("\n", Comment.compile, run, "\n" + log), "Recommendation Review", id);
+			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review", id);
 			recs += 1;
 			fixes.add(id);
 		} else {
@@ -286,7 +287,6 @@ public class Recommender {
 			.replace("{simErr}", noSimilar)
 			.replace("{intro}", Integer.toString(intro))
 			.replace("{new}", introduced);
-		out += "\n" + log;
 		sendEmail(out, "New " + type, id);
 		System.out.println(out);
 		reset();
