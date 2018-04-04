@@ -143,7 +143,7 @@ public class Recommender {
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCountFiles += 1;
 					System.out.println(e.getLog());
-					log += e.getLog();
+					log += "*" + e.getLog();
 					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
 					}
@@ -156,7 +156,7 @@ public class Recommender {
 				if (files.contains(e.getLocalFilePath())) {
 					newErrorCountFiles += 1;
 					System.out.println(e.getLog());
-					log += e.getLog();
+					log += "*" + e.getLog();
 					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
 						intro += 1;
