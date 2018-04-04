@@ -59,7 +59,7 @@ public class Utils {
 	 *
 	 * @param name   Github account username
 	 */
-	public static void setUserName(String name) {
+	public static void setUsername(String name) {
 		username = name;
 	}
 
@@ -69,7 +69,11 @@ public class Utils {
 	 * @param pass   Github account password
 	 */
 	public static void setPassword(String pass) {
-		password = pass;
+		if (pass != null) {
+			password = pass;
+		} else {
+			password = "";
+		}
 	}
 
 	/**
@@ -632,8 +636,8 @@ public class Utils {
 		try {
 			int i = 0;
 		    Scanner sc = new Scanner(file);
-		    while (i < 2) {
-		        creds[i] = sc.nextLine();
+		    while (sc.hasNext()) {
+				creds[i] = sc.nextLine();
 				i++;
 		    }
 		    sc.close();
@@ -642,7 +646,7 @@ public class Utils {
 		    e.printStackTrace();
 		}
 		if (filename.contains("github")) {
-			setUserName(creds[0]);
+			setUsername(creds[0]);
 			setPassword(creds[1]);
 		}
 		return creds;
