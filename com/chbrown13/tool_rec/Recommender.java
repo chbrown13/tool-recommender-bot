@@ -164,11 +164,11 @@ public class Recommender {
 					}
 				}
 			}
+			log += "\n\n\n";
 			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
 			introduced += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
-				log += e.getFilePath() + "\n";
 				if (Utils.isFix(e)) {
 					fix = true;
 					int line = Utils.getFix(id, e);			
@@ -208,7 +208,10 @@ public class Recommender {
 			JsonObject f = files.next();
 			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
 				javaFiles.add(f.getString("filename"));
-			}		
+			} else if (f.getString("filename").equals("pom.xml")) {
+				introduced += "\n\nModified pom.xml";
+				return;
+			}
 		}
 		if (javaFiles.size() == 0) {
 			introduced += "\n\nNo java changes.";
@@ -227,6 +230,8 @@ public class Recommender {
 				owner = head.getJsonObject("user").getString("login");
 				repo = Utils.getProjectName();
 			}
+			log += "\n\n"+ owner +"  "+hash+"\n\n";
+			log += "\n\n"+ owner +"  "+newHash+"\n\n";
 			List<Error> baseErrors = Utils.checkout(hash, tool, true, PULL);
 			List<Error> changeErrors = Utils.checkout(newHash, owner, repo, tool, false, PULL);
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, Integer.toString(pull.number()));
@@ -255,6 +260,9 @@ public class Recommender {
 				String filename = files.getJsonObject(i).getString("filename");
 				if (filename.endsWith(".java")) {
 					javaFiles.add(filename);
+				} else if (filename.equals("pom.xml")) {
+					introduced += "\n\nModified pom.xml";
+					return;
 				}
 			}
 			if (javaFiles.size() == 0) {
@@ -263,6 +271,8 @@ public class Recommender {
 			}
 			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
 			String newHash = commit.json().getString("sha");
+			log += "\n\n"+Utils.getProjectOwner()+"  "+hash+"\n\n";
+			log += "\n\n"+Utils.getProjectOwner()+"  "+newHash+"\n\n";
 			List<Error> baseErrors = Utils.checkout(hash, tool, true, COMMIT);
 			List<Error> changeErrors = Utils.checkout(newHash, tool, false, COMMIT);
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, newHash);
