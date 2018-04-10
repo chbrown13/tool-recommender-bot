@@ -143,7 +143,7 @@ public class Recommender {
 				if (files.contains(e.getLocalFilePath())) {
 					baseErrorCountFiles += 1;
 					System.out.println(e.getLog());
-					log += "\n\n" + e.getLog();
+					log += "\n\n" + e.getKey() + "- " + e.getLog();
 					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
 					}
@@ -156,7 +156,7 @@ public class Recommender {
 				if (files.contains(e.getLocalFilePath())) {
 					newErrorCountFiles += 1;
 					System.out.println(e.getLog());
-					log += "\n\n" + e.getLog();
+					log += "\n\n" + e.getKey() + "- " + e.getLog();
 					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
 						intro += 1;
@@ -165,8 +165,8 @@ public class Recommender {
 				}
 			}
 			log += "\n\n\n";
-			introduced += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
-			introduced += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
+			log += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
+			log += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
 			for (Error e: fixed) {
 				System.out.println(e.getFilePath());
 				if (Utils.isFix(e)) {
@@ -186,7 +186,7 @@ public class Recommender {
 	}
 
 	/**
-	 * Analyze code of files in pull request and compare to master branch.
+	 * Analyze code of files in pull request and compare to base branch.
 	 *
 	 * @param pull   Current pull request
 	 */
@@ -209,12 +209,12 @@ public class Recommender {
 			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
 				javaFiles.add(f.getString("filename"));
 			} else if (f.getString("filename").equals("pom.xml")) {
-				introduced += "\n\nModified pom.xml";
+				log += "\n\nModified pom.xml\n\n";
 				return;
 			}
 		}
 		if (javaFiles.size() == 0) {
-			introduced += "\n\nNo java changes.";
+			log += "\n\nNo java changes\n\n";
 			return;
 		}
 		try {
@@ -243,7 +243,7 @@ public class Recommender {
 	}
 
 	/**
-	 * Analyze code of files in commits and compare to master branch.
+	 * Analyze code of files in commits and compare to base branch.
 	 *
 	 * @param commit   Current commit
 	 */
@@ -261,12 +261,16 @@ public class Recommender {
 				if (filename.endsWith(".java")) {
 					javaFiles.add(filename);
 				} else if (filename.equals("pom.xml")) {
-					introduced += "\n\nModified pom.xml";
+					log += "\n\nModified pom.xml\n\n";
 					return;
 				}
 			}
 			if (javaFiles.size() == 0) {
-				introduced += "\n\nNo java changes.";
+				log += "\n\nNo java changes\n\n";
+				return;
+			}
+			if (commit.json().getJsonArray("parents").size() > 1) {
+				log += "\n\nMultiple commit parents\n\n";
 				return;
 			}
 			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
