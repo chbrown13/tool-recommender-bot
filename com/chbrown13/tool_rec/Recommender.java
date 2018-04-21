@@ -1,6 +1,12 @@
 package com.chbrown13.tool_rec;
 
-import com.jcabi.github.*;
+import com.jcabi.github.Branch;
+import com.jcabi.github.Coordinates;
+import com.jcabi.github.Pull;
+import com.jcabi.github.Pull.Smart;
+import com.jcabi.github.Repo;
+import com.jcabi.github.RepoCommit;
+import com.jcabi.github.RtGithub;
 import com.jcabi.http.response.*;
 import com.jcabi.http.Request;
 import java.io.*;
@@ -10,6 +16,13 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.json.*;
 import org.apache.commons.mail.*;
+import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.errors.*;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.*;
+import org.eclipse.jgit.transport.*;
 
 
 /**
@@ -18,6 +31,7 @@ import org.apache.commons.mail.*;
 public class Recommender {
 
 	private Repo repo;
+	private Git git;
 	private Set<String> fixes = new HashSet<String>();	
 	private int recs = 0;
 	private int rem = 0;
@@ -32,14 +46,14 @@ public class Recommender {
 	private int baseErrorCountFiles = 0;
 	private int newErrorCountFiles = 0;
 	private Tool tool = null;
-	private Object change = null;
 	private static String type = "";
 
 	public static final String PULL = "pull";
 	public static final String COMMIT = "commit";
 
-	public Recommender(Repo repo) {
+	public Recommender(Repo repo, Git git) {
 		this.repo = repo;
+		this.git = git;
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
 	}
@@ -57,6 +71,12 @@ public class Recommender {
 		recs = 0;
 		rem = 0;
 		fix = 0;
+		log = "";
+	}
+
+	private void log(String msg) {
+		System.out.println(msg);
+		log += "\n\n" + msg + "\n";
 	}
 
 	/**
@@ -86,8 +106,7 @@ public class Recommender {
 			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
-			System.out.println("Email sent for review: " + subject);
-			log += "Email sent for review: " + subject + "\n";	
+			//log("Email sent for review: " + subject);	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -136,45 +155,38 @@ public class Recommender {
 		if(baseErrors != null && changeErrors != null) {
 			List<Error> fixed = new ArrayList<Error>();	
 			List<Error> added = new ArrayList<Error>();
-			System.out.println("base");
-			log += "\nbase";
+			log("base");
 			for (Error e: baseErrors) {
 				baseErrorCount += 1;
-				if (files.contains(e.getLocalFilePath())) {
+				//if (files.contains(e.getLocalFilePath())) {
 					baseErrorCountFiles += 1;
-					System.out.println(e.getLog());
-					log += "\n\n" + e.getKey() + "- " + e.getLog();
+					log("\n\n" + e.getKey() + "- " + e.getLog());
 					if (!changeErrors.contains(e) || Collections.frequency(baseErrors, e) > Collections.frequency(changeErrors, e)) {
 						fixed.add(e);
 					}
-				}
+				//}
 			}
-			System.out.println("change");
-			log += "\n\nchange";
+			log("change");
 			for (Error e: changeErrors) {
 				newErrorCount += 1;
-				if (files.contains(e.getLocalFilePath())) {
+				//if (files.contains(e.getLocalFilePath())) {
 					newErrorCountFiles += 1;
-					System.out.println(e.getLog());
-					log += "\n\n" + e.getKey() + "- " + e.getLog();
+					log("\n\n" + e.getKey() + "- " + e.getLog());
 					if (!baseErrors.contains(e) || Collections.frequency(baseErrors, e) < Collections.frequency(changeErrors, e)) {
 						added.add(e);
 						intro += 1;
 						introduced += "-" + e.getLog() + "\n";
 					}
-				}
+				//}
 			}
-			log += "\n\n\n";
-			log += "\n\n" + Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"; 
-			log += Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"; 
+			log(Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"); 
+			log(Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"); 
 			for (Error e: fixed) {
-				System.out.println(e.getFilePath());
 				if (Utils.isFix(e)) {
 					fix = true;
 					int line = Utils.getFix(id, e);			
-					System.out.println("Fixed "+ e.getKey() + " reported at line " + 
-					e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line));
-					log += "Fixed "+ e.getKey() + " reported at line " + e.getLineNumberStr() + " possibly fixed at line " + Integer.toString(line) + "\n";
+					log("Fixed "+ e.getKey() + " reported at line " + e.getLineNumberStr() + 
+						" possibly fixed at line " + Integer.toString(line));
 					makeRecommendation(tool, id, e, line, changeErrors, base, head);
 				} else {
 					rem += 1;
@@ -190,11 +202,9 @@ public class Recommender {
 	 *
 	 * @param pull   Current pull request
 	 */
-	private void analyze(Pull.Smart pull) {
-		System.out.println("Analyzing PR #" + Integer.toString(pull.number()) + "...");
-		log += "Analyzing PR #" + Integer.toString(pull.number()) + "...\n";
+	private void analyze(Git git, Pull.Smart pull) {
+		log("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		this.type = PULL;
-		this.change = pull;
 		tool = new ErrorProne();		
 		List<String> javaFiles = new ArrayList<String>();
 		Iterator<JsonObject> files = null;
@@ -209,36 +219,33 @@ public class Recommender {
 			if (f.getString("filename").endsWith(".java") && f.getString("status").equals("modified")) {
 				javaFiles.add(f.getString("filename"));
 			} else if (f.getString("filename").equals("pom.xml")) {
-				log += "\n\nModified pom.xml\n\n";
+				log("\n\nModified pom.xml\n\n");
 				return;
 			}
 		}
 		if (javaFiles.size() == 0) {
-			log += "\n\nNo java changes\n\n";
+			log("\n\nNo java changes\n\n");
 			return;
 		}
 		try {
 			JsonObject head = pull.json().getJsonObject("head");
 			String hash = pull.json().getJsonObject("base").getString("sha");
 			String newHash = head.getString("sha");
-			String owner = "";
-			String repo = "";
-			try {
-				owner = head.getJsonObject("repo").getString("full_name").split("/")[0];
-				repo = head.getJsonObject("repo").getString("full_name").split("/")[1];
-			} catch (NullPointerException|ClassCastException exc) { //unknown repository
-				owner = head.getJsonObject("user").getString("login");
-				repo = Utils.getProjectName();
-			}
-			log += "\n\n"+ owner +"  "+hash+"\n\n";
-			log += "\n\n"+ owner +"  "+newHash+"\n\n";
-			List<Error> baseErrors = Utils.checkout(hash, tool, true, PULL);
-			List<Error> changeErrors = Utils.checkout(newHash, owner, repo, tool, false, PULL);
+			log += "\n\n"+ "  "+hash+"\n\n";
+			log += "\n\n"+ "  "+newHash+"\n\n";
+			//System.out.println("checkout");
+			git.checkout().setName(hash).call();
+			System.out.println(hash);
+			List<Error> baseErrors = Utils.checkout(git, hash, tool);
+			git.checkout().setName(newHash).call();
+			List<Error> changeErrors = Utils.checkout(git, newHash, tool);
+			System.out.println(newHash);
+			//git.reset().setMode(ResetType.HARD).call();
+			System.out.println(baseErrors.size());
+			System.out.println(changeErrors.size());
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, Integer.toString(pull.number()));
-			Utils.cleanup();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-			Utils.cleanup();
 		}	
 	}
 
@@ -247,15 +254,13 @@ public class Recommender {
 	 *
 	 * @param commit   Current commit
 	 */
-	private void analyze (RepoCommit.Smart commit) {
-		System.out.println("Analyzing commit #" + commit.sha() + "...");
-		log += "Analyzing commit #" + commit.sha() + "...\n";
+	private void analyze(Git git, RevCommit commit) {
+		log("Analyzing commit " + ObjectId.toString(commit.getId()) + "...");
 		this.type = COMMIT;
-		this.change = commit;
 		tool = new ErrorProne();		
 		List<String> javaFiles = new ArrayList<String>();
 		try {
-			JsonArray files = commit.json().getJsonArray("files");
+			/*JsonArray files = commit.json().getJsonArray("files");
 			for (int i = 0; i < files.size(); i++) {
 				String filename = files.getJsonObject(i).getString("filename");
 				if (filename.endsWith(".java")) {
@@ -273,17 +278,30 @@ public class Recommender {
 				log += "\n\nMultiple commit parents\n\n";
 				return;
 			}
+			Git git = null;
 			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
 			String newHash = commit.json().getString("sha");
 			log += "\n\n"+Utils.getProjectOwner()+"  "+hash+"\n\n";
-			log += "\n\n"+Utils.getProjectOwner()+"  "+newHash+"\n\n";
-			List<Error> baseErrors = Utils.checkout(hash, tool, true, COMMIT);
-			List<Error> changeErrors = Utils.checkout(newHash, tool, false, COMMIT);
-			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, newHash);
-			Utils.cleanup();
-		} catch (IOException e) {
+			log += "\n\n"+Utils.getProjectOwner()+"  "+newHash+"\n\n";*/
+			if (commit.getParentCount() == 0 || commit.getParentCount() > 1) {
+				log("Parent count is " + Integer.toString(commit.getParentCount()));
+				return;
+			}
+			String hash = ObjectId.toString(commit.getId());
+			String oldHash = ObjectId.toString(commit.getParent(0).getId());
+			git.checkout().setName(oldHash).call();
+			List<Error> baseErrors = Utils.checkout(git, oldHash, tool);
+			System.out.println(oldHash);
+			// git.checkout().setName(hash).call();
+			// List<Error> changeErrors = Utils.checkout(git, hash, tool);
+			// System.out.println(hash);
+			//System.out.println(hash);
+			//System.out.println(baseErrors.size());
+			//System.out.println(changeErrors.size());
+			//git.reset().setMode(ResetType.HARD).call();
+			//checkFix(baseErrors, changeErrors, javaFiles, oldHash, hash, hash);
+		} catch (Exception e) {
 			e.printStackTrace();
-			Utils.cleanup();
 		}
 	}
 
@@ -301,8 +319,8 @@ public class Recommender {
 			.replace("{simErr}", noSimilar)
 			.replace("{intro}", Integer.toString(intro))
 			.replace("{new}", introduced);
-		sendEmail(out, "New " + type, id);
-		System.out.println(out);
+		//sendEmail(out, "New " + type, id);
+		log(out);
 		reset();
 		return out;
 	}
@@ -312,33 +330,33 @@ public class Recommender {
 	 *
 	 * @return   List of new pull requests
 	 */
-	private ArrayList<Pull.Smart> getPullRequests() {
-		System.out.println("Getting new pull requests...");
-		log += "Getting new pull requests...\n";
+	private void getPullRequests(Git git) {
+		log("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "all");
+		params.put("state", "open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
+		int i = 0;
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
-					analyze(pull);					
-					requests.add(pull);
+				if (i < 1) {//new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+					analyze(git, pull);					
+					//requests.add(pull);
 					String out = results(Integer.toString(pull.number()));
+					i += 1;
 				} else {
 					if (requests.isEmpty()) {
-						System.out.println("No new pull requests");
-						log += "No new pull requests\n";
+						log("No new pull requests");
 					}
 					break;
 				}
-			} catch (IOException e) {
+				//git.checkout().setName("refs/heads/master").call();
+			} catch (Exception e) {
 				e.printStackTrace();
-				return null;
+				return;
 			}
 		}
-		return requests;
 	}
 
 	/**
@@ -346,50 +364,82 @@ public class Recommender {
 	 *
 	 * @return  List of new commits
 	 */
-	private ArrayList<RepoCommit.Smart> getCommits() {
-		System.out.println("Getting new commits...");
-		log += "Getting new commits...\n";
-		ArrayList<RepoCommit.Smart> commits = new ArrayList<RepoCommit.Smart>();
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "all");
-		Iterator<RepoCommit> it = this.repo.commits().iterate(params).iterator();
-		while (it.hasNext()) {
-			RepoCommit.Smart commit = new RepoCommit.Smart(it.next());
-			try {
-				String date = commit.json().getJsonObject("commit").getJsonObject("author").getString("date");
-				DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-				format.setTimeZone(TimeZone.getTimeZone("GMT"));
-				Date created = format.parse(date);
-				if (new Date().getTime() - created.getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
-					analyze(commit);					
-					commits.add(commit);
-					String out = results(commit.sha());
-				} else {
+	private void getCommits(Git git, String branch, String hash) {
+		log("Getting commits from {branch} branch...".replace("{branch}", branch));
+		ArrayList<RevCommit> commits = new ArrayList<RevCommit>();
+		try {
+			git.checkout().setName(hash).call();
+			Iterator<RevCommit> revCommits = git.log().call().iterator();
+			int i = 0;
+			while (revCommits.hasNext()) {
+				RevCommit commit = revCommits.next();
+				long commitTime = (long) commit.getCommitTime() * 1000;
+				long now = new Date().getTime();
+				//if (now - commitTime <= TimeUnit.MILLISECONDS.convert(1500, TimeUnit.MINUTES)) {
+					System.out.println(ObjectId.toString(commit.getId()));
+					analyze(git, commit);
+					//commits.add(commit);
+					//String out = results(ObjectId.toString(commit.getId()));
+					break;
+				/*} else { 
 					if (commits.isEmpty()) {
-						System.out.println("No new commits");
-						log += "No new commits\n";
+						log("No new commits");
 					}
 					break;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
+				 }*/
 			}
+			git.checkout().setName("refs/heads/master").call();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		return commits;
 	}
 
 	public static void main(String[] args) {
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
+		Git git = null;
 		if (gitAcct[1] != null) {
 			github = new RtGithub(gitAcct[0], gitAcct[1]);
 		} else {
 			github = new RtGithub(gitAcct[0]);
+			gitAcct[1] = "";
+		}
+		try {
+			git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git"
+				.replace("{owner}", args[0]).replace("{repo}", args[1]))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitAcct[0], gitAcct[1]))
+			.setDirectory(new File(args[1]))
+			.setCloneAllBranches(true).call();
+		} catch (JGitInternalException jgie) {
+			try {
+				git = Git.open(new File("{repo}/.git".replace("{repo}", args[1])));
+				git.pull().call();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} catch (Exception cloneE) {
+			cloneE.printStackTrace();
 		}
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
-		Recommender toolBot = new Recommender(repo);
-		toolBot.getCommits();
-		toolBot.getPullRequests();
+		Recommender toolBot = new Recommender(repo, git);
+		toolBot.getPullRequests(git);
+		/*try {
+			Collection<Ref> refs = git.lsRemote().call();
+			for (Ref r: refs) {
+				//System.out.println(r.getName());
+				if (r.getName().startsWith("refs/heads/")) {
+					String branch = r.getName().split("/")[2];
+					if (branch.equals("master")) {
+					String hash = ObjectId.toString(r.getObjectId());
+					toolBot.getCommits(git, branch, hash);
+					break;
+					}
+					//break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}*/
 	}
 }

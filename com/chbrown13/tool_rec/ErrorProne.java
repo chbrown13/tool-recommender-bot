@@ -60,17 +60,20 @@ public class ErrorProne extends Tool {
 	 */
 	@Override
 	public List<Error> parseOutput(String msg) {
+		List<Error> errors = new ArrayList<Error>();
+		if (msg == null || msg.isEmpty()) {
+			return errors;
+		}
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String dir = Utils.getCurrentDir();
 		String[] lines = msg.split("\n");
 		Error temp = null;
-		List<Error> errors = new ArrayList<Error>();
 		for (String line: lines) {
+			//System.out.println(line.matches(regex)+"##"+line);
 			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
 				continue;
 			}
-			else if (line.startsWith("[ERROR] ") || line.startsWith("[INFO] ") ||
-						line.startsWith("[WARNING] ")) { //Maven build error
+			else if (line.startsWith("[INFO] ") || line.startsWith("[ERROR]") || line.startsWith("[WARNING] ")) { //Maven build error
 				continue;
 			}
 			else if (line.matches(regex) || line.startsWith(dir)) {
@@ -93,6 +96,7 @@ public class ErrorProne extends Tool {
 			}
 		}
 		if (temp != null && !errors.contains(temp)) { errors.add(temp); }
+		System.out.println(errors.size());
 		return errors;
 	}
 

@@ -41,6 +41,7 @@ public class Utils {
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
+	private static String MVN_CLEAN = "mvn -q -f {dir}/pom.xml clean";
 	private static String currentDir = System.getProperty("user.dir");
 	private static boolean myTool = false;
 	private static boolean xmlProfile = false;
@@ -392,10 +393,21 @@ public class Utils {
 	 */
 	public static String compile(String path) {
 		String output = "";
-		String cmd = MVN_COMPILE.replace("{dir}", path);
+		BufferedReader br = null;
+		String compile = MVN_COMPILE.replace("{dir}", path);
+		String clean = MVN_CLEAN.replace("{dir}", path);
+		System.out.println(clean + "\n" + compile);
 		try {
-			Process p = Runtime.getRuntime().exec(cmd);	
-			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			try {
+				Process p1 = Runtime.getRuntime().exec(clean);
+				p1.waitFor();
+				Process p2 = Runtime.getRuntime().exec(compile);	
+				p2.waitFor();
+				br = new BufferedReader(new InputStreamReader(p2.getErrorStream()));
+			} catch (InterruptedException ie) {
+				ie.printStackTrace();
+				return null;
+			}
 			String line;
 			while ((line = br.readLine()) != null) {
 			    output += line + "\n";
@@ -440,7 +452,7 @@ public class Utils {
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
-						if (qName.equals("plugins") && !xmlReporting) {
+						if (qName.equals("plugins") && !myTool) {
 							writer.write(tool.getPlugin());
 							myTool = true;			
 						} else if (qName.equals("project") && !myTool) {
@@ -466,6 +478,15 @@ public class Utils {
 				}
 			};
 			saxParser.parse(file, handler);
+		} catch (FileNotFoundException fnf) {
+			System.out.println("No pom.xml");
+			try {
+			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
+			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
+			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
+			} catch (IOException io) {
+				io.printStackTrace();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -481,8 +502,8 @@ public class Utils {
 		try {
 			String pom = String.join("/",currentDir, dir, "pom.xml");
 			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
-			FileWriter writer = new FileWriter(tempPom, false);
 			myTool = false;
+			FileWriter writer = new FileWriter(tempPom, false);
 			parseXML(pom, tool, writer);
 			writer.close();
 			tempPom.renameTo(new File(pom));			
@@ -494,21 +515,22 @@ public class Utils {
 	/**
 	 * Checkout git repository with same user and project
 	 * 
+	 * @param git    Current instance of git repo
 	 * @param hash   Hash of GitHub change
 	 * @param tool   Tool to recommend
-	 * @param base   True if original version of repo
-	 * @param type   Type of code change (PULL or COMMIT)
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(String hash, Tool tool, boolean base, String type) {
-		String owner = projectOwner;
-		String repo = projectName;
+	public static List<Error> checkout(Git git, String hash, Tool tool) {
+		String log = null;
 		try {
-			return checkout(hash, projectOwner, projectName, tool, base, type);
-		} catch (IOException e) {
+			addToolPomPlugin(projectName, tool);
+			System.out.println(hash+"*");
+			log = compile(projectName);
+			System.out.println(log);
+		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
+		return tool.parseOutput(log);
 	}
 
 	/**
@@ -521,7 +543,7 @@ public class Utils {
 	 * @param base   True if original version of repo
 	 * @param type   Type of code change (PULL or COMMIT)
 	 * @return       List of errors reported from tool
-	 */
+	 *
 	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
 		String dirName = projectName;
 		Git git = null;
@@ -542,12 +564,6 @@ public class Utils {
 		}
 		System.out.println(dirName+" "+owner+" "+hash);
 		try {
-			git = Git.cloneRepository()
-				.setURI("https://github.com/{owner}/{repo}.git"
-					.replace("{owner}", owner).replace("{repo}", repo))
-				.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-				.setDirectory(new File(dirName))
-				.setCloneAllBranches(true).call();
 			git.checkout().setName(hash).call();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -560,11 +576,11 @@ public class Utils {
 		}
 		//System.out.println(log);
 		return tool.parseOutput(log);
-	}
+	}*/
 
 	/**
 	 * Remove temp repo directories
-	 */
+	 *
 	public static void cleanup() {
 		try {
 			String[] dirs = {projectName+"1", projectName+"2"};
@@ -574,7 +590,7 @@ public class Utils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}	
-	}
+	}*/
 
 	/**
 	 * Utility method to get file contents from url.
