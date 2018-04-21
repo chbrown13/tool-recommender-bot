@@ -69,11 +69,11 @@ public class ErrorProne extends Tool {
 		String[] lines = msg.split("\n");
 		Error temp = null;
 		for (String line: lines) {
-			//System.out.println(line.matches(regex)+"##"+line);
 			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
 				continue;
 			}
-			else if (line.startsWith("[INFO] ") || line.startsWith("[ERROR]") || line.startsWith("[WARNING] ")) { //Maven build error
+			else if (line.startsWith("[INFO] ") || line.startsWith("[ERROR]") || line.startsWith("[WARNING] ")
+				|| line.startsWith("Note:")) { //Maven build log
 				continue;
 			}
 			else if (line.matches(regex) || line.startsWith(dir)) {

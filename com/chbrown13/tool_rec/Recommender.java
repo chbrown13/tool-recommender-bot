@@ -66,7 +66,9 @@ public class Recommender {
 		introduced = "";
 		noSimilar = "";
 		baseErrorCount = 0;
+		baseErrorCountFiles = 0;
 		newErrorCount = 0;
+		newErrorCountFiles = 0;
 		intro = 0;
 		recs = 0;
 		rem = 0;
@@ -182,9 +184,9 @@ public class Recommender {
 			log(Integer.toString(baseErrorCount) + "------" + Integer.toString(newErrorCount) + "\n"); 
 			log(Integer.toString(baseErrorCountFiles) + "------" + Integer.toString(newErrorCountFiles) + " (files)"); 
 			for (Error e: fixed) {
-				if (Utils.isFix(e)) {
+				if (Utils.isFix(e, base, head)) {
 					fix = true;
-					int line = Utils.getFix(id, e);			
+					int line = Utils.getFix(id, type, e);			
 					log("Fixed "+ e.getKey() + " reported at line " + e.getLineNumberStr() + 
 						" possibly fixed at line " + Integer.toString(line));
 					makeRecommendation(tool, id, e, line, changeErrors, base, head);
@@ -231,16 +233,12 @@ public class Recommender {
 			JsonObject head = pull.json().getJsonObject("head");
 			String hash = pull.json().getJsonObject("base").getString("sha");
 			String newHash = head.getString("sha");
-			log += "\n\n"+ "  "+hash+"\n\n";
-			log += "\n\n"+ "  "+newHash+"\n\n";
-			//System.out.println("checkout");
 			git.checkout().setName(hash).call();
-			System.out.println(hash);
 			List<Error> baseErrors = Utils.checkout(git, hash, tool);
+			log("base: " + hash);
 			git.checkout().setName(newHash).call();
 			List<Error> changeErrors = Utils.checkout(git, newHash, tool);
-			System.out.println(newHash);
-			//git.reset().setMode(ResetType.HARD).call();
+			log("head: " + newHash);
 			System.out.println(baseErrors.size());
 			System.out.println(changeErrors.size());
 			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, Integer.toString(pull.number()));
@@ -260,29 +258,6 @@ public class Recommender {
 		tool = new ErrorProne();		
 		List<String> javaFiles = new ArrayList<String>();
 		try {
-			/*JsonArray files = commit.json().getJsonArray("files");
-			for (int i = 0; i < files.size(); i++) {
-				String filename = files.getJsonObject(i).getString("filename");
-				if (filename.endsWith(".java")) {
-					javaFiles.add(filename);
-				} else if (filename.equals("pom.xml")) {
-					log += "\n\nModified pom.xml\n\n";
-					return;
-				}
-			}
-			if (javaFiles.size() == 0) {
-				log += "\n\nNo java changes\n\n";
-				return;
-			}
-			if (commit.json().getJsonArray("parents").size() > 1) {
-				log += "\n\nMultiple commit parents\n\n";
-				return;
-			}
-			Git git = null;
-			String hash = commit.json().getJsonArray("parents").getJsonObject(0).getString("sha");
-			String newHash = commit.json().getString("sha");
-			log += "\n\n"+Utils.getProjectOwner()+"  "+hash+"\n\n";
-			log += "\n\n"+Utils.getProjectOwner()+"  "+newHash+"\n\n";*/
 			if (commit.getParentCount() == 0 || commit.getParentCount() > 1) {
 				log("Parent count is " + Integer.toString(commit.getParentCount()));
 				return;
@@ -291,15 +266,14 @@ public class Recommender {
 			String oldHash = ObjectId.toString(commit.getParent(0).getId());
 			git.checkout().setName(oldHash).call();
 			List<Error> baseErrors = Utils.checkout(git, oldHash, tool);
-			System.out.println(oldHash);
-			// git.checkout().setName(hash).call();
-			// List<Error> changeErrors = Utils.checkout(git, hash, tool);
-			// System.out.println(hash);
-			//System.out.println(hash);
-			//System.out.println(baseErrors.size());
-			//System.out.println(changeErrors.size());
+			log("base: " + oldHash);
+			git.checkout().setName(hash).call();
+			List<Error> changeErrors = Utils.checkout(git, hash, tool);
+			log("head: " + hash);
+			System.out.println(baseErrors.size());
+			System.out.println(changeErrors.size());
 			//git.reset().setMode(ResetType.HARD).call();
-			//checkFix(baseErrors, changeErrors, javaFiles, oldHash, hash, hash);
+			checkFix(baseErrors, changeErrors, javaFiles, oldHash, hash, hash);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -319,7 +293,7 @@ public class Recommender {
 			.replace("{simErr}", noSimilar)
 			.replace("{intro}", Integer.toString(intro))
 			.replace("{new}", introduced);
-		//sendEmail(out, "New " + type, id);
+		sendEmail(out, "New " + type, id);
 		log(out);
 		reset();
 		return out;
@@ -327,8 +301,8 @@ public class Recommender {
 
 	/**
 	 * Searches for new pull requests opened for a Github repository every 15 minutes.
-	 *
-	 * @return   List of new pull requests
+	 * @param git Git repository object
+	 * @return    List of new pull requests
 	 */
 	private void getPullRequests(Git git) {
 		log("Getting pull requests...");
@@ -336,22 +310,20 @@ public class Recommender {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("state", "open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
-		int i = 0;
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
 			try {
-				if (i < 1) {//new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
+				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(git, pull);					
-					//requests.add(pull);
+					requests.add(pull);
 					String out = results(Integer.toString(pull.number()));
-					i += 1;
 				} else {
 					if (requests.isEmpty()) {
 						log("No new pull requests");
 					}
 					break;
 				}
-				//git.checkout().setName("refs/heads/master").call();
+				git.checkout().setName("refs/heads/master").call();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
@@ -361,7 +333,10 @@ public class Recommender {
 
 	/**
 	 * Searches for new commits made to Github repositories every 15 minutes.
-	 *
+	 * 
+	 * @param git    Git repository object
+	 * @param branch Current branch
+	 * @param hash   Commit hash of current branch head
 	 * @return  List of new commits
 	 */
 	private void getCommits(Git git, String branch, String hash) {
@@ -370,23 +345,21 @@ public class Recommender {
 		try {
 			git.checkout().setName(hash).call();
 			Iterator<RevCommit> revCommits = git.log().call().iterator();
-			int i = 0;
 			while (revCommits.hasNext()) {
 				RevCommit commit = revCommits.next();
 				long commitTime = (long) commit.getCommitTime() * 1000;
 				long now = new Date().getTime();
-				//if (now - commitTime <= TimeUnit.MILLISECONDS.convert(1500, TimeUnit.MINUTES)) {
+				if (now - commitTime <= TimeUnit.MILLISECONDS.convert(1500, TimeUnit.MINUTES)) {
 					System.out.println(ObjectId.toString(commit.getId()));
 					analyze(git, commit);
-					//commits.add(commit);
-					//String out = results(ObjectId.toString(commit.getId()));
-					break;
-				/*} else { 
+					commits.add(commit);
+					String out = results(ObjectId.toString(commit.getId()));
+				} else { 
 					if (commits.isEmpty()) {
 						log("No new commits");
 					}
 					break;
-				 }*/
+				 }
 			}
 			git.checkout().setName("refs/heads/master").call();
 		} catch (Exception e) {
@@ -424,22 +397,17 @@ public class Recommender {
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		Recommender toolBot = new Recommender(repo, git);
 		toolBot.getPullRequests(git);
-		/*try {
+		try {
 			Collection<Ref> refs = git.lsRemote().call();
 			for (Ref r: refs) {
-				//System.out.println(r.getName());
 				if (r.getName().startsWith("refs/heads/")) {
 					String branch = r.getName().split("/")[2];
-					if (branch.equals("master")) {
 					String hash = ObjectId.toString(r.getObjectId());
 					toolBot.getCommits(git, branch, hash);
-					break;
-					}
-					//break;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 }
