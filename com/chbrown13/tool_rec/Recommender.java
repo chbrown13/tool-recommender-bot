@@ -350,7 +350,7 @@ public class Recommender {
 				RevCommit commit = revCommits.next();
 				long commitTime = (long) commit.getCommitTime() * 1000;
 				long now = new Date().getTime();
-				if (now - commitTime <= TimeUnit.MILLISECONDS.convert(1500, TimeUnit.MINUTES)) {
+				if (now - commitTime <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					System.out.println(ObjectId.toString(commit.getId()));
 					analyze(git, commit);
 					commits.add(commit);
