@@ -272,7 +272,7 @@ public class Recommender {
 			log("head: " + hash);
 			System.out.println(baseErrors.size());
 			System.out.println(changeErrors.size());
-			//git.reset().setMode(ResetType.HARD).call();
+			git.reset().setMode(ResetType.HARD).call();
 			checkFix(baseErrors, changeErrors, javaFiles, oldHash, hash, hash);
 		} catch (Exception e) {
 			e.printStackTrace();
