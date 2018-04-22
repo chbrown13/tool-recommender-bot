@@ -3,3 +3,5 @@
 *.jar
 *.txt
 *.retry
+base.java
+head.java
