@@ -64,19 +64,20 @@ public class ErrorProne extends Tool {
 		if (msg == null || msg.isEmpty()) {
 			return errors;
 		}
+		boolean compile = true;
 		String regex = "^[\\w+/]*\\w.java\\:\\d+\\:.*\\:.*";
 		String dir = Utils.getCurrentDir();
 		String[] lines = msg.split("\n");
 		Error temp = null;
 		for (String line: lines) {
-			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$")) {
+			if (line.matches("^\\d+\\serror[s]*$") || line.matches("^\\d+\\swarning[s]*$") || line.startsWith("Note:")) {
 				continue;
 			}
-			else if (line.startsWith("[INFO] ") || line.startsWith("[ERROR]") || line.startsWith("[WARNING] ")
-				|| line.startsWith("Note:")) { //Maven build log
+			else if (line.startsWith("[INFO] ") || line.startsWith("[ERROR]") || line.startsWith("[WARNING] ")) {
+				//Maven build log
+				compile = false;
 				continue;
-			}
-			else if (line.matches(regex) || line.startsWith(dir)) {
+			} else if (line.matches(regex) || line.startsWith(dir)) {
 				if (temp != null && !errors.contains(temp)) {	errors.add(temp); }
 				String[] error = line.split(":");
 				String errorFilePath = error[0];
@@ -96,7 +97,9 @@ public class ErrorProne extends Tool {
 			}
 		}
 		if (temp != null && !errors.contains(temp)) { errors.add(temp); }
-		System.out.println(errors.size());
+		if (errors.size() == 0 && !compile) {
+			return null;
+		}
 		return errors;
 	}
 

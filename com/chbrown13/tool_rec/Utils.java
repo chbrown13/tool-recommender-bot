@@ -509,83 +509,26 @@ public class Utils {
 	}
 
 	/**
-	 * Checkout git repository with same user and project
+	 * Get errors from software engineering tool
 	 * 
 	 * @param git    Current instance of git repo
 	 * @param hash   Hash of GitHub change
 	 * @param tool   Tool to recommend
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(Git git, String hash, Tool tool) {
+	public static List<Error> getErrors(Git git, String hash, Tool tool) {
 		String log = null;
+		List<Error> errors = null;
 		try {
 			addToolPomPlugin(projectName, tool);
 			log = compile(projectName);
 			System.out.println(log);
+			errors = tool.parseOutput(log);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return tool.parseOutput(log);
+		return errors;
 	}
-
-	/**
-	 * Checkout specific version of a git repository to analyze
-	 * 
-	 * @param hash   Hash of GitHub change
-	 * @param owner  GitHub user
-	 * @param repo   Name of repository
-	 * @param tool   Tool to recommend
-	 * @param base   True if original version of repo
-	 * @param type   Type of code change (PULL or COMMIT)
-	 * @return       List of errors reported from tool
-	 *
-	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
-		String dirName = projectName;
-		Git git = null;
-		try {
-			if(base) {
-				dirName += "1";
-				if (type.equals(Recommender.PULL)) {
-					diff = PULL_DIFF.replace("{user}", owner).replace("{repo}", repo);
-				} else {
-					diff = COMMIT_DIFF.replace("{user}", owner).replace("{repo}", repo);
-				}
-			} else {
-				dirName += "2";
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		System.out.println(dirName+" "+owner+" "+hash);
-		try {
-			git.checkout().setName(hash).call();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		addToolPomPlugin(dirName, tool);
-		String log = compile(dirName);
-		if (log == null) {
-			return null;
-		}
-		//System.out.println(log);
-		return tool.parseOutput(log);
-	}*/
-
-	/**
-	 * Remove temp repo directories
-	 *
-	public static void cleanup() {
-		try {
-			String[] dirs = {projectName+"1", projectName+"2"};
-			for (String d: dirs) {
-				Process p = Runtime.getRuntime().exec("rm -rf " + d);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
-	}*/
 
 	/**
 	 * Utility method to get file contents from url and download file.

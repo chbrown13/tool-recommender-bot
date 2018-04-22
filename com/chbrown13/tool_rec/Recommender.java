@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import javax.json.*;
 import org.apache.commons.mail.*;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.errors.*;
 import org.eclipse.jgit.lib.*;
@@ -33,6 +33,7 @@ public class Recommender {
 	private Repo repo;
 	private Git git;
 	private Set<String> fixes = new HashSet<String>();	
+	private List<String> changes = new ArrayList<String>();
 	private int recs = 0;
 	private int rem = 0;
 	private int fix = 0;
@@ -40,13 +41,14 @@ public class Recommender {
 	private String removed = "";
 	private String introduced = "";
 	private String noSimilar = "";
-	private static String log = "";
 	private int baseErrorCount = 0;
 	private int newErrorCount = 0;
 	private int baseErrorCountFiles = 0;
 	private int newErrorCountFiles = 0;
 	private Tool tool = null;
 	private static String type = "";
+	private static String log = "";
+	
 
 	public static final String PULL = "pull";
 	public static final String COMMIT = "commit";
@@ -152,7 +154,7 @@ public class Recommender {
 	/**
 	 * Checks if the change is actually a fix or not
 	 */
-	private boolean checkFix(List<Error> baseErrors, List<Error> changeErrors, List<String> files, String base, String head, String id) {
+	private boolean checkFix(List<Error> baseErrors, List<Error> changeErrors, String base, String head, String id) {
 		boolean fix = false;
 		if(baseErrors != null && changeErrors != null) {
 			List<Error> fixed = new ArrayList<Error>();	
@@ -200,21 +202,62 @@ public class Recommender {
 	}
 
 	/**
+	 * Checkout code versions and get errors for each
+	 * 
+	 * @param git   Git repository object
+	 * @param base  Commit hash for base version
+	 * @param head  Commit hash for changed version
+	 * @param id    Code change id
+	 */
+	private boolean checkout (Git git, String base, String head, String id) {
+		this.changes.add(base);
+		this.changes.add(head);
+		List<Error> baseErrors = null;
+		List<Error> changeErrors = null;
+		try {
+			git.checkout().setName(base).call();
+			baseErrors = Utils.getErrors(git, base, tool);
+			log("base: " + base);
+			git.checkout().setName(head).call();
+			changeErrors = Utils.getErrors(git, head, tool);
+			log("head: " + head);
+			git.reset().setMode(ResetType.HARD).call();
+		} catch (GitAPIException e) {
+			e.printStackTrace();
+			log("Git checkout error");
+			return false;
+		}
+		if (baseErrors == null || changeErrors == null) {
+			log("Maven compile error");
+			return false;
+		} else if (baseErrors.size() == 0) {
+			log("No errors found");
+			return false;
+		} else {
+			System.out.println(baseErrors.size());
+			System.out.println(changeErrors.size());
+			return checkFix(baseErrors, changeErrors, base, head, id);
+		}
+	}
+
+	/**
 	 * Analyze code of files in pull request and compare to base branch.
 	 *
 	 * @param pull   Current pull request
 	 */
-	private void analyze(Git git, Pull.Smart pull) {
+	private boolean analyze(Git git, Pull.Smart pull) {
 		log("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		this.type = PULL;
 		tool = new ErrorProne();		
 		List<String> javaFiles = new ArrayList<String>();
+		String hash = "";
+		String newHash = "";
 		Iterator<JsonObject> files = null;
 		try {
 			files = pull.files().iterator();			
 		} catch (Exception e) {
 			e.printStackTrace();
-			return;
+			return false;
 		}
 		while (files.hasNext()) {
 			JsonObject f = files.next();
@@ -222,30 +265,22 @@ public class Recommender {
 				javaFiles.add(f.getString("filename"));
 			} else if (f.getString("filename").equals("pom.xml")) {
 				log("\n\nModified pom.xml\n\n");
-				return;
+				return false;
 			}
 		}
 		if (javaFiles.size() == 0) {
 			log("\n\nNo java changes\n\n");
-			return;
+			return false;
 		}
 		try {
 			JsonObject head = pull.json().getJsonObject("head");
-			String hash = pull.json().getJsonObject("base").getString("sha");
-			String newHash = head.getString("sha");
-			git.checkout().setName(hash).call();
-			List<Error> baseErrors = Utils.checkout(git, hash, tool);
-			log("base: " + hash);
-			git.checkout().setName(newHash).call();
-			List<Error> changeErrors = Utils.checkout(git, newHash, tool);
-			log("head: " + newHash);
-			System.out.println(baseErrors.size());
-			System.out.println(changeErrors.size());
-			git.reset().setMode(ResetType.HARD).call();
-			checkFix(baseErrors, changeErrors, javaFiles, hash, newHash, Integer.toString(pull.number()));
+			hash = pull.json().getJsonObject("base").getString("sha");
+			newHash = head.getString("sha");
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}	
+		return checkout(git, hash, newHash, Integer.toString(pull.number()));
 	}
 
 	/**
@@ -253,31 +288,29 @@ public class Recommender {
 	 *
 	 * @param commit   Current commit
 	 */
-	private void analyze(Git git, RevCommit commit) {
+	private boolean analyze(Git git, RevCommit commit) {
 		log("Analyzing commit " + ObjectId.toString(commit.getId()) + "...");
 		this.type = COMMIT;
-		tool = new ErrorProne();		
+		tool = new ErrorProne();
+		String hash = "";
+		String oldHash = "";		
 		List<String> javaFiles = new ArrayList<String>();
 		try {
 			if (commit.getParentCount() == 0 || commit.getParentCount() > 1) {
 				log("Parent count is " + Integer.toString(commit.getParentCount()));
-				return;
+				return false;
 			}
-			String hash = ObjectId.toString(commit.getId());
-			String oldHash = ObjectId.toString(commit.getParent(0).getId());
-			git.checkout().setName(oldHash).call();
-			List<Error> baseErrors = Utils.checkout(git, oldHash, tool);
-			log("base: " + oldHash);
-			git.checkout().setName(hash).call();
-			List<Error> changeErrors = Utils.checkout(git, hash, tool);
-			log("head: " + hash);
-			System.out.println(baseErrors.size());
-			System.out.println(changeErrors.size());
-			git.reset().setMode(ResetType.HARD).call();
-			checkFix(baseErrors, changeErrors, javaFiles, oldHash, hash, hash);
+			hash = ObjectId.toString(commit.getId());
+			oldHash = ObjectId.toString(commit.getParent(0).getId());
+			if (this.changes.contains(hash) || this.changes.contains(oldHash)) {
+				log("Already seen this code change in a previous branch");
+				return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}
+		return checkout(git, oldHash, hash, hash);
 	}
 
 	/**
