@@ -1,6 +1,5 @@
 package com.chbrown13.tool_rec;
 
-import com.jcabi.github.Branch;
 import com.jcabi.github.Coordinates;
 import com.jcabi.github.Pull;
 import com.jcabi.github.Pull.Smart;
