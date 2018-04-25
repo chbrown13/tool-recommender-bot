@@ -41,6 +41,7 @@ public class Utils {
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
+	private static String MVN_CLEAN = "mvn -q -f {dir}/pom.xml clean";
 	private static String currentDir = System.getProperty("user.dir");
 	private static boolean myTool = false;
 	private static boolean xmlProfile = false;
@@ -143,10 +144,10 @@ public class Utils {
 	 * Get the character offset of an error based on the reported line
 	 * 
 	 * @param error   Error reported by ErrorProne
-	 * @param srcFile Filename of source code
+	 * @param source  Filename of source code
 	 * @return        character offset where error begins
 	 */
-	private static int getErrorOffset(Error error, String srcFile) {
+	private static int getErrorOffset(Error error, String source) {
 		String log = error.getLog();
 		String prev = null;
 		int loc;
@@ -160,7 +161,7 @@ public class Utils {
 			}
 			prev = line;
 		}
-		File file = new File(srcFile);
+		File file = new File(source);
 		try {
 			int i = 0;
 		    Scanner sc = new Scanner(file);
@@ -317,17 +318,23 @@ public class Utils {
 	/**
 	 * Returns line number of code fix
 	 * 
-	 * @param id   ID of code change (pullrequest number or commit hash)
+	 * @param id   ID of code change (PR number or commit hash)
+	 * @param type Type of code change
 	 * @param err  Error fixed by user
 	 * @return     Line number of what is considered a fix or null if none
      */
-	public static int getFix(String id, Error err) {
-		String url = diff.replace("{id}", id);
+	public static int getFix(String id, String type, Error error) {
+		String url = null;
+		if (type.equals(Recommender.PULL)) {
+			url = PULL_DIFF.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{id}", id);
+		} else if (type.equals(Recommender.COMMIT)) {
+			url = COMMIT_DIFF.replace("{user}", projectOwner).replace("{repo}", projectName).replace("{id}", id);
+		} 
 		int newLine = fixType;
 		String[] wget = wget(url).split("\n");
 		boolean found = false;
 		for (String line: wget) {
-			if (line.contains(err.getFileName())) {
+			if (line.contains(error.getFileName())) {
 				found = true;
 				continue;
 			} 
@@ -337,7 +344,7 @@ public class Utils {
 			}
 			if (found) {
 				String l = line.substring(1).trim();
-				if (err.getLog().contains(l) && !l.equals("")) {
+				if (error.getLog().contains(l) && !l.equals("")) {
 					break;
 				} 					
 				newLine += 1;
@@ -353,34 +360,22 @@ public class Utils {
 	 * @param error  Error in question
 	 * @return       True if error prone bug was fixed, else false
 	 */
-	public static boolean isFix(Error error) {
-		String file1 = error.getFilePath();
-		String file2 = file1.replace(projectName + "1", projectName+"2");
-		boolean noChange = false;
-		String content1 = "";
-		String content2 = "";
-		File base = new File(file1);
-		File head = new File(file2);
-		if (!base.isFile() || !head.isFile()) {
+	public static boolean isFix(Error error, String base, String head) {
+		String link = RAW_URL.replace("{user}", projectOwner).replace("{repo}", projectName)
+			.replace("{path}", error.getLocalFilePath());
+		String baseFile = "base.java";
+		String headFile = "head.java";
+		String file1 = wget(link.replace("{sha}", base), baseFile);
+		String file2 = wget(link.replace("{sha}", head), headFile);
+		if (file1.equals(file2)) {
 			return false;
-		} else {
-			try {
-				noChange = FileUtils.contentEquals(base, head);	
-				content1 = new String(Files.readAllBytes(Paths.get(file1)));
-				content2 = new String(Files.readAllBytes(Paths.get(file2)));			
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-			if (noChange || content1.equals(content2)) {
-				return false;
-			}
 		}
-		int fix = findFix(file1, file2, getErrorOffset(error, file1));
+		int fix = findFix(baseFile, headFile, getErrorOffset(error, baseFile));
 		/*if (fix > 0) {
 			System.out.println(conSystem.out.println(content1);
 			System.out.println(content2);
 		}*/
+		System.out.println(fix);
 		return fix > 0;
 	}
 
@@ -392,10 +387,23 @@ public class Utils {
 	 */
 	public static String compile(String path) {
 		String output = "";
-		String cmd = MVN_COMPILE.replace("{dir}", path);
+		BufferedReader br = null;
+		String compile = MVN_COMPILE.replace("{dir}", path);
+		String clean = MVN_CLEAN.replace("{dir}", path);
 		try {
-			Process p = Runtime.getRuntime().exec(cmd);	
-			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			try {
+				System.out.println(clean);
+				Process p1 = Runtime.getRuntime().exec(clean);
+				p1.waitFor();
+				System.out.println(compile);
+				Process p2 = Runtime.getRuntime().exec(compile);	
+				p2.waitFor();
+				System.out.println("compiled");
+				br = new BufferedReader(new InputStreamReader(p2.getErrorStream()));
+			} catch (InterruptedException ie) {
+				ie.printStackTrace();
+				return null;
+			}
 			String line;
 			while ((line = br.readLine()) != null) {
 			    output += line + "\n";
@@ -440,7 +448,7 @@ public class Utils {
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
-						if (qName.equals("plugins") && !xmlReporting) {
+						if (qName.equals("plugins") && !myTool) {
 							writer.write(tool.getPlugin());
 							myTool = true;			
 						} else if (qName.equals("project") && !myTool) {
@@ -466,6 +474,15 @@ public class Utils {
 				}
 			};
 			saxParser.parse(file, handler);
+		} catch (FileNotFoundException fnf) {
+			System.out.println("No pom.xml");
+			try {
+			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
+			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
+			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
+			} catch (IOException io) {
+				io.printStackTrace();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -481,8 +498,8 @@ public class Utils {
 		try {
 			String pom = String.join("/",currentDir, dir, "pom.xml");
 			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
-			FileWriter writer = new FileWriter(tempPom, false);
 			myTool = false;
+			FileWriter writer = new FileWriter(tempPom, false);
 			parseXML(pom, tool, writer);
 			writer.close();
 			tempPom.renameTo(new File(pom));			
@@ -492,97 +509,54 @@ public class Utils {
 	}
 
 	/**
-	 * Checkout git repository with same user and project
+	 * Get errors from software engineering tool
 	 * 
+	 * @param git    Current instance of git repo
 	 * @param hash   Hash of GitHub change
 	 * @param tool   Tool to recommend
-	 * @param base   True if original version of repo
-	 * @param type   Type of code change (PULL or COMMIT)
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> checkout(String hash, Tool tool, boolean base, String type) {
-		String owner = projectOwner;
-		String repo = projectName;
+	public static List<Error> getErrors(Git git, String hash, Tool tool) {
+		String log = null;
+		List<Error> errors = null;
 		try {
-			return checkout(hash, projectOwner, projectName, tool, base, type);
-		} catch (IOException e) {
+			addToolPomPlugin(projectName, tool);
+			log = compile(projectName);
+			System.out.println(log);
+			errors = tool.parseOutput(log);
+		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
+		return errors;
 	}
 
 	/**
-	 * Checkout specific version of a git repository to analyze
+	 * Utility method to get file contents from url and download file.
 	 * 
-	 * @param hash   Hash of GitHub change
-	 * @param owner  GitHub user
-	 * @param repo   Name of repository
-	 * @param tool   Tool to recommend
-	 * @param base   True if original version of repo
-	 * @param type   Type of code change (PULL or COMMIT)
-	 * @return       List of errors reported from tool
+	 * @param link URL of raw file to download
+	 * @param file Output file name
+	 * @return     String of file contents
 	 */
-	public static List<Error> checkout(String hash, String owner, String repo, Tool tool, boolean base, String type) throws IOException {
-		String dirName = projectName;
-		Git git = null;
-		try {
-			if(base) {
-				dirName += "1";
-				if (type.equals(Recommender.PULL)) {
-					diff = PULL_DIFF.replace("{user}", owner).replace("{repo}", repo);
-				} else {
-					diff = COMMIT_DIFF.replace("{user}", owner).replace("{repo}", repo);
-				}
-			} else {
-				dirName += "2";
-			}
-		} catch (Exception e) {
+	private static String wget(String link, String file) {
+		String text = wget(link);
+		System.out.println(text+file);
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(text);
+        } catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println(dirName+" "+owner+" "+hash);
-		try {
-			git = Git.cloneRepository()
-				.setURI("https://github.com/{owner}/{repo}.git"
-					.replace("{owner}", owner).replace("{repo}", repo))
-				.setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
-				.setDirectory(new File(dirName))
-				.setCloneAllBranches(true).call();
-			git.checkout().setName(hash).call();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		addToolPomPlugin(dirName, tool);
-		String log = compile(dirName);
-		if (log == null) {
-			return null;
-		}
-		//System.out.println(log);
-		return tool.parseOutput(log);
-	}
-
-	/**
-	 * Remove temp repo directories
-	 */
-	public static void cleanup() {
-		try {
-			String[] dirs = {projectName+"1", projectName+"2"};
-			for (String d: dirs) {
-				Process p = Runtime.getRuntime().exec("rm -rf " + d);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
+		return text;
 	}
 
 	/**
 	 * Utility method to get file contents from url.
 	 * 
-	 * @param link Url of file to download
+	 * @param link URL of raw file
 	 * @return     String of file contents
 	 */
 	private static String wget(String link) {
+		System.out.println(link);
 		String s = "";
 		String out = "";
 		try {
@@ -602,7 +576,7 @@ public class Utils {
 			e.printStackTrace();
 		}
 		return out;
-}
+	}
 
 	/**
 	 * Changes the current working directory of the program
