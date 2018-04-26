@@ -26,7 +26,7 @@ wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/stop-bot.yml
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/jenkins.xml
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/eval.py
-wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.2.0/error_prone_ant-2.2.0.jar
+wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.3.1/error_prone_ant-2.3.1.jar
 wget -q https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
 wget -q https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit/4.9.0.201710071750-r/org.eclipse.jgit-4.9.0.201710071750-r.jar
 wget -q http://repo1.maven.org/maven2/com/jcabi/jcabi-github/0.38/jcabi-github-0.38-jar-with-dependencies.jar
