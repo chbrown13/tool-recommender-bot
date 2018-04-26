@@ -1,4 +1,4 @@
-DIR = "/home/dcbrow10/"
+DIR = "/home/dcbrow10"
 
 def jenkins(user, repo):
     with open("jenkins.xml") as f:
