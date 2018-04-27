@@ -1,7 +1,9 @@
+DIR = "/home/dcbrow10"
+
 def jenkins(user, repo):
     with open("jenkins.xml") as f:
         config = f.read()
-    config = config.replace("{user}", user).replace("{repo}", repo)
+    config = config.replace("{user}", user).replace("{repo}", repo).replace("{dir}", DIR)
     return config
 
 def main():

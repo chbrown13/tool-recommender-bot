@@ -22,13 +22,14 @@ echo "localhost ansible_connection=local" > hosts
 sudo mv hosts /etc/ansible/hosts
 
 # Download files and dependencies
-wget -q https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/tool-recommender-bot.yml
-wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/delete.yml
-wget -q https://raw.githubusercontent.com/chbrown13/PullRecommender/master/jenkins.xml
-wget -q https://raw.githubusercontent.com/chbrown13/PullRecommender/master/eval_scripts/eval.py
-wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.2.0/error_prone_ant-2.2.0.jar
+wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/start-bot.yml
+wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/stop-bot.yml
+wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/jenkins.xml
+wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/eval.py
+wget -q https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.3.1/error_prone_ant-2.3.1.jar
 wget -q https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
 wget -q https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit/4.9.0.201710071750-r/org.eclipse.jgit-4.9.0.201710071750-r.jar
+wget -q http://repo1.maven.org/maven2/com/jcabi/jcabi-github/0.38/jcabi-github-0.38-jar-with-dependencies.jar
 wget -q http://central.maven.org/maven2/com/jcraft/jsch/0.1.46/jsch-0.1.46.jar
 wget -q http://central.maven.org/maven2/org/apache/commons/commons-email/1.3.1/commons-email-1.3.1.jar
 wget -q http://central.maven.org/maven2/javax/mail/mail/1.4.7/mail-1.4.7.jar
