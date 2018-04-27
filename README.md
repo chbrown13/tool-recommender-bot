@@ -2,7 +2,10 @@
 tool-recommender-bot is an automated recommendation system designed to increase awareness and adoption of software engineering tools among developers. The initial implementation automatically recommends Error Prone, an open source static analysis tool for Java code, to GitHub users.
 
 Set Up:
-* Install required jar files 
+* Dependencies:
+	* Java
+	* Maven
+* Install required jar files: 
 	* error_prone_ant-2.3.1.jar 
 	* gumtree.jar 
 	* jcabi-github-0.38-jar-with-dependencies.jar
