@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.1' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description>Automatically recommend software engineering and research tools to developers of open source software projects on Github.</description>
+  <description>Automatically recommend software engineering tools to developers of open source software projects.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
-    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.28.0">
+    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.29.0">
       <projectUrl>https://github.com/chbrown13/tool-recommender-bot/</projectUrl>
       <displayName></displayName>
     </com.coravy.hudson.plugins.github.GithubProjectProperty>
@@ -14,16 +14,18 @@
           <name>USER</name>
           <description>Github user</description>
           <defaultValue>{user}</defaultValue>
+          <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>REPO</name>
           <description>Github repository</description>
           <defaultValue>{repo}</defaultValue>
+          <trim>false</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.1">
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.8.0">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
@@ -53,36 +55,21 @@
   <builders>
     <hudson.tasks.Shell>
       <command>
-      sudo cp {dir}/jcabi-github-0.38-jar-with-dependencies.jar .
-      sudo cp {dir}/error_prone_ant-2.3.1.jar .
-      sudo cp {dir}/gumtree.jar .
-      sudo cp {dir}/org.eclipse.jgit-4.9.0.201710071750-r.jar .
-      sudo cp {dir}/jsch-0.1.46.jar .
-      sudo cp {dir}/commons-email-1.3.1.jar .
-      sudo cp {dir}/mail-1.4.7.jar .
-      sudo cp {dir}/.github.creds .
-      sudo cp {dir}/.email.creds .
-      export PATH=$PATH:/opt/maven/bin/  
-      sudo javac -cp jcabi-github-0.38-jar-with-dependencies.jar:error_prone_ant-2.3.1.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com/chbrown13/tool_rec/ErrorProne.java com/chbrown13/tool_rec/Tool.java com/chbrown13/tool_rec/Error.java com/chbrown13/tool_rec/Recommender.java com/chbrown13/tool_rec/Utils.java com/chbrown13/tool_rec/Comment.java
-      java -cp .:jcabi-github-0.38-jar-with-dependencies.jar:error_prone_ant-2.3.1.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com.chbrown13.tool_rec.Recommender $USER $REPO
-      </command>
+wget -nc https://repo1.maven.org/maven2/com/google/errorprone/error_prone_ant/2.3.1/error_prone_ant-2.3.1.jar
+wget -nc https://github.com/GumTreeDiff/gumtree/releases/download/2.0.0/gumtree.jar
+wget -nc http://central.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit/4.9.0.201710071750-r/org.eclipse.jgit-4.9.0.201710071750-r.jar
+wget -nc http://repo1.maven.org/maven2/com/jcabi/jcabi-github/0.38/jcabi-github-0.38-jar-with-dependencies.jar
+wget -nc http://central.maven.org/maven2/com/jcraft/jsch/0.1.46/jsch-0.1.46.jar
+wget -nc http://central.maven.org/maven2/org/apache/commons/commons-email/1.3.1/commons-email-1.3.1.jar
+wget -nc http://central.maven.org/maven2/javax/mail/mail/1.4.7/mail-1.4.7.jar
+sudo cp -n {dir}/.github.creds . ; sudo chown jenkins:jenkins .github.creds
+sudo cp -n {dir}/.email.creds . ; sudo chown jenkins:jenkins .email.creds
+export PATH=$PATH:{mvn}
+sudo javac -cp jcabi-github-0.38-jar-with-dependencies.jar:error_prone_ant-2.3.1.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com/chbrown13/tool_rec/ErrorProne.java com/chbrown13/tool_rec/Tool.java com/chbrown13/tool_rec/Error.java com/chbrown13/tool_rec/Recommender.java com/chbrown13/tool_rec/Utils.java com/chbrown13/tool_rec/Comment.java
+java -cp .:jcabi-github-0.38-jar-with-dependencies.jar:error_prone_ant-2.3.1.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com.chbrown13.tool_rec.Recommender $USER $REPO
+</command>
     </hudson.tasks.Shell>
   </builders>
-  <publishers>
-    <hudson.plugins.ws__cleanup.WsCleanup plugin="ws-cleanup@0.34">
-      <patterns class="empty-list"/>
-      <deleteDirs>false</deleteDirs>
-      <skipWhenFailed>false</skipWhenFailed>
-      <cleanWhenSuccess>true</cleanWhenSuccess>
-      <cleanWhenUnstable>true</cleanWhenUnstable>
-      <cleanWhenFailure>true</cleanWhenFailure>
-      <cleanWhenNotBuilt>true</cleanWhenNotBuilt>
-      <cleanWhenAborted>true</cleanWhenAborted>
-      <notFailBuild>false</notFailBuild>
-      <cleanupMatrixParent>false</cleanupMatrixParent>
-      <externalDelete></externalDelete>
-    </hudson.plugins.ws__cleanup.WsCleanup>
-  </publishers>
+  <publishers/>
   <buildWrappers/>
 </project>
-

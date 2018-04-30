@@ -213,6 +213,7 @@ public class Recommender {
 		this.changes.add(head);
 		List<Error> baseErrors = null;
 		List<Error> changeErrors = null;
+		Set<String> path = new HashSet<String>();
 		try {
 			git.checkout().setName(base).call();
 			baseErrors = Utils.getErrors(git, base, tool);
@@ -220,6 +221,8 @@ public class Recommender {
 			git.checkout().setName(head).call();
 			changeErrors = Utils.getErrors(git, head, tool);
 			log("head: " + head);
+			path.add("pom.xml");
+			git.clean().setPaths(path).call();
 			git.reset().setMode(ResetType.HARD).call();
 		} catch (GitAPIException e) {
 			e.printStackTrace();

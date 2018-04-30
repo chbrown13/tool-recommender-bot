@@ -1,9 +1,10 @@
-DIR = "/home/dcbrow10"
+MVN_DIR = "/opt/maven/bin" # Maven bin directory
+DIR = "/home/dcbrow10" # User home directory
 
 def jenkins(user, repo):
     with open("jenkins.xml") as f:
         config = f.read()
-    config = config.replace("{user}", user).replace("{repo}", repo).replace("{dir}", DIR)
+    config = config.replace("{user}", user).replace("{repo}", repo).replace("{dir}", DIR).replace("{mvn}", MVN_DIR)
     return config
 
 def main():
