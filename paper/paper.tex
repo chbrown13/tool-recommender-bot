@@ -46,7 +46,7 @@ To maintain and meet rising demands for technology, software engineers emphasize
 
 To improve code quality, researchers and toolsmiths have created software engineering tools to aid developers in their work. Research shows that tools for static analysis~\cite{UsingStaticAnalysis}, refactoring~\cite{Murphy-HillFitness}, security, and more are beneficial for improving code and preventing bugs. These tools can automatically perform a wide variety of software development tasks to save time and effort for developers. Additionally, the Software Engineering Body of Knowledge recommends using development tools because they can be used to achieve ``desirable characteristics of software products''~\cite{SWEBOK}. Software enginering tools are useful for reducing software errors and debugging costs while increasing developer productivity.
 
-Although software quality is important, software engineering tools created to improve code quality are often ignored by developers~\cite{Ivanov2017Gaps}. Tilley and colleagues suggest tool adoption should be one of the most important goals of software engineering research, and present challenges preventing professional developers from adopting programming tools created by researchers, or research-off-the-shelf (ROTS) software~\cite{Tilley2003ROTS}. Furthermore, researchers have explored barriers preventing software engineers from utilizing useful tools for debugging~\cite{Cao2010Debugging}, static analysis~\cite{Johnson2013Why}, security~\cite{Xiao2014Security}, refactoring~\cite{Murphy-HillBarriersRefactoring}, documentation~\cite{ForwardDocumentationRelevance}, and more. One barrier to tool adoption is the discoverability barrier, where users are unaware of a tool's existence~\cite{Murphy-HillScreencastingDiscovery}. This lack of tool awareness in the software engineering industry can lead to poor-quality applications, inconvenienced users, and wasted time and money fixing errors. Automated approaches have been developed to increase awareness of software tools and features, however Murphy-Hill and colleagues found that developers prefer learning about tools from colleagues during normal work activities, or \textit{peer interactions}~\cite{Murphy-Hill2011PeerInteraction}.
+Although software quality is important, software engineering tools created to improve code quality are often ignored by developers~\cite{Ivanov2017Gaps}. Tilley and colleagues suggest tool adoption should be one of the most important goals of software engineering research, and present challenges preventing professional developers from adopting programming tools created by researchers, or research-off-the-shelf (ROTS) software~\cite{Tilley2003ROTS}. Furthermore, researchers have explored barriers preventing software engineers from utilizing useful tools for debugging~\cite{Cao2010Debugging}, static analysis~\cite{Johnson2013Why}, security~\cite{Xiao2014Security}, refactoring~\cite{Murphy-HillBarriersRefactoring}, documentation~\cite{Forward2002Documentation}, and more. One barrier to tool adoption is the discoverability barrier, where users are unaware of a tool's existence~\cite{Murphy-HillScreencastingDiscovery}. This lack of tool awareness in the software engineering industry can lead to poor-quality applications, inconvenienced users, and wasted time and money fixing errors. Automated approaches have been developed to increase awareness of software tools and features, however Murphy-Hill and colleagues found that developers prefer learning about tools from colleagues during normal work activities, or \textit{peer interactions}~\cite{Murphy-Hill2011PeerInteraction}.
 
 To help solve the tool discovery problem among software engineers, we developed an approach for making automated tool recommendations. Our approach integrates characteristics of peer interactions and software engineering practices to suggest useful tools to developers. We base our technique on three design pillars: \textit{commend}, \textit{apprehend}, and \textit{recommend}. These principles allow our approach to be applied to a variety software engineering tools and to make customized recommendations to developers. Our goal is for researchers and toolsmiths to implement this approach to increase awareness and adoption of their tools.
 
@@ -80,7 +80,7 @@ Finally, existing research has also analyzed different types and styles of softw
 
 \section{Approach}
 
-Our approach uses three design pillars to increase awareness of software engineering tools: \textit{commend} developers on their work, \textit{apprehend} additional opportunities for improvement, and \textit{recommend} useful development tools to enhance the quality of the code.
+Our approach uses three design pillars to increase awareness of software engineering tools: \textit{commend} developers on their work, \textit{apprehend} additional opportunities for improvement, and \textit{recommend} useful development tools to enhance the quality of the code. 
 
 \subsection{Commend}
 
@@ -100,14 +100,13 @@ After commending software engineers for their work, our approach automatically f
 
 \subsection{Recommend}
 
-The final step of our approach is to recommend useful software engineering tools to developers. The recommendation to developers includes commending them for improving code quality and apprehending new opportunities for similar improvements. In our example, the recommendation to the developer will praise them for their work refactoring the code, provide additional places in the code where they can make similar refactoring changes, and then suggest the refactoring tool which is useful for detecting even more instances for refactoring activities. Our goal is that through commending and apprehending, we can improve the effectiveness of recommendations for software engineering tools and increase adoption among developers.
+The final step of our approach is to recommend useful software engineering tools to developers. The recommendation to developers includes commending them for improving code quality and apprehending new opportunities for similar improvements. In our example, the recommendation to the developer will praise them for their work refactoring the code, provide additional places in the code where they can make similar refactoring changes, and then suggest the refactoring tool which is useful for detecting even more instances for refactoring activities. Our goal is that through commending and apprehending, we can improve the effectiveness of recommendations for software engineering tools and increase adoption among developers. Figure \ref{fig:chartA} provides a general overview of how our approach can be implemented as an active help system.
 
-%TODO: Non-lossy image
-%TODO: More interesting error
+%TODO: All non-lossy images
 \begin{figure*}
-	\includegraphics[width=\textwidth]{images/screenshot.png}
-	\caption{Screenshot of recommendation from \tool}	
-	\label{fig:tool} 
+	\includegraphics[width=\textwidth]{images/flowchartA.png}
+	\caption{Flowchart presenting a general implementation of our approach}	
+	\label{fig:chartA} 
 \end{figure*}
 
 \section{Motivation}
@@ -144,9 +143,22 @@ Next, \tool~apprehends places where similar opportunities to the code can be mad
 
 Finally, \tool~recommends \textsc{Error Prone} to the GitHub user at the location of their fix in the code. We commend developers by telling them ``Good job!'' and presenting the error they fixed. \tool~ provides the apprehended opportunities for similar code changes as links to buggy lines with the same error in other parts of the code. Finally, we provide a link to the \textsc{Error Prone} website for users to learn more about the tool if they are interested. Figure \ref{fig:tool} provides a sample recommendation from \tool~to a developer for \textsc{Error Prone} on a GitHub pull request.
 
+%TODO: More interesting error?
+\begin{figure*}
+	\includegraphics[width=\textwidth]{images/screenshot.png}
+	\caption{Screenshot of recommendation from \tool}	
+	\label{fig:tool} 
+\end{figure*}
+
 \section{Implementation Description}
 
-This sections provides technical details on the implementation of our approach in \tool. The design of our system is motivated by current practices in the software engineering industry to make \tool~more similar to a peer for developers.
+This sections provides technical details on the implementation of our approach in \tool. Figure \ref{fig:chartB} shows a specific flowchart displaying the implementation of our design principles for the evaluation. The design of our system is motivated by current practices in the software engineering industry to make \tool~more similar to a peer for developers.
+
+\begin{figure*}
+	\includegraphics[width=\textwidth]{images/flowchartB.png}
+	\caption{Flowchart presenting how we implemented our approach in \tool}	
+	\label{fig:chartB} 
+\end{figure*}
 
 \subsection{Continuous Integration}
 
