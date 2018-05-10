@@ -78,15 +78,21 @@ Furthermore, researchers and toolsmiths have developed automated recommender sys
 %Other existing evaluations
 Finally, existing research has also analyzed different types and styles of software engineering tool recommendations. Murphy-Hill and colleagues outlined existing recommendation algorithms to propose new algorithms based on the previous methods~\cite{Murphy-Hill2011Fluency}. Moreover, Murphy-Hill explored seven different methods of tool recommendations: peer observations, peer recommendations, tool encounters, tutorials, written descriptions, Twitter or RSS Feeds, and discussion threads- and found that peer interactions (peer observation and recommendation) were the most effective mode of tool discovery among software engineers~\cite{Murphy-Hill2011PeerInteraction, Murphy-Hill2015HowDoUsers}. Piorkowski and colleagues evaluated different recommendation algorithms to determine if \textit{information foraging theory}~\cite{Pirolli1999IFT} can be applied to improve recommendations using structure and wording based on how software engineers seek information~\cite{Piorkowski2012ReactiveIFT}. Additionally, Winters and colleagues analyzed different styles of tool recommendations and found that suggestion style impacts tool adoption for software developers [Mike]. This study compares the effectiveness of our approach to other recommender styles by modifying our design principles to investigate different wording and methods of communication in tool recommendations to developers.
 
+\begin{figure*}
+	\includegraphics[width=\textwidth]{images/flowchartA.png}
+	\caption{Flowchart presenting a general implementation of our approach: \textit{A) Store project source code; B) Check for code changes; C.1) Add tool plugin, run tool on original code, and collect output; C.2) Add tool plugin, run tool on modified code, and collect output; D) Check for development tasks performed between versions of code; E) Search for other places where task can be applied; F) Recommend tool to help perform task.}}	
+	\label{fig:chartA} 
+\end{figure*}
+
 \section{Approach}
 
-Our approach uses three design pillars to increase awareness of software engineering tools: \textit{commend} developers on their work, \textit{apprehend} additional opportunities for improvement, and \textit{recommend} useful development tools to enhance the quality of the code. 
+Our approach uses three design pillars to increase awareness of software engineering tools: \textit{commend} developers on their work, \textit{apprehend} additional opportunities for improvement, and \textit{recommend} useful development tools to enhance the quality of the code. Figure \ref{fig:chartA} provides a general overview of how we implement these design pillars as an active help system.
 
 \subsection{Commend}
 
 The first design principle of our approach finds places where a tool would be useful. To do this, our technique commends developers for their updates making improvements to code. We analyze code changes made by developers and then praise them for their work when they improve the quality of code. Additionally, psychology research also suggests people respond better to praise than blame~\cite{PraiseAndBlame}. Our approach applauds developers when they produce good work rather than rebuke them for making mistakes when they introduce new issues. 
 
-To determine improvements in code quality, our approach monitors problems reported by the output of software engineering tools. For example, suppose we want to use our approach to increase awareness of useful refactoring tools. To do this, our technique will inspect code changes made by developers to determine if a refactoring activity occurs. If a refactoring activity is detected, then we commend the programmer for their work to improve the quality of the code.
+To determine improvements in code quality, our approach monitors projects for code changes made by software engineers (Figure \ref{fig:chartA}A, \ref{fig:chartA}.B). Software engineering tools are used to determine if programming tasks are performed by developers when they make code changes by automatically runs tools on the original version of the code and the modified version (Figure \ref{fig:chartA}.C). Then, we compare the tool output from on both versions of code to determine if any development tasks were performed by the developer (Figure \ref{fig:chartA}.D). For example, if we want to recommend a refactoring tool to a developer in an Integrated Development Environment (IDE), then we would wait for changes to the code base and use a tool to detect if a refactoring activity occured in the modifications. If a refactoring activity is detected, our approach commends the programmer for their code change to improve the software quality when making a recommendation for the refactoring tool.
 
 %Our goal is for \tool~to increase awareness of software engineering tools. For our initial evaluation in this paper, we  recommending \textsc{Error Prone}.
 
@@ -94,20 +100,13 @@ To determine improvements in code quality, our approach monitors problems report
 
 Next, our approach finds additional places to recommend useful software engineering tools. To find other opportunities for recommendations, we apprehend instances where developers can make source code improvements similar to their previous code changes and based on development tool analysis from the commend phase. This design principle helps reduce effort and provides information-related needs to software engineers, which Fischer suggests is a goal for help systems~\cite{Fischer1984ActiveHelpSystems}. 
 
-After commending software engineers for their work, our approach automatically finds opportunities to make similar changes to improve the code. For example, after the programmer completes the refactoring task, we analyze the entire updated version of the code base to find other places where the same refactoring activity is applicable. 
+After determining whether a development activity occured, our approach searches for similar instances in the code where the same activity can be applied. To apprehend opportunities for similar programming tasks, our approach involves automatically analyzing the tool output from the updated code to automatically find new opportunities where developers can perform the same task  (Figure \ref{fig:chartA}.E). For example, after the programmer completes the refactoring task in the IDE our approach analyzes the entire updated version of the code base to find other places where the same refactoring activity is applicable. 
 
 %To choose a familiar audience, our approach makes recommendations on proposed Github code changes submitted by users. 
 
 \subsection{Recommend}
 
-The final step of our approach is to recommend useful software engineering tools to developers. The recommendation to developers includes commending them for improving code quality and apprehending new opportunities for similar improvements. In our example, the recommendation to the developer will praise them for their work refactoring the code, provide additional places in the code where they can make similar refactoring changes, and then suggest the refactoring tool which is useful for detecting even more instances for refactoring activities. Our goal is that through commending and apprehending, we can improve the effectiveness of recommendations for software engineering tools and increase adoption among developers. Figure \ref{fig:chartA} provides a general overview of how our approach can be implemented as an active help system.
-
-%TODO: All non-lossy images
-\begin{figure*}
-	\includegraphics[width=\textwidth]{images/flowchartA.png}
-	\caption{Flowchart presenting a general implementation of our approach}	
-	\label{fig:chartA} 
-\end{figure*}
+The final step of our approach is to recommend software engineering tools to developers  (Figure \ref{fig:chartA}.F). The recommendation to developers includes commending them for improving code quality based on their changes and apprehending new opportunities to make the same improvement. In the continuing example, after determining refactoring activity was performed and finding other locations in the code where the same task can be performed, then our approach will make a recommendation to the developer in the IDE. The recommendation will praise the developer for their refactoring change, provide additional places in the code where they can make the same refactoring change, and suggest using a refactoring tool for future refactoring activities. Our goal is that through commending and apprehending, we can improve the effectiveness of recommendations for software engineering tools and increase adoption among developers. 
 
 \section{Motivation}
 
@@ -133,11 +132,11 @@ To implement our approach, we developed \tool~to recommend the \textsc{Error Pro
 
 \subsection{Commend}
 
-First, a GitHub user makes a change to a repository. \tool~automatically analyzes to commits and pull requests GitHub projects to find opportunities to commend developers when bugs reported by \textsc{Error Prone} are removed. \textsc{Error Prone} is a static analysis tool that uses a suite of defined bug patterns to detect errors in Java code. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. More details on how our implementation determines a bug fix can be found in Section 6.2.
+First, we clone repositories locally to detect when GitHub users make changes to a project as a commit or pull request (Figure \ref{fig:chartB}.A.3,  \ref{fig:chartB}.B). \tool~automatically analyzes code changes to find opportunities to commend developers when bugs reported by \textsc{Error Prone} are removed. \textsc{Error Prone} is a static analysis tool that uses a suite of defined bug patterns to detect errors in Java code. Static analysis tools like \textsc{Error Prone} are useful for debugging and preventing errors in source code for applications, however they are often underutilized by software engineers~\cite{Johnson2013Why}. More details on how our implementation determines a bug fix can be found in Section 6.2.
 
 \subsection{Apprehend}
 
-Next, \tool~apprehends places where similar opportunities to the code can be made. GitHub should be knowledgeable and familiar with the changes they propose, as well as the code base to which they are contributing. \tool~suggests \textsc{Error Prone} when a reported bug is fixed by a developer in a commit or pull request, but the same error still exists elsewhere in the code. 
+Next, \tool~apprehends places where similar opportunities to the code can be made (Figure \ref{fig:chartA}.E). GitHub developers should be knowledgeable and familiar with the changes they propose, as well as the code base to which they are contributing. \tool~suggests \textsc{Error Prone} when a reported bug is fixed by a developer in a commit or pull request, but the same error still exists elsewhere in the code. 
 
 \subsection{Recommend}
 
@@ -156,7 +155,7 @@ This sections provides technical details on the implementation of our approach i
 
 \begin{figure*}
 	\includegraphics[width=\textwidth]{images/flowchartB.png}
-	\caption{Flowchart presenting how we implemented our approach in \tool}	
+	\caption{Flowchart presenting our implementation of \tool~for this evaluation: \textit{A) Store project source code; B) Check for code changes; C.1) Add tool plugin, run tool on original code, and collect output; C.2) Add tool plugin, run tool on modified code, and collect output; D) Check for development tasks performed between versions of code; E) Search for other places where task can be applied; F) Recommend tool to help perform task.}}	
 	\label{fig:chartB} 
 \end{figure*}
 
@@ -208,7 +207,7 @@ To evaluate the effectiveness of our approach, we compared \tool~to different st
 
 \subsubsection{Setup}
 
-To analyze 700+ GitHub repositories simultaneously, we set up \tool~on virtual machines. We used Ansible\footnote{https://www.ansible.com/} to automatically generate and provision Jenkins jobs for every project. To limit the load on each machine, we ran our study in parallel by dividing the Jenkins jobs among \textit{n} virtual CentOS images. The scripts and instructions to used setup our study environment for \tool~are publicly available to view online.
+To analyze 700+ GitHub repositories simultaneously, we set up \tool~on virtual machines. We used Ansible\footnote{https://www.ansible.com/} to automatically setup and install dependencies on the all the virtual machines, and then on each VM we use it to setup the Jenkins server and generate Jenkins jobs for each project. Each Jenkins job clones the GitHub repository, periodically checks for new commits and pull requests every 15 minutes, and runs \tool~to analyze project code changes. Figure \ref{fig:chartB}.A.1-A.3 displays the setup process for our evaluation of \tool. Additionally, the scripts and instructions to setup the study environment are publicly available online.\footnote{\url{https://github.com/chbrown13/tool-recommender-bot/tree/master/eval_scripts/}}
 
 \subsubsection{Recommendation Styles}
 
@@ -233,7 +232,7 @@ Without apprehending, our system simply commends the developer for their fix and
 
 \subsubsection{Recommendation Review}
 
-We manually reviewed each instance where \tool~reported a recommendation to a developer for two reasons. First, we wanted to ensure that only one \textsc{Error Prone} recommendation was made to each project. This avoids biasing our results by minimizing the chance other GitHub users working on the same project discover the tool from a comment made to that repository. Additionally, in some cases one commit or pull request provided multiple opportunities for a recommendation. In this case, the authors examined each instance and selected one of errors reported  to make a recommendation on.
+For our evaluation, we manually reviewed each instance where \tool~reported a recommendation to a developer. This step can be seen in Figure \ref{fig:chartB}.F. We do this for several reasons: First, we wanted to ensure that only one \textsc{Error Prone} recommendation was made to each project to avoid biasing our results by minimizing the chance other GitHub users working on the same project discover the tool from a comment made to that repository. Additionally, in some cases one commit or pull request provided multiple opportunities for a recommendation. In this case, the authors examined each instance and selected one of errors reported  to make a recommendation on.
 
 Next, we inspected cases to avoid making uneccesary recommendations to developers. Johnson and colleagues discovered one of the primary barriers of static analysis tool usage for software engineers is false positive output~\cite{Johnson2013Why}. To prevent multple comments on one project and false positives from our system, we modified \tool~to send an email to the researchers with the proposed recommendation. After checking the code changes, we proceeded to use \tool~to post the comment recommending \textsc{Error Prone} to the developer on their pull request or commit if the fix was deemed to be a true positive and the repository had not previously received a recommendation. Otherwise, we noted the instance as a false positive in our implementation and did not make a recommendation.
 
