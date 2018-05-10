@@ -155,7 +155,7 @@ This sections provides technical details on the implementation of our approach i
 
 \begin{figure*}
 	\includegraphics[width=\textwidth]{images/flowchartB.png}
-	\caption{Flowchart presenting our implementation of \tool~for this evaluation: \textit{A) Store project source code; B) Check for code changes; C.1) Add tool plugin, run tool on original code, and collect output; C.2) Add tool plugin, run tool on modified code, and collect output; D) Check for development tasks performed between versions of code; E) Search for other places where task can be applied; F) Recommend tool to help perform task.}}	
+	\caption{Flowchart presenting our implementation of \tool~for this evaluation: \textit{A.1) Setup for \tool~on virtual machines; A.2) Setup Jenkins server and create \tool~jobs; A.3) Clone GitHub repository; B) Check for code changes; C.1) Add \textsc{Error Prone} tool plugin to pom.xml file, build original code with Maven, and collect output; C.2) Add \textsc{Error Prone} tool plugin to pom.xml file, build modified code with Maven, and collect output; D) Check for bugs fixed between versions; E) Search for other instances of bug; F) Send email to researchers to review; G) Recommend Error Prone; H) Repeat process every 15 minutes; I) Pull latest code from GitHub. }}	
 	\label{fig:chartB} 
 \end{figure*}
 
