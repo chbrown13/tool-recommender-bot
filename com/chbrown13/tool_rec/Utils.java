@@ -60,8 +60,15 @@ public class Utils {
 	 *
 	 * @param name   Github account username
 	 */
-	public static void setUsername(String name) {
+	private static void setUsername(String name) {
 		username = name;
+	}
+
+	/**
+	 * Returns the GitHub username
+	 */
+	public static String getUsername() {
+		return username;
 	}
 
 	/**
@@ -69,12 +76,19 @@ public class Utils {
 	 *
 	 * @param pass   Github account password
 	 */
-	public static void setPassword(String pass) {
+	private static void setPassword(String pass) {
 		if (pass != null) {
 			password = pass;
 		} else {
 			password = "";
 		}
+	}
+
+	/**
+	 * Returns the GitHub user password
+	 */
+	public static String getPassword() {
+		return password;
 	}
 
 	/**
