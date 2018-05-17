@@ -59,8 +59,44 @@ public class Recommender {
 	public Recommender(Repo repo, Git git) {
 		this.repo = repo;
 		this.git = git;
+		this.tool = new ErrorProne();
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
+	}
+
+	static class RecommenderThread extends Thread {
+		private String name;
+		private String hash;
+		private Git git;
+		private Tool tool;
+		private List<Error> errors;
+
+		public RecommenderThread(String hash, Git git, Tool tool) {
+			this.hash = hash;
+			this.git = git;
+			this.tool = tool;
+			this.name = git.getRepository().getDirectory().getAbsolutePath().replace("/.git", "");
+		}
+
+		public List<Error> getResults() {
+			return this.errors;
+		}
+
+		public void run() {
+			try {
+				System.out.println ("Thread " +
+					Thread.currentThread().getId() +
+					" is running " + this.git.toString());
+				this.git.checkout().setName(this.hash).call();
+				this.errors = Utils.getErrors(this.name, this.hash, this.tool);
+				Set<String> path = new HashSet<String>();
+				path.add("pom.xml");
+				this.git.clean().setPaths(path).call();
+				this.git.reset().setMode(ResetType.HARD).call();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -207,19 +243,28 @@ public class Recommender {
 	/**
 	 * Checkout code versions and get errors for each
 	 * 
-	 * @param git   Git repository object
 	 * @param base  Commit hash for base version
 	 * @param head  Commit hash for changed version
 	 * @param id    Code change id
 	 */
-	private boolean checkout (Git git, String base, String head, String id) {
+	private boolean checkout(String base, String head, String id) {
 		this.changes.add(base);
-		this.changes.add(head);
 		List<Error> baseErrors = null;
 		List<Error> changeErrors = null;
-		Set<String> path = new HashSet<String>();
 		try {
-			git.checkout().setName(base).call();
+			RecommenderThread thread1 = new RecommenderThread(base, this.git, this.tool);
+			thread1.start();
+			RecommenderThread thread2 = new RecommenderThread(head, this.git2, this.tool);
+			thread2.start();
+			thread1.join();
+			thread2.join();
+			baseErrors = thread1.getResults();
+			changeErrors = thread2.getResults();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+			/*this.git.checkout().setName(base).call();
 			baseErrors = Utils.getErrors(git, base, tool);
 			log("base: " + base);
 			git.checkout().setName(head).call();
@@ -232,7 +277,7 @@ public class Recommender {
 			e.printStackTrace();
 			log("Git checkout error");
 			return false;
-		}
+		}*/
 		if (baseErrors == null || changeErrors == null) {
 			log("Maven compile error");
 			return false;
@@ -254,7 +299,6 @@ public class Recommender {
 	private boolean analyze(Pull.Smart pull) {
 		log("Analyzing PR #" + Integer.toString(pull.number()) + "...");
 		this.type = PULL;
-		tool = new ErrorProne();		
 		List<String> javaFiles = new ArrayList<String>();
 		String hash = "";
 		String newHash = "";
@@ -294,15 +338,15 @@ public class Recommender {
 		try {
 			this.git2 = Git.cloneRepository()
 			.setURI("https://github.com/{owner}/{repo}.git"
-				.replace("{owner}", newOwner).replace("{repo}", newRepo))
+				.replace("{owner}", newOwner).replace("{repo}", Utils.getProjectName()))
 			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
 			.setDirectory(new File(newRepo))
 			.setCloneAllBranches(true).call();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return false;
-		//return checkout(git, hash, newHash, Integer.toString(pull.number()));
+		//return false;
+		return checkout(hash, newHash, Integer.toString(pull.number()));
 	}
 
 	/**
@@ -313,7 +357,6 @@ public class Recommender {
 	private boolean analyze(RevCommit commit) {
 		log("Analyzing commit " + ObjectId.toString(commit.getId()) + "...");
 		this.type = COMMIT;
-		tool = new ErrorProne();
 		String hash = "";
 		String oldHash = "";		
 		List<String> javaFiles = new ArrayList<String>();
@@ -324,13 +367,13 @@ public class Recommender {
 			}
 			hash = ObjectId.toString(commit.getId());
 			oldHash = ObjectId.toString(commit.getParent(0).getId());
-			if (this.changes.contains(hash) || this.changes.contains(oldHash)) {
-				log("Already seen this code change in a different branch");
+			if (this.changes.contains(oldHash)) {
+				log("Already saw commit in different branch");
 				return false;
 			}
 			Repository repository = this.git.getRepository();
 			RevWalk rw = new RevWalk(repository);
-			RevCommit parent = rw.parseCommit(oldHash);
+			RevCommit parent = rw.parseCommit(ObjectId.fromString(oldHash));
 			DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
 			df.setRepository(repository);
 			df.setDiffComparator(RawTextComparator.DEFAULT);
@@ -353,8 +396,18 @@ public class Recommender {
 			e.printStackTrace();
 			return false;
 		}
+		try {
+			this.git2 = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git"
+				.replace("{owner}", Utils.getProjectOwner()).replace("{repo}", Utils.getProjectName()))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+			.setDirectory(new File(Utils.getProjectName()+"2"))
+			.setCloneAllBranches(true).call();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return false;
-		//return checkout(git, oldHash, hash, hash);
+		//return checkout(oldHash, hash, hash);
 	}
 
 	/**
@@ -417,12 +470,12 @@ public class Recommender {
 	 * @param hash   Commit hash of current branch head
 	 * @return  List of new commits
 	 */
-	private void getCommits(Git git, String branch, String hash) {
+	private void getCommits(String branch, String hash) {
 		log("Getting commits from {branch} branch...".replace("{branch}", branch));
 		ArrayList<RevCommit> commits = new ArrayList<RevCommit>();
 		try {
-			git.checkout().setName(hash).call();
-			Iterator<RevCommit> revCommits = git.log().call().iterator();
+			this.git.checkout().setName(hash).call();
+			Iterator<RevCommit> revCommits = this.git.log().call().iterator();
 			while (revCommits.hasNext()) {
 				RevCommit commit = revCommits.next();
 				long commitTime = (long) commit.getCommitTime() * 1000;
@@ -439,7 +492,7 @@ public class Recommender {
 					break;
 				 }
 			}
-			git.checkout().setName("refs/heads/master").call();
+			this.git.checkout().setName("refs/heads/master").call();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -482,7 +535,7 @@ public class Recommender {
 				if (r.getName().startsWith("refs/heads/")) {
 					String branch = r.getName().split("/")[2];
 					String hash = ObjectId.toString(r.getObjectId());
-					toolBot.getCommits(git, branch, hash);
+					toolBot.getCommits(branch, hash);
 				}
 			}
 		} catch (Exception e) {

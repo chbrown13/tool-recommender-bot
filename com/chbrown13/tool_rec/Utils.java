@@ -396,14 +396,14 @@ public class Utils {
 	/**
 	 * Compiles the project to analyze code in the repository
 	 * 
-	 * @param path   Local path to current version of repo
-	 * @return       Output from the maven build
+	 * @param dir   Local path to current version of repo
+	 * @return      Output from the maven build
 	 */
-	public static String compile(String path) {
+	public static String compile(String dir) {
 		String output = "";
 		BufferedReader br = null;
-		String compile = MVN_COMPILE.replace("{dir}", path);
-		String clean = MVN_CLEAN.replace("{dir}", path);
+		String compile = MVN_COMPILE.replace("{dir}", dir);
+		String clean = MVN_CLEAN.replace("{dir}", dir);
 		try {
 			try {
 				System.out.println(clean);
@@ -510,8 +510,8 @@ public class Utils {
 	 */
 	private static void addToolPomPlugin(String dir, Tool tool) {
 		try {
-			String pom = String.join("/",currentDir, dir, "pom.xml");
-			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
+			String pom = String.join("/", dir, "pom.xml");
+			File tempPom = new File(String.join("/", dir, "pom.temp"));
 			myTool = false;
 			FileWriter writer = new FileWriter(tempPom, false);
 			parseXML(pom, tool, writer);
@@ -525,17 +525,17 @@ public class Utils {
 	/**
 	 * Get errors from software engineering tool
 	 * 
-	 * @param git    Current instance of git repo
+	 * @param path   Current instance project path
 	 * @param hash   Hash of GitHub change
 	 * @param tool   Tool to recommend
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> getErrors(Git git, String hash, Tool tool) {
+	public static List<Error> getErrors(String path, String hash, Tool tool) {
 		String log = null;
 		List<Error> errors = null;
 		try {
-			addToolPomPlugin(projectName, tool);
-			log = compile(projectName);
+			addToolPomPlugin(path, tool);
+			log = compile(path);
 			System.out.println(log);
 			errors = tool.parseOutput(log);
 		} catch (Exception e) {
