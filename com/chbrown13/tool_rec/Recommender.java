@@ -115,6 +115,12 @@ public class Recommender {
 		rem = 0;
 		fix = 0;
 		log = "";
+		try {
+			this.git.checkout().setName("refs/heads/master").call();
+			Utils.cleanup();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void log(String msg) {
@@ -168,6 +174,7 @@ public class Recommender {
 	 */
 	private void makeRecommendation(Tool tool, String id, Error error, int line, List<Error> errors, String base, String head) {
 		String comment = error.generateComment(tool, errors, head);
+		System.out.println("COMMENT= "+comment);
 		if (comment != null) {
 			String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{id}", id);
 			comment += link;
@@ -264,20 +271,6 @@ public class Recommender {
 			e.printStackTrace();
 			return false;
 		}
-			/*this.git.checkout().setName(base).call();
-			baseErrors = Utils.getErrors(git, base, tool);
-			log("base: " + base);
-			git.checkout().setName(head).call();
-			changeErrors = Utils.getErrors(git, head, tool);
-			log("head: " + head);
-			path.add("pom.xml");
-			git.clean().setPaths(path).call();
-			git.reset().setMode(ResetType.HARD).call();
-		} catch (GitAPIException e) {
-			e.printStackTrace();
-			log("Git checkout error");
-			return false;
-		}*/
 		if (baseErrors == null || changeErrors == null) {
 			log("Maven compile error");
 			return false;
@@ -345,7 +338,6 @@ public class Recommender {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//return false;
 		return checkout(hash, newHash, Integer.toString(pull.number()));
 	}
 
@@ -406,8 +398,7 @@ public class Recommender {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return false;
-		//return checkout(oldHash, hash, hash);
+		return checkout(oldHash, hash, hash);
 	}
 
 	/**
@@ -454,7 +445,6 @@ public class Recommender {
 					}
 					break;
 				}
-				this.git.checkout().setName("refs/heads/master").call();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
