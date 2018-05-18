@@ -60,8 +60,15 @@ public class Utils {
 	 *
 	 * @param name   Github account username
 	 */
-	public static void setUsername(String name) {
+	private static void setUsername(String name) {
 		username = name;
+	}
+
+	/**
+	 * Returns the GitHub username
+	 */
+	public static String getUsername() {
+		return username;
 	}
 
 	/**
@@ -69,12 +76,19 @@ public class Utils {
 	 *
 	 * @param pass   Github account password
 	 */
-	public static void setPassword(String pass) {
+	private static void setPassword(String pass) {
 		if (pass != null) {
 			password = pass;
 		} else {
 			password = "";
 		}
+	}
+
+	/**
+	 * Returns the GitHub user password
+	 */
+	public static String getPassword() {
+		return password;
 	}
 
 	/**
@@ -350,7 +364,6 @@ public class Utils {
 				newLine += 1;
 			}
 		}
-		System.out.println(url);
 		return newLine;
 	}
 
@@ -371,25 +384,20 @@ public class Utils {
 			return false;
 		}
 		int fix = findFix(baseFile, headFile, getErrorOffset(error, baseFile));
-		/*if (fix > 0) {
-			System.out.println(conSystem.out.println(content1);
-			System.out.println(content2);
-		}*/
-		System.out.println(fix);
 		return fix > 0;
 	}
 
 	/**
 	 * Compiles the project to analyze code in the repository
 	 * 
-	 * @param path   Local path to current version of repo
-	 * @return       Output from the maven build
+	 * @param dir   Local path to current version of repo
+	 * @return      Output from the maven build
 	 */
-	public static String compile(String path) {
+	public static String compile(String dir) {
 		String output = "";
 		BufferedReader br = null;
-		String compile = MVN_COMPILE.replace("{dir}", path);
-		String clean = MVN_CLEAN.replace("{dir}", path);
+		String compile = MVN_COMPILE.replace("{dir}", dir);
+		String clean = MVN_CLEAN.replace("{dir}", dir);
 		try {
 			try {
 				System.out.println(clean);
@@ -398,7 +406,7 @@ public class Utils {
 				System.out.println(compile);
 				Process p2 = Runtime.getRuntime().exec(compile);	
 				p2.waitFor();
-				System.out.println("compiled");
+				System.out.println("compiled " + dir);
 				br = new BufferedReader(new InputStreamReader(p2.getErrorStream()));
 			} catch (InterruptedException ie) {
 				ie.printStackTrace();
@@ -496,8 +504,8 @@ public class Utils {
 	 */
 	private static void addToolPomPlugin(String dir, Tool tool) {
 		try {
-			String pom = String.join("/",currentDir, dir, "pom.xml");
-			File tempPom = new File(String.join("/",currentDir, dir, "pom.temp"));
+			String pom = String.join("/", dir, "pom.xml");
+			File tempPom = new File(String.join("/", dir, "pom.temp"));
 			myTool = false;
 			FileWriter writer = new FileWriter(tempPom, false);
 			parseXML(pom, tool, writer);
@@ -511,23 +519,36 @@ public class Utils {
 	/**
 	 * Get errors from software engineering tool
 	 * 
-	 * @param git    Current instance of git repo
+	 * @param path   Current instance project path
 	 * @param hash   Hash of GitHub change
 	 * @param tool   Tool to recommend
 	 * @return       List of errors reported from tool
 	 */
-	public static List<Error> getErrors(Git git, String hash, Tool tool) {
+	public static List<Error> getErrors(String path, String hash, Tool tool) {
 		String log = null;
 		List<Error> errors = null;
 		try {
-			addToolPomPlugin(projectName, tool);
-			log = compile(projectName);
-			System.out.println(log);
+			addToolPomPlugin(path, tool);
+			log = compile(path);
 			errors = tool.parseOutput(log);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return errors;
+	}
+
+	/**
+	 * Remove temp repo directories
+	 */
+	public static void cleanup() {
+		try {
+			String[] dirs = {projectName+"2"};
+			for (String d: dirs) {
+				Process p = Runtime.getRuntime().exec("rm -rf " + d);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
 
 	/**
@@ -539,7 +560,6 @@ public class Utils {
 	 */
 	private static String wget(String link, String file) {
 		String text = wget(link);
-		System.out.println(text+file);
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(text);
         } catch (IOException e) {
@@ -556,7 +576,6 @@ public class Utils {
 	 * @return     String of file contents
 	 */
 	private static String wget(String link) {
-		System.out.println(link);
 		String s = "";
 		String out = "";
 		try {
