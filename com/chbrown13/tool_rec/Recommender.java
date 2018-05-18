@@ -155,7 +155,7 @@ public class Recommender {
 			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
-			//log("Email sent for review: " + subject);	
+			log("Email sent for review: " + subject);	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -430,7 +430,7 @@ public class Recommender {
 		log("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "open");
+		params.put("state", "all");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
