@@ -155,7 +155,7 @@ public class Recommender {
 			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
-			log("Email sent for review: " + subject);	
+			//log("Email sent for review: " + subject);	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
