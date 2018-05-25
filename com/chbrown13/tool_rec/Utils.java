@@ -43,7 +43,8 @@ public class Utils {
 	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml compile";
 	private static String MVN_CLEAN = "mvn -f {dir}/pom.xml clean";
 	private static String currentDir = System.getProperty("user.dir");
-	private static boolean myTool = false;
+	private static boolean myTool1 = false;
+	private static boolean myTool2 = false;
 	private static boolean xmlProfile = false;
 	private static boolean xmlPluginMgmt = false;
 	private static boolean xmlReporting = false;
@@ -424,13 +425,15 @@ public class Utils {
 	}
 
 	/**
-	 * Modifies pom.xml file to add current tool plugin for maven build
+	 * Modifies base pom.xml file to add current tool plugin for maven build
 	 * 
-	 * @param file   Path to pom.xml file
+	 * @param file   Path to pom.xml file in base version of code
 	 * @param tool   Tool to analyze code
 	 * @param writer New pom.xml file to write to
 	 */
-	public static void parseXML(String file, Tool tool, FileWriter writer) {
+	public static void parseXML1(String file, Tool tool, FileWriter writer) {
+		myTool1 = false;
+		System.out.println("PARSE ME " + file);
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser saxParser = factory.newSAXParser();
@@ -456,15 +459,21 @@ public class Utils {
 				public void endElement(String uri, String localName,
 					String qName) throws SAXException {
 					try {
-						if (qName.equals("plugins") && !myTool) {
+						if (qName.equals("plugins") && !myTool1 && !xmlPluginMgmt) {
 							writer.write(tool.getPlugin());
-							myTool = true;			
-						} else if (qName.equals("project") && !myTool) {
+							myTool1 = true;
+							System.out.println("xmlplugins-" + uri + " " + qName + " " + localName);			
+						} else if (qName.equals("project") && !myTool1 && !xmlPluginMgmt) {
 							writer.write(String.join("\n", "<build>", "<plugins>", 
 								tool.getPlugin(), "</plugins>", "</build>"));
-							myTool = true;
+							myTool1 = true;
+							System.out.println("xmlproject-" + uri + " " + qName + " " + localName);			
 						} else if (qName.equals("reporting")) {
 							xmlReporting = false;
+						} else if (qName.equals("pluginManagement")) {
+							xmlPluginMgmt = false;
+						} else if (qName.equals("profiles")) {
+							xmlProfile = false;
 						}
 						writer.write("</" + qName + ">");
 					} catch (IOException e) {
@@ -483,35 +492,96 @@ public class Utils {
 			};
 			saxParser.parse(file, handler);
 		} catch (FileNotFoundException fnf) {
-			System.out.println("No pom.xml");
+			/*System.out.println("No pom.xml");
 			try {
 			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
 			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
 			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
 			} catch (IOException io) {
 				io.printStackTrace();
-			}
+			}*/
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Updates to pom.xml file to include tool plugin
+	 * Modifies head pom.xml file to add current tool plugin for maven build
 	 * 
-	 * @param dir   Current directory of the project
-	 * @param tool  Static analysis tool to analyze code
+	 * @param file   Path to pom.xml file in head version of code
+	 * @param tool   Tool to analyze code
+	 * @param writer New pom.xml file to write to
 	 */
-	private static void addToolPomPlugin(String dir, Tool tool) {
+	public static void parseXML2(String file, Tool tool, FileWriter writer) {
+		myTool2 = false;
+		System.out.println("PARSE ME " + file);
 		try {
-			String pom = String.join("/", dir, "pom.xml");
-			File tempPom = new File(String.join("/", dir, "pom.temp"));
-			myTool = false;
-			FileWriter writer = new FileWriter(tempPom, false);
-			parseXML(pom, tool, writer);
-			writer.close();
-			tempPom.renameTo(new File(pom));			
-		} catch (IOException e) {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			SAXParser saxParser = factory.newSAXParser();
+			DefaultHandler handler = new DefaultHandler() {
+				@Override
+				public void startElement(String uri, String localName, String qName,
+							Attributes attributes) throws SAXException {
+					try {
+						writer.write("<" + qName + ">");
+						if(qName.equals("pluginManagement")) {
+							xmlPluginMgmt = true;
+						} else if (qName.equals("profiles")) {
+							xmlProfile = true;
+						} else if (qName.equals("reporting")) {
+							xmlReporting = true;
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+				@Override
+				public void endElement(String uri, String localName,
+					String qName) throws SAXException {
+					try {
+						if (qName.equals("plugins") && !myTool2 && !xmlPluginMgmt) {
+							writer.write(tool.getPlugin());
+							myTool2 = true;
+							System.out.println("xmlplugins-" + uri + " " + qName + " " + localName);			
+						} else if (qName.equals("project") && !myTool2 && !xmlPluginMgmt) {
+							writer.write(String.join("\n", "<build>", "<plugins>", 
+								tool.getPlugin(), "</plugins>", "</build>"));
+							myTool2 = true;
+							System.out.println("xmlproject-" + uri + " " + qName + " " + localName);			
+						} else if (qName.equals("reporting")) {
+							xmlReporting = false;
+						} else if (qName.equals("pluginManagement")) {
+							xmlPluginMgmt = false;
+						} else if (qName.equals("profiles")) {
+							xmlProfile = false;
+						}
+						writer.write("</" + qName + ">");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+				@Override
+				public void characters(char ch[], int start, int length) throws SAXException {
+					try {
+						writer.write(new String(ch, start, length));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			saxParser.parse(file, handler);
+		} catch (FileNotFoundException fnf) {
+			/*System.out.println("No pom.xml");
+			try {
+			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
+			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
+			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
+			} catch (IOException io) {
+				io.printStackTrace();
+			}*/
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -528,7 +598,6 @@ public class Utils {
 		String log = null;
 		List<Error> errors = null;
 		try {
-			addToolPomPlugin(path, tool);
 			log = compile(path);
 			errors = tool.parseOutput(log);
 		} catch (Exception e) {

@@ -36,7 +36,7 @@ public class Recommender {
 	private Git git;
 	private Git git2;
 	private Set<String> fixes = new HashSet<String>();	
-	private List<String> changes = new ArrayList<String>();
+	private List<String> changes;
 	private int recs = 0;
 	private int rem = 0;
 	private int fix = 0;
@@ -60,10 +60,14 @@ public class Recommender {
 		this.repo = repo;
 		this.git = git;
 		this.tool = new ErrorProne();
+		this.changes = new ArrayList<String>();
 		Utils.setProjectName(repo.coordinates().repo());
 		Utils.setProjectOwner(repo.coordinates().user());
 	}
 
+	/**
+	 * Build versions of code in separate threads
+	 */
 	static class RecommenderThread extends Thread {
 		private String name;
 		private String hash;
@@ -76,6 +80,7 @@ public class Recommender {
 			this.git = git;
 			this.tool = tool;
 			this.name = git.getRepository().getDirectory().getAbsolutePath().replace("/.git", "");
+			this.errors = new ArrayList<Error>();
 		}
 
 		public List<Error> getResults() {
@@ -88,11 +93,19 @@ public class Recommender {
 					Thread.currentThread().getId() +
 					" is running " + this.git.toString());
 				this.git.checkout().setName(this.hash).call();
+				System.out.println("pom "+this.name+" pom");
+				String pom = String.join("/", this.name, "pom.xml");
+				File tempPom = new File(String.join("/", this.name, "pom.temp"));
+				FileWriter writer = new FileWriter(tempPom, false);
+				if (this.name.contains(Utils.getProjectName()+"2")) {
+					Utils.parseXML2(pom, tool, writer);
+				} else {
+					Utils.parseXML1(pom, tool, writer);
+				}
+				writer.close();
+				System.out.println("wrote "+this.name+" wrote");
+				tempPom.renameTo(new File(pom));	
 				this.errors = Utils.getErrors(this.name, this.hash, this.tool);
-				Set<String> path = new HashSet<String>();
-				path.add("pom.xml");
-				this.git.clean().setPaths(path).call();
-				this.git.reset().setMode(ResetType.HARD).call();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -116,13 +129,24 @@ public class Recommender {
 		fix = 0;
 		log = "";
 		try {
+			Set<String> path = new HashSet<String>();
+			path.add("pom.xml");
+			path.add("target/");
+			this.git.clean().setPaths(path).call();
+			this.git.reset().setMode(ResetType.HARD).call();
 			this.git.checkout().setName("refs/heads/master").call();
+			this.git2.clean().setPaths(path).call();
+			this.git2.reset().setMode(ResetType.HARD).call();
+			this.git2.checkout().setName("refs/heads/master").call();
 			Utils.cleanup();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * tool-recommender-bot logging
+	 */
 	private void log(String msg) {
 		System.out.println(msg);
 		log += "\n\n" + msg + "\n";
@@ -155,7 +179,7 @@ public class Recommender {
 			email.setMsg(String.join("\n", viewChanges, text));
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
-			//log("Email sent for review: " + subject);	
+			log("Email sent for review: " + subject);	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -255,6 +279,10 @@ public class Recommender {
 	 * @param id    Code change id
 	 */
 	private boolean checkout(String base, String head, String id) {
+		if (this.changes.contains(base)) {
+			log("Already viewed commit");
+			return false;
+		}
 		this.changes.add(base);
 		List<Error> baseErrors = null;
 		List<Error> changeErrors = null;
@@ -359,10 +387,6 @@ public class Recommender {
 			}
 			hash = ObjectId.toString(commit.getId());
 			oldHash = ObjectId.toString(commit.getParent(0).getId());
-			if (this.changes.contains(oldHash)) {
-				log("Already saw commit in different branch");
-				return false;
-			}
 			Repository repository = this.git.getRepository();
 			RevWalk rw = new RevWalk(repository);
 			RevCommit parent = rw.parseCommit(ObjectId.fromString(oldHash));
@@ -423,14 +447,14 @@ public class Recommender {
 
 	/**
 	 * Searches for new pull requests opened for a Github repository every 15 minutes.
-	 * @param git Git repository object
+	 * 
 	 * @return    List of new pull requests
 	 */
 	private void getPullRequests() {
 		log("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "all");
+		params.put("state", "open");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
@@ -455,7 +479,6 @@ public class Recommender {
 	/**
 	 * Searches for new commits made to Github repositories every 15 minutes.
 	 * 
-	 * @param git    Git repository object
 	 * @param branch Current branch
 	 * @param hash   Commit hash of current branch head
 	 * @return  List of new commits
@@ -471,7 +494,6 @@ public class Recommender {
 				long commitTime = (long) commit.getCommitTime() * 1000;
 				long now = new Date().getTime();
 				if (now - commitTime <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
-					System.out.println(ObjectId.toString(commit.getId()));
 					analyze(commit);
 					commits.add(commit);
 					String out = results(ObjectId.toString(commit.getId()));
