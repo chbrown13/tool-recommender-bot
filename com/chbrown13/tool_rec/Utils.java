@@ -609,9 +609,9 @@ public class Utils {
 	/**
 	 * Remove temp repo directories
 	 */
-	public static void cleanup() {
+	public static void cleanup(String rm) {
 		try {
-			String[] dirs = {projectName+"2"};
+			String[] dirs = {rm};
 			for (String d: dirs) {
 				Process p = Runtime.getRuntime().exec("rm -rf " + d);
 			}
