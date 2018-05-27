@@ -135,10 +135,12 @@ public class Recommender {
 			this.git.clean().setPaths(path).call();
 			this.git.reset().setMode(ResetType.HARD).call();
 			this.git.checkout().setName("refs/heads/master").call();
-			this.git2.clean().setPaths(path).call();
-			this.git2.reset().setMode(ResetType.HARD).call();
-			this.git2.checkout().setName("refs/heads/master").call();
-			Utils.cleanup();
+			if (this.git2 != null) {
+				this.git2.clean().setPaths(path).call();
+				this.git2.reset().setMode(ResetType.HARD).call();
+				this.git2.checkout().setName("refs/heads/master").call();
+				Utils.cleanup(Utils.getProjectName()+"2");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -350,7 +352,7 @@ public class Recommender {
 			newHash = head.getString("sha");
 			newOwner = head.getJsonObject("user").getString("login");
 			newRepo = Utils.getProjectName()+"2";
-			System.out.println(newOwner);
+			log(newOwner);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -552,5 +554,6 @@ public class Recommender {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		Utils.cleanup(args[1]);
 	}
 }
