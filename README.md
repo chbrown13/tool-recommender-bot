@@ -5,6 +5,6 @@ This branch shows our approach for searching for GitHub repositories to evaluate
 
 Run from source code:
 ```
-$ sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar com/chbrown13/tool_rec/Recommender.java
-$ java -cp .:jcabi-github-0.23-jar-with-dependencies.jar com.chbrown13.tool_rec.Recommender
+$ sudo javac -cp jcabi-github-0.41-jar-with-dependencies.jar com/chbrown13/tool_rec/Recommender.java
+$ java -cp .:jcabi-github-0.41-jar-with-dependencies.jar com.chbrown13.tool_rec.Recommender
 ```
