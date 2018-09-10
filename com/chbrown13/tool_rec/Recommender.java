@@ -15,6 +15,8 @@ import javax.json.*;
 public class Recommender {
 
 	private static int year = 2008;
+	private static int stars1 = 1;
+	private static int stars2 = 2;
 	private static String url = "https://raw.githubusercontent.com/{user}/{repo}/master/pom.xml";
 
 	private static boolean wgetErrorProne(String user, String repo) {
@@ -41,64 +43,30 @@ public class Recommender {
 		return true;
 	}
 
-	private static String getDates(int month) {
-		String date = "{y1}-{m1}-01..{y2}-{m2}-01";
-		int m1 = month % 12;
-		int m2 = (month + 1) % 12;
-		if (m1 == 0) {
-			date = date.replace("{y1}", Integer.toString(year))
-				.replace("{y2}", Integer.toString(year+1))
-				.replace("{m1}", "12").replace("{m2}", "01");
-			year += 1;
-		} else if (m2 == 0) {
-			date = date.replace("{y1}", Integer.toString(year))
-				.replace("{y2}", Integer.toString(year))
-				.replace("{m1}", Integer.toString(m1))
-				.replace("{m2}", "12");
-		} else if (m2 < 10) {
-			date = date.replace("{y1}", Integer.toString(year))
-				.replace("{y2}", Integer.toString(year))
-				.replace("{m1}", "0"+Integer.toString(m1))
-				.replace("{m2}", "0"+Integer.toString(m2));
-		} else if (m2 == 10) {
-			date = date.replace("{y1}", Integer.toString(year))
-				.replace("{y2}", Integer.toString(year))
-				.replace("{m1}", "09")
-				.replace("{m2}", "10");
-		}
-		else {
-			date = date.replace("{y1}", Integer.toString(year))
-				.replace("{y2}", Integer.toString(year))
-				.replace("{m1}", Integer.toString(m1))
-				.replace("{m2}", Integer.toString(m2));
-		}
-		System.out.println(date);
-		return date;
+	private static String getStars() {
+		String starStr = Integer.toString(stars1) + ".." + Integer.toString(stars2);
+		int temp = stars2;
+		stars2 += stars1;
+		stars1 = temp;
+		return starStr;
 	}
 
 	public static void main(String[] args) {
 		int n = 0;
-		int month = 2;
-		int pg = 1;
-		final Github github = new RtGithub("<username>", "<password>");
+		final Github github = new RtGithub("chbrown13", "git_down1");
 		ArrayList<String> projects = new ArrayList<String>();
 		try { 
 			while (true) {
 				final JsonResponse resp = github.entry()
 					.uri().path("/search/repositories")
-					.queryParam("q", "language:java created:{date}".replace("{date}", getDates(month)))
+					.queryParam("q", "language:java stars:{stars}".replace("{stars}", getStars()))
 					.queryParam("per_page", 100)
-					.queryParam("page", pg)
 					.queryParam("sort", "forks")
 					.queryParam("order", "desc").back()
 					.fetch()
 					.as(JsonResponse.class);
 				JsonArray items = resp.json().readObject().getJsonArray("items");
-				System.out.println(pg);
-				pg += 1;
 				if (items.isEmpty()) {
-					pg = 1;
-					month++;
 					continue;
 				} else {
 					final List<JsonObject> repos = items.getValuesAs(JsonObject.class);
@@ -122,11 +90,7 @@ public class Recommender {
 						n += 1;
 						System.out.println(n);			
 					}	
-				}
-				if (pg == 5) {
-					pg = 1;
-					month += 1;
-				}		
+				}	
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
