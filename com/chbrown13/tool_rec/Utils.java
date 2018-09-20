@@ -41,7 +41,7 @@ public class Utils {
 	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
-	private static String MVN_CLEAN = "mvn -q -f {dir}/pom.xml clean";
+	private static String MVN_VALIDATE = "mvn -q -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");
 	private static boolean myTool1 = false;
 	private static boolean myTool2 = false;
@@ -398,11 +398,11 @@ public class Utils {
 		String output = "";
 		BufferedReader br = null;
 		String compile = MVN_COMPILE.replace("{dir}", dir);
-		String clean = MVN_CLEAN.replace("{dir}", dir);
+		String valid = MVN_VALIDATE.replace("{dir}", dir);
 		try {
 			try {
-				System.out.println(clean);
-				Process p1 = Runtime.getRuntime().exec(clean);
+				System.out.println(valid);
+				Process p1 = Runtime.getRuntime().exec(valid);
 				p1.waitFor();
 				System.out.println(compile);
 				Process p2 = Runtime.getRuntime().exec(compile);	
