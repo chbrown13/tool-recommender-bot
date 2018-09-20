@@ -220,7 +220,7 @@ public class Recommender {
 			fix += 1;
 			noSimilar += "None similar to " + error.getLog() + "\n";
 		}
-	}
+	} 
 
 	/**
 	 * Checks if the change is actually a fix or not
@@ -451,25 +451,33 @@ public class Recommender {
 	 * 
 	 * @return    List of new pull requests
 	 */
-	private void getPullRequests() {
+	private void getPullRequests(String n) {
 		log("Getting pull requests...");
 		ArrayList<Pull.Smart> requests = new ArrayList<Pull.Smart>();
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("state", "open");
+		params.put("state", "all");
 		Iterator<Pull> pullit = this.repo.pulls().iterate(params).iterator();
 		while (pullit.hasNext()) {
 			Pull.Smart pull = new Pull.Smart(pullit.next());
+			System.out.print(pull.number());
+			System.out.println(" " + n);
 			try {
 				if (new Date().getTime() - pull.createdAt().getTime() <= TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES)) {
 					analyze(pull);					
 					requests.add(pull);
 					String out = results(Integer.toString(pull.number()));
-				} else {
-					if (requests.isEmpty()) {
-						log("No new pull requests");
-					}
+				} else if (pull.number() == Integer.parseInt(n)) {
+					System.out.println(n);
+					analyze(pull);
+					requests.add(pull);
+					String out = results(Integer.toString(pull.number()));
 					break;
-				}
+				} // else {
+				// 	if (requests.isEmpty()) {
+				// 		log("No new pull requests");
+				// 	}
+				// 	break;
+				// }
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
@@ -541,19 +549,19 @@ public class Recommender {
 		}
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		Recommender toolBot = new Recommender(repo, git);
-		toolBot.getPullRequests();
-		try {
-			Collection<Ref> refs = git.lsRemote().call();
-			for (Ref r: refs) {
-				if (r.getName().startsWith("refs/heads/")) {
-					String branch = r.getName().split("/")[2];
-					String hash = ObjectId.toString(r.getObjectId());
-					toolBot.getCommits(branch, hash);
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		Utils.cleanup(args[1]);
+		toolBot.getPullRequests(args[2]);
+		// try {
+		// 	Collection<Ref> refs = git.lsRemote().call();
+		// 	for (Ref r: refs) {
+		// 		if (r.getName().startsWith("refs/heads/")) {
+		// 			String branch = r.getName().split("/")[2];
+		// 			String hash = ObjectId.toString(r.getObjectId());
+		// 			toolBot.getCommits(branch, hash);
+		// 		}
+		// 	}
+		// } catch (Exception e) {
+		// 	e.printStackTrace();
+		// }
+		// Utils.cleanup(args[1]);
 	}
 }
