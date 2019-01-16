@@ -38,10 +38,9 @@ public class Utils {
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
     private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
-	public static String BASE_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {fixed}";
 	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
-	private static String MVN_COMPILE = "mvn -q -f {dir}/pom.xml compile";
-	private static String MVN_VALIDATE = "mvn -q -f {dir}/pom.xml validate";
+	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
+	private static String MVN_VALIDATE = "mvn -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");
 	private static boolean myTool1 = false;
 	private static boolean myTool2 = false;
@@ -156,51 +155,6 @@ public class Utils {
 	}
 
 	/**
-	 * Get the character offset of an error based on the reported line
-	 * 
-	 * @param error   Error reported by ErrorProne
-	 * @param source  Filename of source code
-	 * @return        character offset where error begins
-	 */
-	private static int getErrorOffset(Error error, String source) {
-		String log = error.getLog();
-		String prev = null;
-		int loc;
-		int chars = 0;
-		String bug = null;
-		for(String line: log.split("\n")) {
-			if(line.contains("^")) {
-				loc = line.indexOf("^");
-				bug = prev.substring(loc);
-				break;
-			}
-			prev = line;
-		}
-		File file = new File(source);
-		try {
-			int i = 0;
-		    Scanner sc = new Scanner(file);
-		    while (sc.hasNext()) {
-				if (i < error.getLineNumber()-1) {
-					chars += sc.nextLine().length(); //ignore
-				} else {
-					String str = sc.nextLine();
-					if (str.contains(bug)) {
-						chars += str.indexOf(bug);
-						return chars;
-					}
-				}
-				i++;
-		    }
-		    sc.close();
-		} 
-		catch (FileNotFoundException e) {
-		    e.printStackTrace();
-		}
-		return 0;
-	}
-
-	/**
 	 * Check if a node exists in the updated file
 	 * 
 	 * @param node   ITree to search for in destination file
@@ -292,15 +246,14 @@ public class Utils {
 			return -1;
 		}		
 		for(Action a: actions) {
-			if(!a.toString().startsWith("DEL")) {
+			if(a.toString().equals("DEL")) {
+				continue;
+			} else {
 				deleteOnly = false;
-			}
-			if(a.toString().endsWith("@Deprecated")) {
-				return -1;			
-			}
-			int pos = a.getNode().getPos();
-			if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
-				closestAction = a;
+				int pos = a.getNode().getPos();
+				if (Math.abs(errorNode.getPos() - pos) < Math.abs(errorNode.getPos() - closestAction.getNode().getPos())) {
+					closestAction = a;
+				}
 			}
 		}
 		if (deleteOnly) {
@@ -384,44 +337,43 @@ public class Utils {
 		if (file1.equals(file2)) {
 			return false;
 		}
-		int fix = findFix(baseFile, headFile, getErrorOffset(error, baseFile));
+		int fix = findFix(baseFile, headFile, error.getOffset());
 		return fix > 0;
 	}
 
 	/**
 	 * Compiles the project to analyze code in the repository
 	 * 
-	 * @param dir   Local path to current version of repo
+	 * @param dir   Local path to repo
+	 * @param hash  Commit hash for current version
+	 * 
 	 * @return      Output from the maven build
 	 */
-	public static String compile(String dir) {
-		String output = "";
-		BufferedReader br = null;
-		String compile = MVN_COMPILE.replace("{dir}", dir);
+	public static boolean compile(String dir, String hash) {
 		String valid = MVN_VALIDATE.replace("{dir}", dir);
+		String compile = MVN_COMPILE.replace("{dir}", dir).replace("{sha}", hash);
 		try {
 			try {
 				System.out.println(valid);
 				Process p1 = Runtime.getRuntime().exec(valid);
 				p1.waitFor();
-				System.out.println(compile);
-				Process p2 = Runtime.getRuntime().exec(compile);	
-				p2.waitFor();
-				System.out.println("compiled " + dir);
-				br = new BufferedReader(new InputStreamReader(p2.getErrorStream()));
+				if(p1.exitValue() == 0) {
+					System.out.println(compile);
+					Process p2 = Runtime.getRuntime().exec(compile);
+					p2.waitFor();	
+				} else {
+					System.out.println("invalid pom");
+					return false;
+				}
 			} catch (InterruptedException ie) {
 				ie.printStackTrace();
-				return null;
-			}
-			String line;
-			while ((line = br.readLine()) != null) {
-			    output += line + "\n";
+				return false;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
+			return false;
 		}
-		return output;
+		return true;
 	}
 
 	/**
@@ -429,10 +381,78 @@ public class Utils {
 	 * 
 	 * @param file   Path to pom.xml file in base version of code
 	 * @param tool   Tool to analyze code
-	 * @param writer New pom.xml file to write to
 	 */
-	public static void parseXML1(String file, Tool tool, FileWriter writer) {
-		myTool1 = false;
+	public static String updatePom(String file, Tool tool) {
+		Scanner scan = null;
+		String toolPom = "";
+		boolean properties = false;
+		boolean plugin = false;
+		boolean profile = false;
+		String pom = loadFile(file);
+		/*if(pom.contains("com.google.errorprone")) {
+			System.out.println("Already has Error Prone");
+			return null;
+		}*/
+		try {
+			scan = new Scanner(new File(file));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		while(scan.hasNextLine()) {
+			String line = scan.nextLine();
+			String tag = line.replace("\n","").trim();
+			if(tag.equals("<properties>") && !properties) {
+				while (!tag.equals("</properties>")) {
+					toolPom += line;
+					line = scan.nextLine();
+					tag = line.replace("\n","").trim();
+				}
+				toolPom += tool.getProperty();
+				properties = true;
+			} else if(tag.equals("<pluginManagement>") && !plugin) {
+				while(!tag.equals("</plugins>")) {
+					toolPom += line;
+					line = scan.nextLine();
+					tag = line.replace("\n","").trim();
+				}
+				toolPom += tool.getPlugin();
+				plugin = true;
+			} else if(tag.equals("<reporting>")) {
+				while(!tag.equals("</reporting>")) {
+					toolPom += line;
+					line = scan.nextLine();
+					tag = line.replace("\n","").trim();
+				}
+			} else if (tag.equals("<profiles>") && !profile) {
+				while(!tag.equals("</profiles>")) {
+					toolPom += line;
+					line = scan.nextLine();
+					tag = line.replace("\n","").trim();
+				}
+				toolPom += tool.getProfile();
+				profile = true;
+			} else if (tag.equals("</plugins>") && !plugin) {
+				toolPom += tool.getPlugin();
+				plugin = true;
+			} else if (tag.equals("</build>") && !plugin) {
+				toolPom += "<plugins>\n{p}</plugins>\n".replace("{p}", tool.getPlugin());
+				plugin = true;
+			} else if (tag.equals("</project>")) {
+				if(!properties) {
+					toolPom += "<properties>\n{p}</properties>\n".replace("{p}", tool.getProperty());
+				}
+				if(!plugin) {
+					toolPom += "<build>\n<plugins>\n{p}</plugins>\n</build>\n".replace("{p}", tool.getPlugin());
+				}
+				if(!profile) {
+					toolPom += "<profiles>\n{p}</profiles>\n".replace("{p}", tool.getProfile());
+				}
+			}
+			toolPom += line;
+		}
+		return toolPom;
+		/*myTool1 = false;
 		System.out.println("PARSE ME " + file);
 		try {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -500,110 +520,6 @@ public class Utils {
 			} catch (IOException io) {
 				io.printStackTrace();
 			}*/
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Modifies head pom.xml file to add current tool plugin for maven build
-	 * 
-	 * @param file   Path to pom.xml file in head version of code
-	 * @param tool   Tool to analyze code
-	 * @param writer New pom.xml file to write to
-	 */
-	public static void parseXML2(String file, Tool tool, FileWriter writer) {
-		myTool2 = false;
-		System.out.println("PARSE ME " + file);
-		try {
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			DefaultHandler handler = new DefaultHandler() {
-				@Override
-				public void startElement(String uri, String localName, String qName,
-							Attributes attributes) throws SAXException {
-					try {
-						writer.write("<" + qName + ">");
-						if(qName.equals("pluginManagement")) {
-							xmlPluginMgmt = true;
-						} else if (qName.equals("profiles")) {
-							xmlProfile = true;
-						} else if (qName.equals("reporting")) {
-							xmlReporting = true;
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-
-				@Override
-				public void endElement(String uri, String localName,
-					String qName) throws SAXException {
-					try {
-						if (qName.equals("plugins") && !myTool2 && !xmlPluginMgmt) {
-							writer.write(tool.getPlugin());
-							myTool2 = true;
-							System.out.println("xmlplugins-" + uri + " " + qName + " " + localName);			
-						} else if (qName.equals("project") && !myTool2 && !xmlPluginMgmt) {
-							writer.write(String.join("\n", "<build>", "<plugins>", 
-								tool.getPlugin(), "</plugins>", "</build>"));
-							myTool2 = true;
-							System.out.println("xmlproject-" + uri + " " + qName + " " + localName);			
-						} else if (qName.equals("reporting")) {
-							xmlReporting = false;
-						} else if (qName.equals("pluginManagement")) {
-							xmlPluginMgmt = false;
-						} else if (qName.equals("profiles")) {
-							xmlProfile = false;
-						}
-						writer.write("</" + qName + ">");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-
-				@Override
-				public void characters(char ch[], int start, int length) throws SAXException {
-					try {
-						writer.write(new String(ch, start, length));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			saxParser.parse(file, handler);
-		} catch (FileNotFoundException fnf) {
-			/*System.out.println("No pom.xml");
-			try {
-			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
-			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
-			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
-			} catch (IOException io) {
-				io.printStackTrace();
-			}*/
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Get errors from software engineering tool
-	 * 
-	 * @param path   Current instance project path
-	 * @param hash   Hash of GitHub change
-	 * @param tool   Tool to recommend
-	 * @return       List of errors reported from tool
-	 */
-	public static List<Error> getErrors(String path, String hash, Tool tool) {
-		String log = null;
-		List<Error> errors = null;
-		try {
-			log = compile(path);
-			errors = tool.parseOutput(log);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return errors;
 	}
 
 	/**
@@ -614,6 +530,7 @@ public class Utils {
 			String[] dirs = {rm};
 			for (String d: dirs) {
 				Process p = Runtime.getRuntime().exec("rm -rf " + d);
+				p.waitFor();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -686,26 +603,39 @@ public class Utils {
 	}
 
 	/**
-	 * Retrieve Github username and password. 
-	 * Requires .github.creds file with username on the first line and password on the second line.
+	 * Utility method to load the contents of a file into a string
+	 */
+	public static String loadFile(String path) {
+		String str = "";
+		Scanner sc = null;
+		File file = new File(path);
+		try {
+			sc = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+		while (sc.hasNextLine()) {
+			str += sc.nextLine() + "\n";
+		}
+		sc.close();
+		return str;
+	}
+
+	/**
+	 * Retrieve username and password from file
+	 * Github and email data in files with username or auth token on line 1 and password on line 2
 	 *
 	 * @param filename   Name of credentials file
-	 * @return           Array containing the Github username and password
+	 * @return           Array containing username and password
 	 */
 	public static String[] getCredentials(String filename) {
+		String secret = loadFile(filename);
 		String[] creds = new String[2];
-		File file = new File(filename);
-		try {
-			int i = 0;
-		    Scanner sc = new Scanner(file);
-		    while (sc.hasNext()) {
-				creds[i] = sc.nextLine();
-				i++;
-		    }
-		    sc.close();
-		} 
-		catch (FileNotFoundException e) {
-		    e.printStackTrace();
+		int i = 0;
+		for (String s: secret.split("\n")) {
+			creds[i] = s;
+			i++;
 		}
 		if (filename.contains("github")) {
 			setUsername(creds[0]);
