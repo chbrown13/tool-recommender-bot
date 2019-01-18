@@ -88,15 +88,17 @@ public class ErrorProne extends Tool {
 		List<Error> errors = new ArrayList<Error>();
 		if (log == null || log.isEmpty()) {
 			return errors;
+		} else if (log.contains("java.lang.RuntimeException")) {
+			System.out.println("Maven build error");
+			return null;
 		}
 		String regex = "^[\\[ERROR\\]\\s]*/[(/\\w\\W)]+.java:\\[*\\d+(,|:)\\d+(:|\\])\\s(error:|warning:|\\[\\w+\\])";
 		Pattern pattern = Pattern.compile(regex);
 		Pattern err= Pattern.compile("\\[\\w+\\]");
 		String dir = Utils.getCurrentDir();
-		String[] lines = log.split("\n");
 		Error temp = null;
 		String path, file, loc, offset, error, msg, info = "";
-		for (String line: lines) {
+		for (String line: log.split("\n")) {
 			Matcher m = pattern.matcher(line);
 			if (line.startsWith("[INFO] ")) {
 				if (temp != null && !errors.contains(temp)) { 

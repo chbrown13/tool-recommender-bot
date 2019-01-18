@@ -14,6 +14,7 @@ import java.io.*;
 import java.lang.*;
 import java.net.*;
 import java.nio.file.*;
+import java.text.*;
 import java.util.*;
 import javax.json.*;
 import javax.xml.parsers.*;
@@ -388,15 +389,16 @@ public class Utils {
 		boolean properties = false;
 		boolean plugin = false;
 		boolean profile = false;
-		String pom = loadFile(file);
-		/*if(pom.contains("com.google.errorprone")) {
-			System.out.println("Already has Error Prone");
-			return null;
-		}*/
+		String pom = "";
 		try {
 			scan = new Scanner(new File(file));
-		} catch (Exception e) {
-			e.printStackTrace();
+			pom = loadFile(file);
+		} catch (FileNotFoundException e) {
+			System.out.println("No pom.xml");
+			return null;
+		}
+		if(pom.contains("com.google.errorprone")) {
+			System.out.println("Already has Error Prone.");
 			return null;
 		}
 		while(scan.hasNextLine()) {
@@ -452,75 +454,17 @@ public class Utils {
 			toolPom += line;
 		}
 		return toolPom;
-		/*myTool1 = false;
-		System.out.println("PARSE ME " + file);
-		try {
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser saxParser = factory.newSAXParser();
-			DefaultHandler handler = new DefaultHandler() {
-				@Override
-				public void startElement(String uri, String localName, String qName,
-							Attributes attributes) throws SAXException {
-					try {
-						writer.write("<" + qName + ">");
-						if(qName.equals("pluginManagement")) {
-							xmlPluginMgmt = true;
-						} else if (qName.equals("profiles")) {
-							xmlProfile = true;
-						} else if (qName.equals("reporting")) {
-							xmlReporting = true;
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-
-				@Override
-				public void endElement(String uri, String localName,
-					String qName) throws SAXException {
-					try {
-						if (qName.equals("plugins") && !myTool1 && !xmlPluginMgmt) {
-							writer.write(tool.getPlugin());
-							myTool1 = true;
-							System.out.println("xmlplugins-" + uri + " " + qName + " " + localName);			
-						} else if (qName.equals("project") && !myTool1 && !xmlPluginMgmt) {
-							writer.write(String.join("\n", "<build>", "<plugins>", 
-								tool.getPlugin(), "</plugins>", "</build>"));
-							myTool1 = true;
-							System.out.println("xmlproject-" + uri + " " + qName + " " + localName);			
-						} else if (qName.equals("reporting")) {
-							xmlReporting = false;
-						} else if (qName.equals("pluginManagement")) {
-							xmlPluginMgmt = false;
-						} else if (qName.equals("profiles")) {
-							xmlProfile = false;
-						}
-						writer.write("</" + qName + ">");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-
-				@Override
-				public void characters(char ch[], int start, int length) throws SAXException {
-					try {
-						writer.write(new String(ch, start, length));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			saxParser.parse(file, handler);
-		} catch (FileNotFoundException fnf) {
-			/*System.out.println("No pom.xml");
-			try {
-			writer.write(String.join("\n", "<project>", "<modelVersion>4.0.0</modelVersion>",
-			"<groupId>com.chbrown13.rec_test</groupId>", "<artifactId>tool-recommender-bot-test</artifactId>",
-			"<version>1</version>", "<build>", "<plugins>", tool.getPlugin(), "</plugins>", "</build>", "</project>"));
-			} catch (IOException io) {
-				io.printStackTrace();
-			}*/
 	}
+
+	/**
+	 * Returns the time threshold for changes to check
+	 */
+	public static String getTime() {
+		Date d = new Date();
+		d.setMinutes(new Date().getMinutes() - 15);
+		DateFormat df = new SimpleDateFormat("yyyy-MM-DD'T'HH:MM:SS'Z'");
+		return df.format(d);
+	}	
 
 	/**
 	 * Remove temp repo directories
@@ -612,7 +556,6 @@ public class Utils {
 		try {
 			sc = new Scanner(file);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			return null;
 		}
 		while (sc.hasNextLine()) {
