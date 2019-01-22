@@ -457,7 +457,7 @@ public class Recommender {
 		}
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		Recommender toolBot = new Recommender(repo, git);
-		toolBot.getPullRequests();
+		// toolBot.getPullRequests();
 		toolBot.getCommits();
 		Utils.cleanup(args[1]);
 	}
