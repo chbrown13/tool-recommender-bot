@@ -9,8 +9,10 @@ import javax.json.*;
 /**
  * Post comment for a tool recommendation on GitHub code changes
  */
-public class Comment {		
+public class Comment {	
 
+    public static String POS_COMMENT = "Good job! The {desc} {tool} reported an error [1] used to be here, but you fixed it.{similar}Check out {link} for more information.\n\n\n[1] {error}";
+	public static String NEG_COMMENT = "The {desc} {tool} reported an error [1] added in your code change.{similar} Check out {link} for more information.\n\n\n[1] {error}";
     public static String compile = "sudo javac -cp jcabi-github-0.23-jar-with-dependencies.jar:error_prone_ant-2.1.0.jar:gumtree.jar:org.eclipse.jgit-4.9.0.201710071750-r.jar:jsch-0.1.46.jar:commons-email-1.3.1.jar:mail-1.4.7.jar com/chbrown13/tool_rec/ErrorProne.java com/chbrown13/tool_rec/Tool.java com/chbrown13/tool_rec/Error.java com/chbrown13/tool_rec/Recommender.java com/chbrown13/tool_rec/Utils.java com/chbrown13/tool_rec/Comment.java";
     public static String cmd = "java -cp .:jcabi-github-0.23-jar-with-dependencies.jar com.chbrown13.tool_rec.Comment {args}";
     public static String changes = "https://github.com/{user}/{repo}/{type}/{num}/";

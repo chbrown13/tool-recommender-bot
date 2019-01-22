@@ -7,22 +7,23 @@ public class Error {
     private String key;
 	private String filename;
 	private String filepath;
-	private String realPath;
 	private int line;
+	private int offset;
 	private String error;
 	private String message;
 	private String log;
+	private String id;
 
-	public Error(String name, String path, String line, String error, String msg, String log) {
+	public Error(String path, String file, String line, String offset, String error, String msg, String log) {
 		String project = Utils.getProjectName();
-		this.realPath = path.replace(project+"1", project).replace(project+"2", project);
-		this.filename = name;
+		this.filename = file;
 		this.filepath = path;
 		this.line = Integer.parseInt(line);
+		this.offset = Integer.parseInt(offset);
 		this.error = error;
 		this.message = msg;
 		this.log = log;
-		this.key = String.join(":", getLocalFilePath(), this.error);
+		this.key = String.join(":", path, this.error);
     }
 
     /**
@@ -35,12 +36,30 @@ public class Error {
 	}
 	
 	/**
-	 * Appends output to the log.
+	 * Sets additional output from the log.
 	 *
  	 * @param log   Message to add to log
 	 */
-	public void addLog(String log) {
-		this.log += "\n"+log;
+	public void setLog(String log) {
+		this.log = "\n"+log;
+	}
+
+	/**
+	 * Gets code change ID for this error
+	 * 
+	 * @return   commit hash or pull request number
+	 */
+	public String getId() {
+		return this.id;
+	}
+
+	/**
+	 * Sets ID this error
+	 * 
+	 * @param id   Code change ID (commit hash or pull request number)
+	 */
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	/**
@@ -121,17 +140,26 @@ public class Error {
 	 *
 	 * @return   Line number
 	 */
-	public int getLineNumber() {
+	public int getLine() {
 		return this.line;
 	}
 
 	/**
-	 * Gets line number where error was found as a string.
+	 * Gets the line number in file where error was found.
 	 *
-	 * @return   String representation of line number
+	 * @return   Line number as string
 	 */
-	public String getLineNumberStr() {
+	public String getLineStr() {
 		return Integer.toString(this.line);
+	}
+
+	/**
+	 * Gets the offset on line where error occurs.
+	 *
+	 * @return   Column number
+	 */
+	public int getOffset() {
+		return this.offset;
 	}
     
     /**
@@ -139,12 +167,18 @@ public class Error {
 	 *
 	 * @return   Message with fixed error and tool recommendation
 	 */
-	public String generateComment(Tool tool, List<Error> similar, String sha) {
-		String comment = Utils.BASE_COMMENT.replace("{desc}", tool.getDescription())
+	public String generateComment(Tool tool, List<Error> similar, String sha, boolean fix) {
+		String comment;
+		if (fix) {
+			comment = Comment.POS_COMMENT;
+		} else {
+			comment = Comment.NEG_COMMENT;
+		}
+		comment = comment.replace("{desc}", tool.getDescription())
 			.replace("{tool}", tool.getName())
 			.replace("{link}", tool.getLink());
 		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName());
-		comment = comment.replace("{fixed}", "\\`\\`\\`" + String.join(":", this.filename, getLineNumberStr(), " ") + this.message + this.log + "\\`\\`\\`");
+		comment = comment.replace("{error}", "\\`\\`\\`" + String.join(":", this.filename, getLineStr(), " ") + this.message + this.log + "\\`\\`\\`");
 		List<Error> simList = new ArrayList<Error>();
 		Error sim;
 		for (Error epi: similar) {
@@ -160,7 +194,9 @@ public class Error {
 		} else {
 			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
 		}
-		System.out.println("Err- "+comment);
+		String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{id}", this.id);
+		comment += link;
+		System.out.println(comment);
 		return comment;
 	}
 
@@ -172,7 +208,7 @@ public class Error {
 	 * @return      Url to line with a similar error
 	 */
 	private String getErrorLink(Error err, String hash) {
-		String url = Utils.LINK_URL.replace("{line}", err.getLineNumberStr())
+		String url = Utils.LINK_URL.replace("{line}", err.getLineStr())
 			.replace("{path}", err.getLocalFilePath())
 			.replace("{sha}", hash).replace("{repo}", Utils.getProjectName())
 			.replace("{user}", Utils.getProjectOwner());
