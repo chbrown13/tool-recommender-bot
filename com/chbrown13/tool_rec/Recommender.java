@@ -67,6 +67,8 @@ public class Recommender {
 	 */
 	private void reset() {
 		//Utils.cleanup(this.repo);
+		this.stats = "";
+		this.log = "";
 		try {
 			Set<String> path = new HashSet<String>();
 			path.add("pom.xml");
@@ -207,8 +209,8 @@ public class Recommender {
 	 */
 	public boolean build(String hash) {
 		try {
-			String pom = String.join("/", this.repo, "pom.xml");
-			File tempPom = new File(String.join("/", this.repo, "tool.xml"));
+			String pom = String.join(File.separator, this.repo, "pom.xml");
+			File tempPom = new File(String.join(File.separator, this.repo, "tool.xml"));
 			String toolPom = Utils.updatePom(pom, this.tool);;
 			if(toolPom != null) {
 				FileWriter writer = new FileWriter(tempPom, false);
@@ -427,41 +429,53 @@ public class Recommender {
 			RepoCommit.Smart commit = new RepoCommit.Smart(commits.next());
 			if (analyze(commit)) {
 				changes.add(commit);
-				results(commit.sha());
-			} else {
-				reset();
 			}
-			i += 1;
-			System.out.println(commit.sha() + " " + Integer.toString(i));
+			results(commit.sha());
+			reset();
 		}
-		if (changes.isEmpty()) {
-			log("No new commits");
+	}
+
+	/**
+	 * Clone a git repository to make recommendation.
+	 * 
+	 * @param user   Git username
+	 * @param repo   Git project name
+	 * @return       Git object
+	 */
+	private static Git clone(String user, String repo) {
+		Git git = null;
+		try {
+			git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+			.setDirectory(new File(repo))
+			.setCloneAllBranches(true).call();
+		} catch (Exception e) {
+			try {
+				git = Git.open(new File(repo + File.separator + ".git"));
+			} catch (IOException io) {
+				e.printStackTrace();
+			}
 		}
+		return git;
 	}
 
 	public static void main(String[] args) {
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
-		Git git = null;
-		try {
-			git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", args[0]).replace("{repo}", args[1]))
-			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
-			.setDirectory(new File(args[1]))
-			.setCloneAllBranches(true).call();
-		} catch (GitAPIException e) {
-			e.printStackTrace();
-		}
 		if (gitAcct[1] != null) {
 			github = new RtGithub(gitAcct[0], gitAcct[1]);
 		} else {
 			github = new RtGithub(gitAcct[0]);
 			gitAcct[1] = "";
 		}
-		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
-		Recommender toolBot = new Recommender(repo, git);
-		// toolBot.getPullRequests();
-		toolBot.getCommits();
-		Utils.cleanup(args[1]);
+		Git git = clone(args[0], args[1]);
+		if (git != null) {
+			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
+			Recommender toolBot = new Recommender(repo, git);
+			// toolBot.getPullRequests();
+			toolBot.getCommits();
+			Utils.cleanup(args[1]);
+		}
 	}
 }

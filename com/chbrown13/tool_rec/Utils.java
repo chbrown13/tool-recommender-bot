@@ -537,9 +537,9 @@ public class Utils {
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);		
 			if(!dir.equals("..")) {
-				currentDir += "/" + dir;
+				currentDir += File.separator + dir;
 			} else {
-				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
+				currentDir = currentDir.substring(0, currentDir.lastIndexOf(File.separator));
 			}
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			

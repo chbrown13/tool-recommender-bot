@@ -1,5 +1,6 @@
 package com.chbrown13.tool_rec;
 
+import java.io.*;
 import java.util.*;
 
 public class Error {
@@ -104,8 +105,8 @@ public class Error {
  	 * @return   String filepath
 	 */
 	public String getLocalFilePath() {
-        String path = this.filepath.replace(Utils.getCurrentDir() + "/", "");
-        return path.substring(path.indexOf("/") + 1);
+        String path = this.filepath.replace(Utils.getCurrentDir() + File.separator, "");
+        return path.substring(path.indexOf(File.separator) + 1);
 	}
 	
 	/**
