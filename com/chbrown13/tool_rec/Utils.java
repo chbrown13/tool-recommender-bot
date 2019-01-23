@@ -39,7 +39,6 @@ public class Utils {
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
     private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
-	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
 	private static String MVN_VALIDATE = "mvn -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");

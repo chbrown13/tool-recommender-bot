@@ -195,8 +195,7 @@ public class Error {
 		} else {
 			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
 		}
-		String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{id}", this.id);
-		comment += link;
+		comment += "\n\nPlease feel free to add any comments below explaining why you did or did not find this recommendation useful.";
 		System.out.println(comment);
 		return comment;
 	}
