@@ -467,21 +467,6 @@ public class Utils {
 	}	
 
 	/**
-	 * Remove temp repo directories
-	 */
-	public static void cleanup(String rm) {
-		try {
-			String[] dirs = {rm};
-			for (String d: dirs) {
-				Process p = Runtime.getRuntime().exec("rm -rf " + d);
-				p.waitFor();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
-	}
-
-	/**
 	 * Utility method to get file contents from url and download file.
 	 * 
 	 * @param link URL of raw file to download

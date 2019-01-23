@@ -66,7 +66,6 @@ public class Recommender {
 	 * Reset class variables for each PR
 	 */
 	private void reset() {
-		//Utils.cleanup(this.repo);
 		this.stats = "";
 		this.log = "";
 		try {
@@ -475,7 +474,6 @@ public class Recommender {
 			Recommender toolBot = new Recommender(repo, git);
 			// toolBot.getPullRequests();
 			toolBot.getCommits();
-			Utils.cleanup(args[1]);
 		}
 	}
 }
