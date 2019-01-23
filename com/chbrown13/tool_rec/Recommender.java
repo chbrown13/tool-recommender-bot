@@ -67,6 +67,8 @@ public class Recommender {
 	 */
 	private void reset() {
 		//Utils.cleanup(this.repo);
+		this.stats = "";
+		this.log = "";
 		try {
 			Set<String> path = new HashSet<String>();
 			path.add("pom.xml");
@@ -427,36 +429,39 @@ public class Recommender {
 			RepoCommit.Smart commit = new RepoCommit.Smart(commits.next());
 			if (analyze(commit)) {
 				changes.add(commit);
-				results(commit.sha());
-			} else {
-				reset();
 			}
-			i += 1;
-			System.out.println(commit.sha() + " " + Integer.toString(i));
+			results(commit.sha());
+			reset();
 		}
-		if (changes.isEmpty()) {
-			log("No new commits");
+	}
+
+	private static Git clone(String user, String repo) {
+		Git git = null;
+		try {
+			git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+			.setDirectory(new File(repo))
+			.setCloneAllBranches(true).call();
+		} catch (GitAPIException e) {
+			e.printStackTrace();
 		}
+		return git;
 	}
 
 	public static void main(String[] args) {
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
-		Git git = null;
-		try {
-			git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", args[0]).replace("{repo}", args[1]))
-			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
-			.setDirectory(new File(args[1]))
-			.setCloneAllBranches(true).call();
-		} catch (GitAPIException e) {
-			e.printStackTrace();
-		}
 		if (gitAcct[1] != null) {
 			github = new RtGithub(gitAcct[0], gitAcct[1]);
 		} else {
 			github = new RtGithub(gitAcct[0]);
 			gitAcct[1] = "";
+		}
+		Git git = clone(args[0], args[1]);
+		if (git == null) {
+			Utils.cleanup(args[1]);
+			git = clone(args[0], args[1]);
 		}
 		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 		Recommender toolBot = new Recommender(repo, git);
