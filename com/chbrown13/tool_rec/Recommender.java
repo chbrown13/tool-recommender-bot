@@ -57,7 +57,7 @@ public class Recommender {
 		this.changes = new ArrayList<String>();
 		this.user = repo.coordinates().user();
 		this.repo = repo.coordinates().repo();
-		this.name = this.user + "/" + this.repo
+		this.name = this.user + "/" + this.repo;
 		Utils.setProjectName(this.repo);
 		Utils.setProjectOwner(this.user);
 	}
