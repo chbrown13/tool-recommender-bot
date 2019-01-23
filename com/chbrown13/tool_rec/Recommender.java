@@ -36,6 +36,7 @@ public class Recommender {
 	private Git git;
 	private String user;
 	private String repo;
+	private String name;
 	private Set<String> fixes = new HashSet<String>();	
 	private List<String> changes;
 	private Tool tool = null;
@@ -56,8 +57,9 @@ public class Recommender {
 		this.changes = new ArrayList<String>();
 		this.user = repo.coordinates().user();
 		this.repo = repo.coordinates().repo();
-		Utils.setProjectName(repo.coordinates().repo());
-		Utils.setProjectOwner(repo.coordinates().user());
+		this.name = this.user + "/" + this.repo;
+		Utils.setProjectName(this.repo);
+		Utils.setProjectOwner(this.user);
 	}
 
 	/**
@@ -82,7 +84,7 @@ public class Recommender {
 	 */
 	private void log(String msg) {
 		System.out.println(msg);
-		log += "\n\n" + msg + "\n";
+		this.log += "\n\n" + msg + "\n";
 	}
 
 	/**
@@ -140,7 +142,7 @@ public class Recommender {
 				error.getId(), "\""+comment+"\"", error.getLocalFilePath(), Integer.toString(line));
 			}
 			String run = Comment.cmd.replace("{args}", args);
-			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review " + this.repo, error.getId());
+			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review: " + this.name + " " + error.getId(), error.getId());
 			recs += 1;
 		}
 	} 
@@ -178,6 +180,7 @@ public class Recommender {
 					}
 				}
 			}
+			stats += "Total base: " + Integer.toString(baseErrors.size()) + "\n";
 			stats += "Fixed: " + Integer.toString(fixed.size()) + "\n";
 			stats += "Removed: " + Integer.toString(removed.size()) + "\n";
 			log("head");
@@ -191,6 +194,7 @@ public class Recommender {
 					makeRecommendation(comment, e, e.getLine(), head);
 				}
 			}
+			stats += "Total head: " + Integer.toString(headErrors.size()) + "\n";
 			stats += "Introduced: " + Integer.toString(added.size()) + "\n";
 			stats += "Similar: " + Integer.toString(sim) + "\n";
 		}
@@ -365,9 +369,8 @@ public class Recommender {
 	 * @param id   ID for GitHub code change (Commit hash/Pull Request number)
 	 */
 	private void results(String id) {
-		String out = "";
-		sendEmail(this.stats, "New " + this.type, id);
 		log(this.stats);
+		sendEmail(this.log, "New " + this.type + ": " + this.name + " " + id, id);
 		reset();
 		this.recs = 0;
 		this.sim = 0;
