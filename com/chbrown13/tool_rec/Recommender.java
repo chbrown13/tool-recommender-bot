@@ -443,8 +443,12 @@ public class Recommender {
 			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
 			.setDirectory(new File(repo))
 			.setCloneAllBranches(true).call();
-		} catch (GitAPIException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			try {
+				git = Git.open(new File(repo + File.separator + ".git"));
+			} catch (IOException io) {
+				e.printStackTrace();
+			}
 		}
 		return git;
 	}
@@ -467,6 +471,6 @@ public class Recommender {
 		Recommender toolBot = new Recommender(repo, git);
 		// toolBot.getPullRequests();
 		toolBot.getCommits();
-		Utils.cleanup(args[1]);
+		// Utils.cleanup(args[1]);
 	}
 }
