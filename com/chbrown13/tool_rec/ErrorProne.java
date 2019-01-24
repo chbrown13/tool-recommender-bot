@@ -12,7 +12,6 @@ import java.util.regex.*;
  */
 public class ErrorProne extends Tool {
 	
-	private final String RUN_CMD = "java -Xbootclasspath/p:error_prone_ant-2.1.0.jar com.google.errorprone.ErrorProneCompiler {file}";	
 	private final String MAVEN = "<plugin>\n"+
 	"<groupId>org.apache.maven.plugins</groupId>\n"+
 	"<artifactId>maven-compiler-plugin</artifactId>\n"+
@@ -34,6 +33,7 @@ public class ErrorProne extends Tool {
 	"	</annotationProcessorPaths>\n"+
 	"</configuration>\n"+
 	"</plugin>\n";
+
 	private final String PROFILE = "<profile>\n"+
 	"<id>jdk8</id>\n"+
 	"<activation>\n"+
@@ -54,7 +54,10 @@ public class ErrorProne extends Tool {
 	"	</plugins>\n"+
 	"</build>\n"+
 	"</profile>\n";
+
 	private final String PROPERTY = "<javac.version>9+181-r4173-1</javac.version>\n";
+
+	private final String REC = "";
 	
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
@@ -151,29 +154,5 @@ public class ErrorProne extends Tool {
 		}
 		return errors;
 	}
-
-	/**
-	 * Runs ErrorProne static analysis tool on a java file.
-	 * TODO: run ErrorProne from source code
-	 *
-	 * @param file   Name of file to analyze
-	 * @return       ErrorProne results
-	 *
-	@Override
-	public String analyze(String file) {
-		String cmd = RUN_CMD.replace("{file}", file);
-		String output = "";
-		try {
-			Process p = Runtime.getRuntime().exec(cmd);	
-			BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			String line;
-			while ((line = br.readLine()) != null) {
-			    output += line + "\n";
-			}
-		} catch (IOException e) {
-			return null;
-		}
-		return output;
-	}*/
 }
 

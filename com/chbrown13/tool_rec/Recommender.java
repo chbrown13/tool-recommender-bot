@@ -40,11 +40,6 @@ public class Recommender {
 	private Set<String> fixes = new HashSet<String>();	
 	private List<String> changes;
 	private Tool tool = null;
-	private static String type = "";
-	private static String log = "";
-	private static String stats = "";
-	private static int recs = 0;
-	private static int sim = 0;
 
 	public static final String COMMIT = "commit";
 
@@ -64,8 +59,6 @@ public class Recommender {
 	 * Reset class variables for each PR
 	 */
 	private void reset() {
-		this.stats = "";
-		this.log = "";
 		try {
 			Set<String> path = new HashSet<String>();
 			path.add("pom.xml");
@@ -79,14 +72,6 @@ public class Recommender {
 	}
 
 	/**
-	 * tool-recommender-bot logging
-	 */
-	private void log(String msg) {
-		System.out.println(msg);
-		this.log += "\n\n" + msg + "\n";
-	}
-
-	/**
 	 * Get errors for each
 	 * 
 	 * @param base  Commit hash for base version
@@ -95,7 +80,6 @@ public class Recommender {
 	 */
 	private boolean getErrors(String head) {
 		List<Error> errors = this.tool.parseOutput(Utils.loadFile("tool_{h}.txt".replace("{h}", head)));
-		System.out.println(errors.size());
 		return errors.size() > 0;
 	}
 
@@ -133,7 +117,7 @@ public class Recommender {
 	private boolean analyze() {
 		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
 		try {
-			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot5").setStartPoint(hash).call();
+			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot7").setStartPoint(hash).call();
 		} catch (GitAPIException e) {
 			e.printStackTrace();
 			return false;
@@ -141,18 +125,30 @@ public class Recommender {
 		return build(hash) && getErrors(hash);
 	}
 
-	/**
-	 * Formats information from analysis to send in review email
-	 * 
-	 * @param id   ID for GitHub code change (Commit hash/Pull Request number)
-	 */
-	private void results(String id) {
-		log(this.stats);
-		// sendEmail(this.log, "New " + this.type + ": " + this.name + " " + id, id);
-		reset();
-		this.recs = 0;
-		this.sim = 0;
-		this.stats = "";
+	private void commit() {
+		String user = "tool-recommender-bot";
+		String email = "toolrecommenderbot@gmail.com";
+		try {
+			this.git.add().addFilepattern("pom.xml").call();
+			this.git.commit().setMessage("Error Prone\n\nAdding the Error Prone tool to automatically check for Java errors")
+			.setAuthor(user, email)
+			.setCommitter(user, email).call();
+			this.git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("username", "password")).call();
+		} catch (GitAPIException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void recommend() {
+		if (analyze()) {
+			commit();			
+			try {
+				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot7", "master"));
+				p.body("body yo");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -193,31 +189,8 @@ public class Recommender {
 		if (git != null) {
 			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 			Recommender toolBot = new Recommender(repo, git);
-			boolean b = toolBot.analyze();
-			System.out.println(b);
-			if (b) {
-				 System.out.println(String.join(File.separator, args[1], "pom.xml"));
-				try {
-					git.add().addFilepattern("pom.xml").call();
-					git.commit().setMessage("Error Prone\n\nAdding the Error Prone tool to automatically check for Java errors")
-					.setAuthor("tool-recommender-bot", "toolrecommenderbot@gmail.com")
-					.setCommitter("tool-recommender-bot", "toolrecommenderbot@gmail.com").call();
-					git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("username", "password")).call();
-				} catch (GitAPIException e) {
-					e.printStackTrace();
-				}
-				try {
-					Iterator<Branch> bs = repo.branches().iterate().iterator();
-					while(bs.hasNext()) {
-						System.out.println(bs.next().name());
-					}
-					Pull.Smart p = new Pull.Smart(repo.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot5", "master"));
-					p.body("body yo");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			//toolBot.reset();
+			toolBot.recommend();
 		}
+		//toolBot.reset();
 	}
 }

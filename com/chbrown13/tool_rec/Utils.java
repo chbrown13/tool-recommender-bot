@@ -34,24 +34,13 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class Utils {
 
-	public static String MARKDOWN_LINK = "[{src}]({url})";
-	public static String LINK_URL = "https://github.com/{user}/{repo}/blob/{sha}/{path}#L{line}";
-	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
-	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
-    private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
 	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
 	private static String MVN_VALIDATE = "mvn -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");
-	private static boolean myTool1 = false;
-	private static boolean myTool2 = false;
-	private static boolean xmlProfile = false;
-	private static boolean xmlPluginMgmt = false;
-	private static boolean xmlReporting = false;
 	private static String projectName = "";
 	private static String projectOwner = "";
 	private static String username = "";
 	private static String password = "";
-	private static String diff = "";
 
 	/**
 	 * Stores current user's Github login
@@ -238,25 +227,6 @@ public class Utils {
 		}
 		return toolPom;
 	}	
-
-	/**
-	 * Changes the current working directory of the program
-	 * 
-	 * @param dir   Directory to change into
-	 */
-	public static void cd(String dir) throws FileNotFoundException {
-		String cmd = "cd " + dir;
-		try {
-			Process p = Runtime.getRuntime().exec(cmd);		
-			if(!dir.equals("..")) {
-				currentDir += File.separator + dir;
-			} else {
-				currentDir = currentDir.substring(0, currentDir.lastIndexOf(File.separator));
-			}
-		} catch (IOException e) {
-			throw new FileNotFoundException("Invalid directory name "+dir);			
-		}
-	}
 
 	/**
 	 * Utility method to load the contents of a file into a string
