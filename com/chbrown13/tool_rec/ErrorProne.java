@@ -95,7 +95,6 @@ public class ErrorProne extends Tool {
 		String regex = "^[\\[ERROR\\]\\s]*/[(/\\w\\W)]+.java:\\[*\\d+(,|:)\\d+(:|\\])\\s(error:|warning:|\\[\\w+\\])";
 		Pattern pattern = Pattern.compile(regex);
 		Pattern err= Pattern.compile("\\[\\w+\\]");
-		String dir = Utils.getCurrentDir();
 		Error temp = null;
 		String path, file, loc, offset, error, msg, info = "";
 		for (String line: log.split("\n")) {

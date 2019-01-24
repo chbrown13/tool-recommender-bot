@@ -105,7 +105,7 @@ public class Error {
  	 * @return   String filepath
 	 */
 	public String getLocalFilePath() {
-        String path = this.filepath.replace(Utils.getCurrentDir() + File.separator, "");
+        String path = this.filepath.replace(Utils.getProjectName() + File.separator, "");
         return path.substring(path.indexOf(File.separator) + 1);
 	}
 	
@@ -161,69 +161,6 @@ public class Error {
 	 */
 	public int getOffset() {
 		return this.offset;
-	}
-    
-    /**
-	 * Creates comment to recommend tool from error for a Github code change.
-	 *
-	 * @return   Message with fixed error and tool recommendation
-	 */
-	public String generateComment(Tool tool, List<Error> similar, String sha, boolean fix) {
-		String comment;
-		if (fix) {
-			comment = Comment.POS_COMMENT;
-		} else {
-			comment = Comment.NEG_COMMENT;
-		}
-		comment = comment.replace("{desc}", tool.getDescription())
-			.replace("{tool}", tool.getName())
-			.replace("{link}", tool.getLink());
-		String simSentence = " {tool} also found {issue} in {link}. ".replace("{tool}", tool.getName());
-		comment = comment.replace("{error}", "\\`\\`\\`" + String.join(":", this.filename, getLineStr(), " ") + this.message + this.log + "\\`\\`\\`");
-		List<Error> simList = new ArrayList<Error>();
-		Error sim;
-		for (Error epi: similar) {
-			if (!this.equals(epi) && this.similar(epi)) {
-				simList.add(epi);
-			}
-		}
-		Iterator<Error> iter = simList.iterator();
-		if (simList.isEmpty()) {
-			comment = comment.replace("{similar}", " ");
-		} else if (simList.size() == 1) {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", getErrorLink(iter.next(), sha)).replace("{issue}", "a similar issue"));
-		} else {
-			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
-		}
-		comment += "\n\nPlease feel free to add any comments below explaining why you did or did not find this recommendation useful.";
-		System.out.println(comment);
-		return comment;
-	}
-
-	/**
-	 * Gets url to link to similar errors found by Tool in recommendation.
-	 *
-	 * @param err   Error with others similar to fixed error
-	 * @param hash  Git commit hash
-	 * @return      Url to line with a similar error
-	 */
-	private String getErrorLink(Error err, String hash) {
-		String url = Utils.LINK_URL.replace("{line}", err.getLineStr())
-			.replace("{path}", err.getLocalFilePath())
-			.replace("{sha}", hash).replace("{repo}", Utils.getProjectName())
-			.replace("{user}", Utils.getProjectOwner());
-		return Utils.MARKDOWN_LINK.replace("{src}", err.getFileName()).replace("{url}", url);
-	}
-
-	/**
-	 * Compare Error objects based on error
-	 */
-	public boolean similar(Object o) {
-		if (o instanceof Error) {
-			Error e = (Error) o;
-			return e.getError().equals(this.error);
-		}
-		return false;
 	}
 
 	/**

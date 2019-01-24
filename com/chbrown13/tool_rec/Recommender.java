@@ -1,6 +1,8 @@
 package com.chbrown13.tool_rec;
 
+import com.jcabi.github.Branch;
 import com.jcabi.github.Coordinates;
+import com.jcabi.github.Pull;
 import com.jcabi.github.Repo;
 import com.jcabi.github.RepoCommit;
 import com.jcabi.github.RtGithub;
@@ -85,63 +87,6 @@ public class Recommender {
 	}
 
 	/**
-	 * Sends email to researchers for review
-	 * 
-	 * @param text    Contents of email message
-	 * @param subject Subject of the email
-	 * @param id	  Code change id (PR number or commit hash)
-	 */
-	private void sendEmail(String text, String subject, String id) {
-		SimpleEmail email = new SimpleEmail();
-		String viewChanges = Comment.changes.replace("{user}", this.user)
-			.replace("{repo}", this.repo).replace("{type}", this.type)
-			.replace("{num}", id);
-		String[] emailAcct = Utils.getCredentials(".email.creds");
-		text += "\n" + log;
-		try {
-			email.setHostName("smtp.googlemail.com");
-			email.setSmtpPort(465);
-			email.setAuthenticator(new DefaultAuthenticator(emailAcct[0], emailAcct[1]));
-			email.setSSLOnConnect(true);
-			email.setFrom("toolrecommenderbot@gmail.com");
-			email.setSubject("[tool-recommender-bot] " + subject);
-			email.setMsg(String.join("\n", viewChanges, text));
-			email.addTo("dcbrow10@ncsu.edu");
-			email.send();		
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Create message recommending ErrorProne to Github code changes.
-	 *
-	 * @param id	 Code change id (PR number or commit hash)
-	 * @param error  Fixed error 
-	 * @param line   Line number of fix
-	 * @param head   Hash of code changes
-	 */
-	private void makeRecommendation(String comment, Error error, int line, String head) {
-		if (comment != null && comment != "") {
-			if(comment.contains("similar")) {
-				sim += 1;
-			}
-			String args = "";
-			if (this.type.equals(PULL)) {
-				args = String.join(" ", this.user, this.repo, PULL,
-				error.getId(), "\""+comment+"\"", head, error.getLocalFilePath(), 
-				Integer.toString(line));
-			} else if (this.type.equals(COMMIT)) {
-				args = String.join(" ", this.user, this.repo, COMMIT,
-				error.getId(), "\""+comment+"\"", error.getLocalFilePath(), Integer.toString(line));
-			}
-			String run = Comment.cmd.replace("{args}", args);
-			sendEmail(String.join("\n", Comment.compile, run), "Recommendation Review: " + this.name + " " + error.getId(), error.getId());
-			recs += 1;
-		}
-	} 
-
-	/**
 	 * Get errors for each
 	 * 
 	 * @param base  Commit hash for base version
@@ -187,6 +132,12 @@ public class Recommender {
 	 */
 	private boolean analyze() {
 		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+		try {
+			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot5").setStartPoint(hash).call();
+		} catch (GitAPIException e) {
+			e.printStackTrace();
+			return false;
+		}
 		return build(hash) && getErrors(hash);
 	}
 
@@ -197,7 +148,7 @@ public class Recommender {
 	 */
 	private void results(String id) {
 		log(this.stats);
-		sendEmail(this.log, "New " + this.type + ": " + this.name + " " + id, id);
+		// sendEmail(this.log, "New " + this.type + ": " + this.name + " " + id, id);
 		reset();
 		this.recs = 0;
 		this.sim = 0;
@@ -245,12 +196,24 @@ public class Recommender {
 			boolean b = toolBot.analyze();
 			System.out.println(b);
 			if (b) {
-				 //Create pull request
 				 System.out.println(String.join(File.separator, args[1], "pom.xml"));
 				try {
 					git.add().addFilepattern("pom.xml").call();
-					
+					git.commit().setMessage("Error Prone\n\nAdding the Error Prone tool to automatically check for Java errors")
+					.setAuthor("tool-recommender-bot", "toolrecommenderbot@gmail.com")
+					.setCommitter("tool-recommender-bot", "toolrecommenderbot@gmail.com").call();
+					git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("username", "password")).call();
 				} catch (GitAPIException e) {
+					e.printStackTrace();
+				}
+				try {
+					Iterator<Branch> bs = repo.branches().iterate().iterator();
+					while(bs.hasNext()) {
+						System.out.println(bs.next().name());
+					}
+					Pull.Smart p = new Pull.Smart(repo.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot5", "master"));
+					p.body("body yo");
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
