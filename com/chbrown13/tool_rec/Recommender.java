@@ -117,7 +117,7 @@ public class Recommender {
 	private boolean analyze() {
 		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
 		try {
-			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot7").setStartPoint(hash).call();
+			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot11").setStartPoint(hash).call();
 		} catch (GitAPIException e) {
 			e.printStackTrace();
 			return false;
@@ -126,15 +126,21 @@ public class Recommender {
 	}
 
 	private void commit() {
-		String user = "tool-recommender-bot";
-		String email = "toolrecommenderbot@gmail.com";
+		String user = "";
+		String email = "";
+		String pass = "";
 		try {
 			this.git.add().addFilepattern("pom.xml").call();
-			this.git.commit().setMessage("Error Prone\n\nAdding the Error Prone tool to automatically check for Java errors")
+			this.git.commit().setMessage("Error Prone Static Analysis\n\nAdds Error Prone maven plugin in pom.xml to automatically check for Java errors during project builds.")
 			.setAuthor(user, email)
 			.setCommitter(user, email).call();
-			this.git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider("username", "password")).call();
-		} catch (GitAPIException e) {
+			StoredConfig config = this.git.getRepository().getConfig();
+			config.setBoolean( "http", null, "sslVerify", false );
+			config.save();
+			PushCommand push = this.git.push();
+			push.setCredentialsProvider(new UsernamePasswordCredentialsProvider(user, pass));
+			push.setForce(true).call();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -143,8 +149,8 @@ public class Recommender {
 		if (analyze()) {
 			commit();			
 			try {
-				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot7", "master"));
-				p.body("body yo");
+				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot11", "master"));
+				p.body(ErrorProne.getBody());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -158,25 +164,25 @@ public class Recommender {
 	 * @param repo   Git project name
 	 * @return       Git object
 	 */
-	private static Git clone(String user, String repo) {
-		Git git = null;
-		try {
-			git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
-			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
-			.setDirectory(new File(repo))
-			.setCloneAllBranches(true).call();
-		} catch (Exception e) {
-			try {
-				git = Git.open(new File(repo + File.separator + ".git"));
-			} catch (IOException io) {
-				e.printStackTrace();
-			}
-		}
-		return git;
-	}
+	// private Git clone(String user, String repo) {
+	// 	try {
+	// 		this.git = Git.cloneRepository()
+	// 		.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
+	// 		.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+	// 		.setDirectory(new File(repo))
+	// 		.setCloneAllBranches(true).call();
+	// 	} catch (Exception e) {
+	// 		try {
+	// 			this.git = Git.open(new File(repo + File.separator + ".git"));
+	// 		} catch (IOException io) {
+	// 			e.printStackTrace();
+	// 		}
+	// 	}
+	// 	return this.git;
+	// }
 
 	public static void main(String[] args) {
+		//TODO: load list of projects from file
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
 		if (gitAcct[1] != null) {
@@ -185,7 +191,20 @@ public class Recommender {
 			github = new RtGithub(gitAcct[0]);
 			gitAcct[1] = "";
 		}
-		Git git = clone(args[0], args[1]);
+		Git git = null;
+		try {
+			git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", args[0]).replace("{repo}", args[1]))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+			.setDirectory(new File(args[1]))
+			.setCloneAllBranches(true).call();
+		} catch (Exception e) {
+			try {
+				git = Git.open(new File(args[1] + File.separator + ".git"));
+			} catch (IOException io) {
+				e.printStackTrace();
+			}
+		}
 		if (git != null) {
 			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 			Recommender toolBot = new Recommender(repo, git);

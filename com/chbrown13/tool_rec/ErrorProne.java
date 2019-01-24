@@ -57,7 +57,11 @@ public class ErrorProne extends Tool {
 
 	private final String PROPERTY = "<javac.version>9+181-r4173-1</javac.version>\n";
 
-	private final String REC = "";
+	private final static String REC = "Looks like you're not using any error-checking in your Java build. This pull requests adds a static analysis tool, [Error Prone](http://errorprone.info), created by Google to find common errors in Java code. For example, running ```mvn compile``` on the following code:\n" +
+	"```java\n{code}\n```\n" +
+	"would identify this error:\n" +
+	"```\n{error}\n```\n" +
+	"If you think you might want to try out this plugin, you can just merge this pull request. Please feel free to add any comments below explaining why you did or did not find this recommendation useful.";
 	
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
@@ -79,6 +83,10 @@ public class ErrorProne extends Tool {
 		return this.PROPERTY;
 	}
 	
+	public static String getBody() {
+		return REC;
+	}
+
 	/**
 	 * Parses output from ErrorProne static analysis of code and creates Errors.
 	 *
