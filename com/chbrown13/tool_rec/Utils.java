@@ -450,7 +450,7 @@ public class Utils {
 					toolPom += "<profiles>\n{p}</profiles>\n".replace("{p}", tool.getProfile());
 				}
 			}
-			toolPom += line;
+			toolPom += line + "\n";
 		}
 		return toolPom;
 	}
