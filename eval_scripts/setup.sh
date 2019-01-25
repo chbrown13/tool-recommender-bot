@@ -21,7 +21,7 @@ sudo mv hosts /etc/ansible/hosts
 # Download tool-recommender-bot files and dependencies
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/start-bot.yml
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/stop-bot.yml
-wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/jenkins.xml
+wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/pulls/jenkins.xml
 wget -q https://raw.githubusercontent.com/chbrown13/tool-recommender-bot/master/eval_scripts/eval.py
 
 
