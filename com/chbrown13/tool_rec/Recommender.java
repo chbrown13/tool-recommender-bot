@@ -2,6 +2,7 @@ package com.chbrown13.tool_rec;
 
 import com.jcabi.github.Branch;
 import com.jcabi.github.Coordinates;
+import com.jcabi.github.Fork;
 import com.jcabi.github.Pull;
 import com.jcabi.github.Repo;
 import com.jcabi.github.RepoCommit;
@@ -37,38 +38,17 @@ public class Recommender {
 	private String user;
 	private String repo;
 	private String name;
-	private Set<String> fixes = new HashSet<String>();	
-	private List<String> changes;
 	private Tool tool = null;
-
-	public static final String COMMIT = "commit";
 
 	public Recommender(Repo repo, Git git) {
 		this.repository = repo;
 		this.git = git;
 		this.tool = new ErrorProne();
-		this.changes = new ArrayList<String>();
 		this.user = repo.coordinates().user();
 		this.repo = repo.coordinates().repo();
 		this.name = this.user + "/" + this.repo;
 		Utils.setProjectName(this.repo);
 		Utils.setProjectOwner(this.user);
-	}
-
-	/**
-	 * Reset class variables for each PR
-	 */
-	private void reset() {
-		try {
-			Set<String> path = new HashSet<String>();
-			path.add("pom.xml");
-			path.add("target/");
-			this.git.clean().setPaths(path).call();
-			this.git.reset().setMode(ResetType.HARD).call();
-			this.git.checkout().setName("refs/heads/master").call();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -110,25 +90,11 @@ public class Recommender {
 	}
 
 	/**
-	 * Analyze code of files in commits and compare to base branch.
-	 *
-	 * @param commit   Current commit
+	 * Commit and push changes to add Error Prone plugin
 	 */
-	private boolean analyze() {
-		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
-		try {
-			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot11").setStartPoint(hash).call();
-		} catch (GitAPIException e) {
-			e.printStackTrace();
-			return false;
-		}
-		return build(hash) && getErrors(hash);
-	}
-
 	private void commit() {
-		String user = "";
-		String email = "";
-		String pass = "";
+		String user = "tool-recommender-bot";
+		String email = "toolrecommenderbot@gmail.com";
 		try {
 			this.git.add().addFilepattern("pom.xml").call();
 			this.git.commit().setMessage("Error Prone Static Analysis\n\nAdds Error Prone maven plugin in pom.xml to automatically check for Java errors during project builds.")
@@ -138,18 +104,22 @@ public class Recommender {
 			config.setBoolean( "http", null, "sslVerify", false );
 			config.save();
 			PushCommand push = this.git.push();
-			push.setCredentialsProvider(new UsernamePasswordCredentialsProvider(user, pass));
+			push.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()));
 			push.setForce(true).call();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void recommend() {
-		if (analyze()) {
+	/**
+	 * Starts tool-recommender-bot
+	 */
+	private void start() {
+		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+		if (build(hash) && getErrors(hash)) {
 			commit();			
 			try {
-				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-rec-bot11", "master"));
+				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-recommender-bot:master", "master"));
 				p.body(ErrorProne.getBody());
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -164,22 +134,42 @@ public class Recommender {
 	 * @param repo   Git project name
 	 * @return       Git object
 	 */
-	// private Git clone(String user, String repo) {
-	// 	try {
-	// 		this.git = Git.cloneRepository()
-	// 		.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
-	// 		.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
-	// 		.setDirectory(new File(repo))
-	// 		.setCloneAllBranches(true).call();
-	// 	} catch (Exception e) {
-	// 		try {
-	// 			this.git = Git.open(new File(repo + File.separator + ".git"));
-	// 		} catch (IOException io) {
-	// 			e.printStackTrace();
-	// 		}
-	// 	}
-	// 	return this.git;
-	// }
+	private static Git clone(String user, String repo) {
+		Git git = null;
+		try {
+			git = Git.cloneRepository()
+			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", user).replace("{repo}", repo))
+			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
+			.setDirectory(new File(repo))
+			.setCloneAllBranches(true).call();
+		} catch (Exception e) {
+			try {
+				git = Git.open(new File(repo + File.separator + ".git"));
+			} catch (IOException io) {
+				e.printStackTrace();
+			}
+		}
+		return git;
+	}
+
+	/**
+	 * Forks the repository before making changes
+	 * 
+	 * @param github   Github object for original repo
+	 * @param user     User to fork project
+	 * @param repo     Project name
+	 */
+	private static void fork(RtGithub github, String user, String repo) {
+		try {
+			github.entry()
+			.uri().path("/repos/{user}/{repo}/forks".replace("{user}",user).replace("{repo}", repo)).back()
+			.method(Request.POST)
+			.fetch()
+			.as(JsonResponse.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void main(String[] args) {
 		//TODO: load list of projects from file
@@ -189,27 +179,13 @@ public class Recommender {
 			github = new RtGithub(gitAcct[0], gitAcct[1]);
 		} else {
 			github = new RtGithub(gitAcct[0]);
-			gitAcct[1] = "";
 		}
-		Git git = null;
-		try {
-			git = Git.cloneRepository()
-			.setURI("https://github.com/{owner}/{repo}.git".replace("{owner}", args[0]).replace("{repo}", args[1]))
-			.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()))
-			.setDirectory(new File(args[1]))
-			.setCloneAllBranches(true).call();
-		} catch (Exception e) {
-			try {
-				git = Git.open(new File(args[1] + File.separator + ".git"));
-			} catch (IOException io) {
-				e.printStackTrace();
-			}
-		}
+		fork(github, args[0], args[1]);
+		Git git = clone(Utils.getUsername(), args[1]);
 		if (git != null) {
 			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
 			Recommender toolBot = new Recommender(repo, git);
-			toolBot.recommend();
+			toolBot.start();
 		}
-		//toolBot.reset();
 	}
 }

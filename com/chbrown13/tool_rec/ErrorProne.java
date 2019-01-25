@@ -63,6 +63,12 @@ public class ErrorProne extends Tool {
 	"```\n{error}\n```\n" +
 	"If you think you might want to try out this plugin, you can just merge this pull request. Please feel free to add any comments below explaining why you did or did not find this recommendation useful.";
 	
+	private final static String CODE = "public boolean validate(String s) {\n" +
+	"	return s == this.username;\n" +
+	"}";
+
+	private final static String ERROR = "[ERROR] src/main/java/HelloWorld.java:[17,17] error: [StringEquality] String comparison using reference equality instead of value equality\n" +
+	"[ERROR]     (see https://errorprone.info/bugpattern/StringEquality)";
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
 	}
@@ -84,7 +90,7 @@ public class ErrorProne extends Tool {
 	}
 	
 	public static String getBody() {
-		return REC;
+		return REC.replace("{code}", CODE).replace("{error}", ERROR);
 	}
 
 	/**
