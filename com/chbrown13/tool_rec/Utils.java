@@ -176,51 +176,72 @@ public class Utils {
 		while(scan.hasNextLine()) {
 			String line = scan.nextLine();
 			String tag = line.replace("\n","").trim();
+			String spaces = "  ";
 			if(tag.equals("<properties>") && !properties) {
 				while (!tag.equals("</properties>")) {
-					toolPom += line;
+					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
+					spaces += line.substring(0, line.indexOf("<"));
 				}
-				toolPom += tool.getProperty();
+				toolPom += tool.getProperty().replaceAll("{s}", spaces);
 				properties = true;
+			} else if (tag.equals("<artifactId>maven-compiler-plugin</artifactId>") && !plugin) {
+				while (!tag.equals("</plugin>")) {
+					line = scan.nextLine();
+					tag = line.replace("\n","").trim();
+					spaces += line.substring(0, line.indexOf("<"));
+					if (tag.startsWith("<source>") || tag.startsWith("<target>")) {
+						String version = tag.substring(tag.indexOf(">")+1, tag.indexOf("</"));
+						if (!version.equals("1.8") && !version.equals("1.9")) {
+							System.out.println("- low version: " + version);
+							return null;
+						}
+					}
+				}
+				toolPom += tool.getPlugin().substring(tool.getPlugin().indexOf("<artifactId>")).replaceAll("{s}", spaces);
+				plugin = true;
+				continue;
 			} else if(tag.equals("<pluginManagement>") && !plugin) {
 				while(!tag.equals("</plugins>")) {
-					toolPom += line;
+					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
+					spaces += line.substring(0, line.indexOf("<"));
 				}
 				toolPom += tool.getPlugin();
 				plugin = true;
 			} else if(tag.equals("<reporting>")) {
 				while(!tag.equals("</reporting>")) {
-					toolPom += line;
+					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
+					spaces += line.substring(0, line.indexOf("<"));
 				}
 			} else if (tag.equals("<profiles>") && !profile) {
 				while(!tag.equals("</profiles>")) {
-					toolPom += line;
+					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
+					spaces += line.substring(0, line.indexOf("<"));
 				}
-				toolPom += tool.getProfile();
+				toolPom += tool.getProfile().replaceAll("{s}", spaces);
 				profile = true;
 			} else if (tag.equals("</plugins>") && !plugin) {
-				toolPom += tool.getPlugin();
+				toolPom += tool.getPlugin().replaceAll("{s}", spaces);
 				plugin = true;
 			} else if (tag.equals("</build>") && !plugin) {
-				toolPom += "<plugins>\n{p}</plugins>\n".replace("{p}", tool.getPlugin());
+				toolPom += "<plugins>\n{p}</plugins>\n".replace("{p}", tool.getPlugin()).replaceAll("{s}", spaces);
 				plugin = true;
 			} else if (tag.equals("</project>")) {
 				if(!properties) {
-					toolPom += "<properties>\n{p}</properties>\n".replace("{p}", tool.getProperty());
+					toolPom += "{s}<properties>\n{p}{s}</properties>\n".replace("{p}", tool.getProperty()).replaceAll("{s}", spaces);
 				}
 				if(!plugin) {
-					toolPom += "<build>\n<plugins>\n{p}</plugins>\n</build>\n".replace("{p}", tool.getPlugin());
+					toolPom += "{s}<build>\n{s}{s}<plugins>\n{p}{s}{s}</plugins>\n{s}</build>\n".replace("{p}", tool.getPlugin()).replaceAll("{s}", spaces);
 				}
 				if(!profile) {
-					toolPom += "<profiles>\n{p}</profiles>\n".replace("{p}", tool.getProfile());
+					toolPom += "{s}<profiles>\n{p}{s}</profiles>\n".replace("{p}", tool.getProfile()).replaceAll("{s}", spaces);
 				}
 			}
 			toolPom += line + "\n";
