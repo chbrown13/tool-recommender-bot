@@ -176,21 +176,22 @@ public class Utils {
 		while(scan.hasNextLine()) {
 			String line = scan.nextLine();
 			String tag = line.replace("\n","").trim();
-			String spaces = "  ";
+			String spaces = "  " + line.substring(0, line.indexOf(tag));
+			System.out.println(line);
 			if(tag.equals("<properties>") && !properties) {
+				spaces += line.substring(0, line.indexOf(tag));
 				while (!tag.equals("</properties>")) {
 					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
-					spaces += line.substring(0, line.indexOf("<"));
 				}
-				toolPom += tool.getProperty().replaceAll("{s}", spaces);
+				toolPom += tool.getProperty().replace("{s}", spaces);
 				properties = true;
 			} else if (tag.equals("<artifactId>maven-compiler-plugin</artifactId>") && !plugin) {
+				spaces += line.substring(0, line.indexOf(tag));
 				while (!tag.equals("</plugin>")) {
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
-					spaces += line.substring(0, line.indexOf("<"));
 					if (tag.startsWith("<source>") || tag.startsWith("<target>")) {
 						String version = tag.substring(tag.indexOf(">")+1, tag.indexOf("</"));
 						if (!version.equals("1.8") && !version.equals("1.9")) {
@@ -199,53 +200,53 @@ public class Utils {
 						}
 					}
 				}
-				toolPom += tool.getPlugin().substring(tool.getPlugin().indexOf("<artifactId>")).replaceAll("{s}", spaces);
+				toolPom += tool.getPlugin().substring(tool.getPlugin().indexOf("<artifactId>")).replace("{s}", spaces);
 				plugin = true;
 				continue;
 			} else if(tag.equals("<pluginManagement>") && !plugin) {
+				spaces += line.substring(0, line.indexOf(tag));
 				while(!tag.equals("</plugins>")) {
 					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
-					spaces += line.substring(0, line.indexOf("<"));
 				}
-				toolPom += tool.getPlugin();
+				toolPom += tool.getPlugin().replace("{s}", spaces);
 				plugin = true;
 			} else if(tag.equals("<reporting>")) {
 				while(!tag.equals("</reporting>")) {
 					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
-					spaces += line.substring(0, line.indexOf("<"));
 				}
 			} else if (tag.equals("<profiles>") && !profile) {
+				spaces += line.substring(0, line.indexOf(tag));
 				while(!tag.equals("</profiles>")) {
 					toolPom += line + "\n";
 					line = scan.nextLine();
 					tag = line.replace("\n","").trim();
-					spaces += line.substring(0, line.indexOf("<"));
 				}
-				toolPom += tool.getProfile().replaceAll("{s}", spaces);
+				toolPom += tool.getProfile().replace("{s}", spaces);
 				profile = true;
 			} else if (tag.equals("</plugins>") && !plugin) {
-				toolPom += tool.getPlugin().replaceAll("{s}", spaces);
+				toolPom += tool.getPlugin().replace("{s}", spaces);
 				plugin = true;
 			} else if (tag.equals("</build>") && !plugin) {
-				toolPom += "<plugins>\n{p}</plugins>\n".replace("{p}", tool.getPlugin()).replaceAll("{s}", spaces);
+				toolPom += "<plugins>\n{p}</plugins>\n".replace("{p}", tool.getPlugin().replace("{s}", spaces));
 				plugin = true;
 			} else if (tag.equals("</project>")) {
 				if(!properties) {
-					toolPom += "{s}<properties>\n{p}{s}</properties>\n".replace("{p}", tool.getProperty()).replaceAll("{s}", spaces);
+					toolPom += "  <properties>\n  {p}  </properties>\n".replace("{p}", tool.getProperty().replace("{s}", spaces));
 				}
 				if(!plugin) {
-					toolPom += "{s}<build>\n{s}{s}<plugins>\n{p}{s}{s}</plugins>\n{s}</build>\n".replace("{p}", tool.getPlugin()).replaceAll("{s}", spaces);
+					toolPom += "  <build>\n    <plugins>\n  {p}    </plugins>\n  </build>\n".replace("{p}", tool.getPlugin().replace("{s}", spaces));
 				}
 				if(!profile) {
-					toolPom += "{s}<profiles>\n{p}{s}</profiles>\n".replace("{p}", tool.getProfile()).replaceAll("{s}", spaces);
+					toolPom += "  <profiles>\n  {p}  </profiles>\n".replace("{p}", tool.getProfile().replace("{s}", spaces));
 				}
 			}
 			toolPom += line + "\n";
 		}
+		System.out.println("pom= " + toolPom);
 		return toolPom;
 	}	
 
