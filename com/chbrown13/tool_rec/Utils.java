@@ -135,7 +135,7 @@ public class Utils {
 					Process p2 = Runtime.getRuntime().exec(compile);
 					p2.waitFor();	
 				} else {
-					System.out.println("invalid pom");
+					System.out.println("Invalid pom");
 					return false;
 				}
 			} catch (InterruptedException ie) {
@@ -177,7 +177,6 @@ public class Utils {
 			String line = scan.nextLine();
 			String tag = line.replace("\n","").trim();
 			String spaces = "  " + line.substring(0, line.indexOf(tag));
-			System.out.println(line);
 			if(tag.equals("<properties>") && !properties) {
 				spaces += line.substring(0, line.indexOf(tag));
 				while (!tag.equals("</properties>")) {
@@ -194,7 +193,7 @@ public class Utils {
 					tag = line.replace("\n","").trim();
 					if (tag.startsWith("<source>") || tag.startsWith("<target>")) {
 						String version = tag.substring(tag.indexOf(">")+1, tag.indexOf("</"));
-						if (!version.equals("1.8") && !version.equals("1.9")) {
+						if (!version.equals("1.8") && !version.equals("1.9") && !version.equals("${java.version}") && !version.equals("${version.java}")) {
 							System.out.println("- low version: " + version);
 							return null;
 						}
@@ -246,7 +245,6 @@ public class Utils {
 			}
 			toolPom += line + "\n";
 		}
-		System.out.println("pom= " + toolPom);
 		return toolPom;
 	}	
 
