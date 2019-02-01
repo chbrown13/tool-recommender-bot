@@ -29,7 +29,7 @@ import org.eclipse.jgit.util.io.*;
 
 
 /**
- * Recommender is the main class for this project and handles interactions with Github repositories.
+ * Recommender is the main class for tool-recommender-bot and handles interactions with Github repositories.
  */
 public class Recommender {
 
@@ -57,22 +57,24 @@ public class Recommender {
 	 * @param base  Commit hash for base version
 	 * @param head  Commit hash for changed version
 	 * @param id    Code change id
+	 * @return      True if bugs reported or no errors
 	 */
 	private boolean getErrors(String head) {
 		List<Error> errors = this.tool.parseOutput(Utils.loadFile("tool_{h}.txt".replace("{h}", head)));
-		return errors.size() > 0;
+		return errors != null;
 	}
 
 	/**
 	 * Compiles the GitHub project
 	 * 
 	 * @param hash   Commit version	
+	 * @return       True if project compiles
 	 */
 	public boolean build(String hash) {
 		try {
 			String pom = String.join(File.separator, this.repo, "pom.xml");
 			File tempPom = new File(String.join(File.separator, this.repo, "tool.xml"));
-			String toolPom = Utils.updatePom(pom, this.tool);;
+			String toolPom = Utils.updatePom(pom, this.tool);
 			if(toolPom != null) {
 				FileWriter writer = new FileWriter(tempPom, false);
 				writer.write(toolPom);
@@ -113,18 +115,34 @@ public class Recommender {
 
 	/**
 	 * Starts tool-recommender-bot
+	 * 
+	 * @return   True if recommendation submitted
 	 */
-	private void start() {
-		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+	private boolean start() {
+		String hash = "";
+		try {
+			hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		} catch (AssertionError ae) {
+			ae.printStackTrace();
+			return false;
+		}
 		if (build(hash) && getErrors(hash)) {
 			commit();			
 			try {
-				Pull.Smart p = new Pull.Smart(this.repository.pulls().create("Error Prone Static Analysis Tool", "tool-recommender-bot:master", "master"));
+				String branch = new Repo.Smart(this.repository).json().getString("default_branch");
+				Pull.Smart p = new Pull.Smart(this.repository.pulls()
+				.create("Error Prone Static Analysis Tool", Utils.getUsername()+":"+branch, branch));
 				p.body(ErrorProne.getBody());
+				System.out.println(p.htmlUrl().toString());
+			 	return true;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		return false;
 	}
 
 	/**
@@ -156,7 +174,7 @@ public class Recommender {
 	 * Forks the repository before making changes
 	 * 
 	 * @param github   Github object for original repo
-	 * @param user     User to fork project
+	 * @param user     GitHub user to fork project
 	 * @param repo     Project name
 	 */
 	private static void fork(RtGithub github, String user, String repo) {
@@ -172,7 +190,6 @@ public class Recommender {
 	}
 
 	public static void main(String[] args) {
-		//TODO: load list of projects from file
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
 		if (gitAcct[1] != null) {
@@ -180,12 +197,27 @@ public class Recommender {
 		} else {
 			github = new RtGithub(gitAcct[0]);
 		}
-		fork(github, args[0], args[1]);
-		Git git = clone(Utils.getUsername(), args[1]);
-		if (git != null) {
-			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
-			Recommender toolBot = new Recommender(repo, git);
-			toolBot.start();
+		String projects = Utils.loadFile("projects.txt"); // load list of projects from a text file
+		for(String proj: projects.split("\n")) {
+			System.out.println(proj);
+			String[] info = proj.split("/");
+			fork(github, info[0], info[1]);
+			Git git = clone(Utils.getUsername(), info[1]);
+			if (git != null) {
+				Repo repo = github.repos().get(new Coordinates.Simple(info[0], info[1]));
+				Recommender toolBot = new Recommender(repo, git);
+				boolean rec = toolBot.start();
+				if (rec) {
+					try {
+						BufferedWriter out = new BufferedWriter( 
+							new FileWriter("recommended.txt", true)); // Recommended projects written here 
+						 out.write(proj+"\n"); 
+						 out.close(); 
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 	}
 }
