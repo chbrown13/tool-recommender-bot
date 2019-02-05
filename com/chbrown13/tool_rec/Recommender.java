@@ -452,8 +452,9 @@ public class Recommender {
 		} catch (Exception e) {
 			try {
 				git = Git.open(new File(repo + File.separator + ".git"));
-			} catch (IOException io) {
-				e.printStackTrace();
+				git.pull().call();
+			} catch (Exception e2) {
+				e2.printStackTrace();
 			}
 		}
 		return git;
