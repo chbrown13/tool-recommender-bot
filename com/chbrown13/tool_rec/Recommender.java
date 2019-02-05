@@ -66,7 +66,6 @@ public class Recommender {
 	 * Reset class variables for each PR
 	 */
 	private void reset() {
-		//Utils.cleanup(this.repo);
 		this.stats = "";
 		this.log = "";
 		try {
@@ -209,8 +208,8 @@ public class Recommender {
 	 */
 	public boolean build(String hash) {
 		try {
-			String pom = String.join("/", this.repo, "pom.xml");
-			File tempPom = new File(String.join("/", this.repo, "tool.xml"));
+			String pom = String.join(File.separator, this.repo, "pom.xml");
+			File tempPom = new File(String.join(File.separator, this.repo, "tool.xml"));
 			String toolPom = Utils.updatePom(pom, this.tool);;
 			if(toolPom != null) {
 				FileWriter writer = new FileWriter(tempPom, false);
@@ -435,6 +434,13 @@ public class Recommender {
 		}
 	}
 
+	/**
+	 * Clone a git repository to make recommendation.
+	 * 
+	 * @param user   Git username
+	 * @param repo   Git project name
+	 * @return       Git object
+	 */
 	private static Git clone(String user, String repo) {
 		Git git = null;
 		try {
@@ -464,14 +470,11 @@ public class Recommender {
 			gitAcct[1] = "";
 		}
 		Git git = clone(args[0], args[1]);
-		if (git == null) {
-			Utils.cleanup(args[1]);
-			git = clone(args[0], args[1]);
+		if (git != null) {
+			Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
+			Recommender toolBot = new Recommender(repo, git);
+			// toolBot.getPullRequests();
+			toolBot.getCommits();
 		}
-		Repo repo = github.repos().get(new Coordinates.Simple(args[0], args[1]));
-		Recommender toolBot = new Recommender(repo, git);
-		// toolBot.getPullRequests();
-		toolBot.getCommits();
-		// Utils.cleanup(args[1]);
 	}
 }

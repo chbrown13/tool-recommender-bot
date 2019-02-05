@@ -39,7 +39,6 @@ public class Utils {
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
     private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
-	public static String SURVEY = "[How useful was this recommendation?](https://ncsu.qualtrics.com/jfe/form/SV_4JGXYBRyb3GeF5X?project={project}&pr={id})";
 	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
 	private static String MVN_VALIDATE = "mvn -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");
@@ -460,26 +459,11 @@ public class Utils {
 	 * Returns the time threshold for changes to check
 	 */
 	public static String getTime() {
-		Date d = new Date();
-		d.setMinutes(new Date().getMinutes() - 15);
-		DateFormat df = new SimpleDateFormat("yyyy-MM-DD'T'HH:MM:SS'Z'");
-		return df.format(d);
+		Calendar commitTime = Calendar.getInstance();
+		commitTime.set(Calendar.MINUTE, commitTime.get(Calendar.MINUTE) - 15);
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		return df.format(commitTime.getTime());
 	}	
-
-	/**
-	 * Remove temp repo directories
-	 */
-	public static void cleanup(String rm) {
-		try {
-			String[] dirs = {rm};
-			for (String d: dirs) {
-				Process p = Runtime.getRuntime().exec("rm -rf " + d);
-				p.waitFor();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
-	}
 
 	/**
 	 * Utility method to get file contents from url and download file.
@@ -537,9 +521,9 @@ public class Utils {
 		try {
 			Process p = Runtime.getRuntime().exec(cmd);		
 			if(!dir.equals("..")) {
-				currentDir += "/" + dir;
+				currentDir += File.separator + dir;
 			} else {
-				currentDir = currentDir.substring(0, currentDir.lastIndexOf("/"));
+				currentDir = currentDir.substring(0, currentDir.lastIndexOf(File.separator));
 			}
 		} catch (IOException e) {
 			throw new FileNotFoundException("Invalid directory name "+dir);			
