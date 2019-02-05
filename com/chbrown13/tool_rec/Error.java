@@ -1,5 +1,6 @@
 package com.chbrown13.tool_rec;
 
+import java.io.*;
 import java.util.*;
 
 public class Error {
@@ -104,8 +105,8 @@ public class Error {
  	 * @return   String filepath
 	 */
 	public String getLocalFilePath() {
-        String path = this.filepath.replace(Utils.getCurrentDir() + "/", "");
-        return path.substring(path.indexOf("/") + 1);
+        String path = this.filepath.replace(Utils.getCurrentDir() + File.separator, "");
+        return path.substring(path.indexOf(File.separator) + 1);
 	}
 	
 	/**
@@ -194,8 +195,7 @@ public class Error {
 		} else {
 			comment = comment.replace("{similar}", simSentence.replace("{link}", String.join(" and ", getErrorLink(iter.next(), sha), getErrorLink(iter.next(), sha))).replace("{issue}", "similar issues"));
 		}
-		String link = "\n\n" + Utils.SURVEY.replace("{project}", Utils.getProjectName()).replace("{id}", this.id);
-		comment += link;
+		comment += "\n\nPlease feel free to add any comments below explaining why you did or did not find this recommendation useful.";
 		System.out.println(comment);
 		return comment;
 	}
