@@ -459,10 +459,10 @@ public class Utils {
 	 * Returns the time threshold for changes to check
 	 */
 	public static String getTime() {
-		Date d = new Date();
-		d.setMinutes(new Date().getMinutes() - 15);
-		DateFormat df = new SimpleDateFormat("yyyy-MM-DD'T'HH:MM:SS'Z'");
-		return df.format(d);
+		Calendar commitTime = Calendar.getInstance();
+		commitTime.set(Calendar.MINUTE, commitTime.get(Calendar.MINUTE) - 15);
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		return df.format(commitTime.getTime());
 	}	
 
 	/**
