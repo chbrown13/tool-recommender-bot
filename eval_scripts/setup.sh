@@ -11,6 +11,8 @@ sudo systemctl enable jenkins.service
 sudo firewall-cmd --zone=public --permanent --add-port=8080/tcp
 sudo firewall-cmd --reload
 
+# Set JAVA_HOME
+JAVA_HOME=/usr/lib/jvm/java-openjdk/
 
 # Install Ansible
 sudo yum -y install ansible
