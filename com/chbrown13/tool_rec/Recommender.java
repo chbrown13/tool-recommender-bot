@@ -67,7 +67,7 @@ public class Recommender {
 	 */
 	private void reset() {
 		this.stats = "";
-		this.log = "";
+		log = "";
 		try {
 			Set<String> path = new HashSet<String>();
 			path.add("pom.xml");
@@ -76,16 +76,17 @@ public class Recommender {
 			this.git.reset().setMode(ResetType.HARD).call();
 			this.git.checkout().setName("refs/heads/master").call();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log("Reset error");
+			log(e.toString());
 		}
 	}
 
 	/**
 	 * tool-recommender-bot logging
 	 */
-	private void log(String msg) {
+	private static void log(String msg) {
 		System.out.println(msg);
-		this.log += "\n\n" + msg + "\n";
+		log += "\n\n" + msg + "\n";
 	}
 
 	/**
@@ -116,7 +117,8 @@ public class Recommender {
 			email.addTo("dcbrow10@ncsu.edu");
 			email.send();		
 		} catch (Exception e) {
-			e.printStackTrace();
+			log("Email error");
+			log(e.toString());
 		}
 	}
 	
@@ -222,7 +224,7 @@ public class Recommender {
 				return false;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log(e.toString());
 		}
 		return false;
 	}
@@ -246,12 +248,12 @@ public class Recommender {
 				reset();
 				this.git.checkout().setCreateBranch(true).setForce(true).setName("basehead_"+id ).setStartPoint(base).call();
 			} catch (GitAPIException e) {
-				e.printStackTrace();
-				System.out.println("Git base checkout error");
+				log("Git base checkout error");
+				log(e.toString());
 				return false;
 			} catch (JGitInternalException j) {
-				j.printStackTrace();
-				System.out.println("Jgit base checkout error");
+				log("Jgit base checkout error");
+				log(j.toString());
 				return false;
 			}
 			if(!build(base)) {
@@ -275,8 +277,8 @@ public class Recommender {
 		try {
 			this.git.checkout().setCreateBranch(true).setForce(true).setName("tool-rec-bot-"+id).setStartPoint(head).call();
 		} catch (Exception e) {
-			e.printStackTrace();
 			log("Git checkout error");
+			log(e.toString());
 			return false;
 		}
 		System.out.println(base + "---" + head);
@@ -323,7 +325,7 @@ public class Recommender {
 				return false;
 			}
 		} catch (Exception e) {
-				e.printStackTrace();
+				log(e.toString());
 				return false;
 		}	
 		if(checkout(hash, newHash, Integer.toString(pull.number()))) {
@@ -353,7 +355,7 @@ public class Recommender {
 				return false;
 			}
 		 } catch (Exception e) {
-			e.printStackTrace();
+			log(e.toString());
 			return false;
 		}
 		if(checkout(oldHash, hash, id)) {
@@ -454,8 +456,8 @@ public class Recommender {
 				git = Git.open(new File(repo + File.separator + ".git"));
 				git.pull().call();
 			} catch (Exception e2) {
-				e.printStackTrace();
-				e2.printStackTrace();
+				log(e.toString());
+				log(e2.toString());
 			}
 		}
 		return git;
