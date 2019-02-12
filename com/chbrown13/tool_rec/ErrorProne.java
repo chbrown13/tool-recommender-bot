@@ -57,7 +57,7 @@ public class ErrorProne extends Tool {
 
 	private final String PROPERTY = "{s}<javac.version>9+181-r4173-1</javac.version>\n";
 
-	private final static String REC = "Looks like you're not using any error-checking in your Java build. This pull requests adds a static analysis tool, [Error Prone](http://errorprone.info), created by Google to find common errors in Java code. For example, running ```mvn compile``` on the following code:\n" +
+	private String REC = "Looks like you're not using any error-checking in your Java build. This pull requests adds a static analysis tool, [Error Prone](http://errorprone.info), created by Google to find common errors in Java code. For example, running ```mvn compile``` on the following code:\n" +
 	"```java\n{code}\n```\n" +
 	"would identify this error:\n" +
 	"```\n{error}\n```\n" +
@@ -69,6 +69,7 @@ public class ErrorProne extends Tool {
 
 	private final static String ERROR = "[ERROR] src/main/java/HelloWorld.java:[17,17] error: [StringEquality] String comparison using reference equality instead of value equality\n" +
 	"[ERROR]     (see https://errorprone.info/bugpattern/StringEquality)";
+
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
 	}
@@ -81,16 +82,19 @@ public class ErrorProne extends Tool {
 		return this.MAVEN;
 	}
 
+	@Override
 	public String getProfile() {
 		return this.PROFILE;
 	}
 	
+	@Override
 	public String getProperty() {
 		return this.PROPERTY;
 	}
 	
-	public static String getBody() {
-		return REC.replace("{code}", CODE).replace("{error}", ERROR);
+	@Override
+	public String getBody() {
+		return this.REC.replace("{code}", CODE).replace("{error}", ERROR);
 	}
 
 	/**

@@ -135,7 +135,7 @@ public class Recommender {
 				String branch = new Repo.Smart(this.repository).json().getString("default_branch");
 				Pull.Smart p = new Pull.Smart(this.repository.pulls()
 				.create("Error Prone Static Analysis Tool", Utils.getUsername()+":"+branch, branch));
-				p.body(ErrorProne.getBody());
+				p.body(this.tool.getRec());
 				System.out.println(p.htmlUrl().toString());
 			 	return true;
 			} catch (IOException e) {
