@@ -355,6 +355,8 @@ public class Utils {
 		try {
 			try {
 				System.out.println(valid);
+				Process p = Runtime.getRuntime().exec("id");
+				p.waitFor();
 				Process p1 = Runtime.getRuntime().exec(valid);
 				p1.waitFor();
 				if(p1.exitValue() == 0) {
