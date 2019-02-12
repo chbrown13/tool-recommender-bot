@@ -68,7 +68,7 @@ public class Recommender {
 			email.setAuthenticator(new DefaultAuthenticator(emailAcct[0], emailAcct[1]));
 			email.setSSLOnConnect(true);
 			email.setFrom("toolrecommenderbot@gmail.com");
-			email.setSubject("[tool-recommender-bot] Error Prone found Java errors in your project " + this.repo);
+			email.setSubject("Error Prone Static Analysis Tool");
 			email.setMsg(this.tool.getRec());
 			email.addTo(to);
 			email.send();	
