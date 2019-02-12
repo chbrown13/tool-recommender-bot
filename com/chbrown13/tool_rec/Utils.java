@@ -377,6 +377,14 @@ public class Utils {
 					p2.waitFor();	
 				} else {
 					System.out.println("invalid pom");
+					Scanner s1 = new Scanner(p1.getErrorStream()).useDelimiter("\\A");
+					while (s1.hasNext()) {
+						System.out.println(s1.next());
+					}
+					Scanner i1 = new Scanner(p1.getInputStream()).useDelimiter("\\A");
+					while (i1.hasNext()) {
+						System.out.println(i1.next());
+					}
 					return false;
 				}
 			} catch (InterruptedException ie) {
