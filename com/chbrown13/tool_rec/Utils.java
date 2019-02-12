@@ -357,6 +357,18 @@ public class Utils {
 				System.out.println(valid);
 				Process p = Runtime.getRuntime().exec("id");
 				p.waitFor();
+				System.out.println(p.exitValue());
+                System.out.println(p.getErrorStream().toString());
+                System.out.println(p.getInputStream().toString());
+                Scanner s = new Scanner(p.getErrorStream()).useDelimiter("\\A");
+                while (s.hasNext()) {
+                    System.out.println(s.next());
+                }
+                Scanner i = new Scanner(p.getInputStream()).useDelimiter("\\A");
+                while (i.hasNext()) {
+                    System.out.println(i.next());
+                }
+
 				Process p1 = Runtime.getRuntime().exec(valid);
 				p1.waitFor();
 				if(p1.exitValue() == 0) {
