@@ -57,7 +57,7 @@ public class ErrorProne extends Tool {
 
 	private final String PROPERTY = "{s}<javac.version>9+181-r4173-1</javac.version>\n";
 
-	private String REC = "Looks like you're not using any error-checking in your Java build. This pull requests adds a static analysis tool, [Error Prone](http://errorprone.info), created by Google to find common errors in Java code. For example, running ```mvn compile``` on the following code:\n" +
+	private final static String REC = "Looks like you're not using any error-checking in your Java build. This pull requests adds a static analysis tool, [Error Prone](http://errorprone.info), created by Google to find common errors in Java code. For example, running ```mvn compile``` on the following code:\n" +
 	"```java\n{code}\n```\n" +
 	"would identify this error:\n" +
 	"```\n{error}\n```\n" +
@@ -93,7 +93,7 @@ public class ErrorProne extends Tool {
 	}
 	
 	@Override
-	public String getBody() {
+	public String getRec() {
 		return this.REC.replace("{code}", CODE).replace("{error}", ERROR);
 	}
 
