@@ -7,6 +7,7 @@ import com.jcabi.github.Pull;
 import com.jcabi.github.Repo;
 import com.jcabi.github.RepoCommit;
 import com.jcabi.github.RtGithub;
+import com.jcabi.github.User;
 import com.jcabi.http.response.*;
 import com.jcabi.http.Request;
 import java.io.*;
@@ -52,6 +53,35 @@ public class Recommender {
 	}
 
 	/**
+	 * Sends email to researchers for review
+	 * 
+	 * @param text    Contents of email message
+	 * @param subject Subject of the email
+	 * @param to	  Email address to send recommendation
+	 */
+	private boolean email(String to) {
+		SimpleEmail email = new SimpleEmail();
+		String[] emailAcct = Utils.getCredentials(".email.creds");
+		System.out.println(to);
+		try {
+			email.setHostName("smtp.googlemail.com");
+			email.setSmtpPort(465);
+			email.setAuthenticator(new DefaultAuthenticator(emailAcct[0], emailAcct[1]));
+			email.setSSLOnConnect(true);
+			email.setFrom("toolrecommenderbot@gmail.com");
+			email.setSubject("[tool-recommender-bot] Error Prone found Java errors in your project " + this.repo);
+			email.setMsg(this.tool.getRec());
+			email.addTo("dcbrow10@ncsu.edu");
+			email.send();	
+			return true;	
+		} catch (Exception e) {
+			System.out.println("Email error");
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Get errors for each
 	 * 
 	 * @param base  Commit hash for base version
@@ -92,28 +122,6 @@ public class Recommender {
 	}
 
 	/**
-	 * Commit and push changes to add Error Prone plugin
-	 */
-	private void commit() {
-		String user = "tool-recommender-bot";
-		String email = "toolrecommenderbot@gmail.com";
-		try {
-			this.git.add().addFilepattern("pom.xml").call();
-			this.git.commit().setMessage("Error Prone Static Analysis\n\nAdds Error Prone maven plugin in pom.xml to automatically check for Java errors during project builds.")
-			.setAuthor(user, email)
-			.setCommitter(user, email).call();
-			StoredConfig config = this.git.getRepository().getConfig();
-			config.setBoolean( "http", null, "sslVerify", false );
-			config.save();
-			PushCommand push = this.git.push();
-			push.setCredentialsProvider(new UsernamePasswordCredentialsProvider(Utils.getUsername(), Utils.getPassword()));
-			push.setForce(true).call();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * Starts tool-recommender-bot
 	 * 
 	 * @return   True if recommendation submitted
@@ -130,17 +138,7 @@ public class Recommender {
 			return false;
 		}
 		if (build(hash) && getErrors(hash)) {
-			commit();			
-			try {
-				String branch = new Repo.Smart(this.repository).json().getString("default_branch");
-				Pull.Smart p = new Pull.Smart(this.repository.pulls()
-				.create("Error Prone Static Analysis Tool", Utils.getUsername()+":"+branch, branch));
-				p.body(ErrorProne.getBody());
-				System.out.println(p.htmlUrl().toString());
-			 	return true;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			return true;
 		}
 		return false;
 	}
@@ -209,11 +207,18 @@ public class Recommender {
 				boolean rec = toolBot.start();
 				if (rec) {
 					try {
-						BufferedWriter out = new BufferedWriter( 
-							new FileWriter("recommended.txt", true)); // Recommended projects written here 
-						 out.write(proj+"\n"); 
-						 out.close(); 
-					} catch (Exception e) {
+						User user = github.users().get(info[0]);
+						User.Smart u = new User.Smart(user);
+						boolean sent = toolBot.email(u.email());
+						if (sent) {
+							BufferedWriter out = new BufferedWriter( 
+								new FileWriter("recommended.txt", true)); // Recommended projects written here 
+							out.write(proj + " " + u.email() + "\n"); 
+							out.close(); 
+						}
+					} catch (ClassCastException cce) {
+						System.out.println("No email address");
+					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}

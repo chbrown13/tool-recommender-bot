@@ -69,6 +69,7 @@ public class ErrorProne extends Tool {
 
 	private final static String ERROR = "[ERROR] src/main/java/HelloWorld.java:[17,17] error: [StringEquality] String comparison using reference equality instead of value equality\n" +
 	"[ERROR]     (see https://errorprone.info/bugpattern/StringEquality)";
+	
 	public ErrorProne() {
 		super("Error Prone", "static analysis tool", "http://errorprone.info");
 	}
@@ -81,16 +82,19 @@ public class ErrorProne extends Tool {
 		return this.MAVEN;
 	}
 
+	@Override
 	public String getProfile() {
 		return this.PROFILE;
 	}
 	
+	@Override
 	public String getProperty() {
 		return this.PROPERTY;
 	}
 	
-	public static String getBody() {
-		return REC.replace("{code}", CODE).replace("{error}", ERROR);
+	@Override
+	public String getRec() {
+		return this.REC.replace("{code}", CODE).replace("{error}", ERROR);
 	}
 
 	/**

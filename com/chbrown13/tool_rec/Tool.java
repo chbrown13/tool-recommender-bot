@@ -42,5 +42,7 @@ public abstract class Tool {
 
     public abstract String getProperty();
     
+    public abstract String getRec();
+    
     public abstract List<Error> parseOutput(String log);
 }
