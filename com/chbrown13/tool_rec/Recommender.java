@@ -461,6 +461,7 @@ public class Recommender {
 	}
 
 	public static void main(String[] args) {
+		System.out.println("dev");
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
 		if (gitAcct[1] != null) {
