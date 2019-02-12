@@ -62,7 +62,6 @@ public class Recommender {
 	private boolean email(String to) {
 		SimpleEmail email = new SimpleEmail();
 		String[] emailAcct = Utils.getCredentials(".email.creds");
-		System.out.println(to);
 		try {
 			email.setHostName("smtp.googlemail.com");
 			email.setSmtpPort(465);
@@ -71,7 +70,7 @@ public class Recommender {
 			email.setFrom("toolrecommenderbot@gmail.com");
 			email.setSubject("[tool-recommender-bot] Error Prone found Java errors in your project " + this.repo);
 			email.setMsg(this.tool.getRec());
-			email.addTo("dcbrow10@ncsu.edu");
+			email.addTo(to);
 			email.send();	
 			return true;	
 		} catch (Exception e) {
