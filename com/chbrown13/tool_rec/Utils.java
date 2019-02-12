@@ -39,8 +39,8 @@ public class Utils {
 	public static String RAW_URL = "https://raw.githubusercontent.com/{user}/{repo}/{sha}/{path}";
 	private static String PULL_DIFF = "https://patch-diff.githubusercontent.com/raw/{user}/{repo}/pull/{id}.diff";
     private static String COMMIT_DIFF = "https://github.com/{user}/{repo}/commit/{id}.diff";
-	private static String MVN_COMPILE = "sudo mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
-	private static String MVN_VALIDATE = "sudo mvn -f {dir}/pom.xml validate";
+	private static String MVN_COMPILE = "mvn -f {dir}/pom.xml --log-file tool_{sha}.txt compile";
+	private static String MVN_VALIDATE = "mvn -f {dir}/pom.xml validate";
 	private static String currentDir = System.getProperty("user.dir");
 	private static boolean myTool1 = false;
 	private static boolean myTool2 = false;
