@@ -3,11 +3,11 @@ package com.chbrown13.tool_rec;
 import com.jcabi.github.Branch;
 import com.jcabi.github.Coordinates;
 import com.jcabi.github.Fork;
+import com.jcabi.github.Issue;
 import com.jcabi.github.Pull;
 import com.jcabi.github.Repo;
 import com.jcabi.github.RepoCommit;
 import com.jcabi.github.RtGithub;
-import com.jcabi.github.User;
 import com.jcabi.http.response.*;
 import com.jcabi.http.Request;
 import java.io.*;
@@ -50,34 +50,6 @@ public class Recommender {
 		this.name = this.user + "/" + this.repo;
 		Utils.setProjectName(this.repo);
 		Utils.setProjectOwner(this.user);
-	}
-
-	/**
-	 * Sends email to researchers for review
-	 * 
-	 * @param text    Contents of email message
-	 * @param subject Subject of the email
-	 * @param to	  Email address to send recommendation
-	 */
-	private boolean email(String to) {
-		SimpleEmail email = new SimpleEmail();
-		String[] emailAcct = Utils.getCredentials(".email.creds");
-		try {
-			email.setHostName("smtp.googlemail.com");
-			email.setSmtpPort(465);
-			email.setAuthenticator(new DefaultAuthenticator(emailAcct[0], emailAcct[1]));
-			email.setSSLOnConnect(true);
-			email.setFrom("toolrecommenderbot@gmail.com");
-			email.setSubject("[tool-recommender-bot] Error Prone found Java errors in your project " + this.repo);
-			email.setMsg(this.tool.getRec());
-			email.addTo(to);
-			email.send();	
-			return true;	
-		} catch (Exception e) {
-			System.out.println("Email error");
-			e.printStackTrace();
-			return false;
-		}
 	}
 
 	/**
@@ -126,9 +98,13 @@ public class Recommender {
 	 * @return   True if recommendation submitted
 	 */
 	private boolean start() {
-		String hash = "";
+		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
 		try {
-			hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+			if (build(hash) && getErrors(hash)) {
+				Issue.Smart i = new Issue.Smart(this.repository.issues().create("Error Prone Static Analysis Tool", this.tool.getRec()));
+				System.out.println(i.url());
+				return true;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -136,10 +112,7 @@ public class Recommender {
 			ae.printStackTrace();
 			return false;
 		}
-		if (build(hash) && getErrors(hash)) {
-			return true;
-		}
-		return false;
+		//return false;
 	}
 
 	/**
@@ -206,17 +179,10 @@ public class Recommender {
 				boolean rec = toolBot.start();
 				if (rec) {
 					try {
-						User user = github.users().get(info[0]);
-						User.Smart u = new User.Smart(user);
-						boolean sent = toolBot.email(u.email());
-						if (sent) {
-							BufferedWriter out = new BufferedWriter( 
-								new FileWriter("recommended.txt", true)); // Recommended projects written here 
-							out.write(proj + " " + u.email() + "\n"); 
-							out.close(); 
-						}
-					} catch (ClassCastException cce) {
-						System.out.println("No email address");
+						BufferedWriter out = new BufferedWriter( 
+							new FileWriter("recommended.txt", true)); // Recommended projects written here 
+						out.write(proj + "\n"); 
+						out.close(); 
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
