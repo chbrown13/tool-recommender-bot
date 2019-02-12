@@ -98,13 +98,9 @@ public class Recommender {
 	 * @return   True if recommendation submitted
 	 */
 	private boolean start() {
-		String hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
+		String hash = "";
 		try {
-			if (build(hash) && getErrors(hash)) {
-				Issue.Smart i = new Issue.Smart(this.repository.issues().create("Error Prone Static Analysis Tool", this.tool.getRec()));
-				System.out.println(i.url());
-				return true;
-			}
+			hash = this.repository.commits().iterate(new HashMap<String, String>()).iterator().next().sha();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -112,7 +108,16 @@ public class Recommender {
 			ae.printStackTrace();
 			return false;
 		}
-		//return false;
+		if (build(hash) && getErrors(hash)) {
+			try {
+				Issue.Smart i = new Issue.Smart(this.repository.issues().create("Error Prone Static Analysis Tool", this.tool.getRec()));
+				System.out.println(i.htmlUrl().toString());
+			 	return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return false;
 	}
 
 	/**
