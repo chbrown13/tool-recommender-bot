@@ -15,7 +15,6 @@ import java.text.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.json.*;
-import org.apache.commons.mail.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -192,7 +191,10 @@ public class Recommender {
 	public static void main(String[] args) {
 		String[] gitAcct = Utils.getCredentials(".github.creds");
 		RtGithub github = null;
-		if (gitAcct[1] != null) {
+		if (gitAcct == null) {
+			System.out.println("GitHub authentication error.");
+			System.exit(0);
+		} else if (gitAcct[1] != null) {
 			github = new RtGithub(gitAcct[0], gitAcct[1]);
 		} else {
 			github = new RtGithub(gitAcct[0]);
@@ -203,7 +205,8 @@ public class Recommender {
 			String[] info = proj.split("/");
 			fork(github, info[0], info[1]);
 			Git git = clone(Utils.getUsername(), info[1]);
-			if (git != null) {
+			boolean bots = Utils.botsYml(info[1]);
+			if (git != null && bots) {
 				Repo repo = github.repos().get(new Coordinates.Simple(info[0], info[1]));
 				Recommender toolBot = new Recommender(repo, git);
 				boolean rec = toolBot.start();
@@ -217,6 +220,8 @@ public class Recommender {
 						e.printStackTrace();
 					}
 				}
+			} else if (bots == false) {
+				System.out.println("Bots not allowed.");
 			}
 		}
 	}

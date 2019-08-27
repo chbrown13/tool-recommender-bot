@@ -1,13 +1,5 @@
 package com.chbrown13.tool_rec;
 
-import com.github.gumtreediff.actions.*;
-import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.client.Run;
-import com.github.gumtreediff.gen.*;
-import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
-import com.github.gumtreediff.matchers.*;
-import com.github.gumtreediff.matchers.heuristic.gt.*;
-import com.github.gumtreediff.tree.*;
 import com.jcabi.github.Pull;
 import com.jcabi.github.RepoCommit;
 import java.io.*;
@@ -28,6 +20,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
+import org.yaml.snakeyaml.*;
 
 /**
  * The Utils class contains various helper methods and variables for tool-recommender-bot
@@ -276,6 +269,10 @@ public class Utils {
 	 */
 	public static String[] getCredentials(String filename) {
 		String secret = loadFile(filename);
+		if (secret == null) {
+			System.out.println("Create a .github.creds file with GitHub credentials");
+			return null;
+		}
 		String[] creds = new String[2];
 		int i = 0;
 		for (String s: secret.split("\n")) {
@@ -287,5 +284,38 @@ public class Utils {
 			setPassword(creds[1]);
 		}
 		return creds;
+	}
+
+	/**
+	 * Check if a project has a bots.yml file to restrict bot usage
+	 *
+	 * @param project  Repo name
+	 * @return         True if tool-recommender-bot is allowed, else false
+	 */
+	public static boolean botsYml(String project) {
+		String bots = loadFile(String.join(File.separator, project, "bots.yml"));
+		if (bots == null) {
+			bots = loadFile(String.join(File.separator, project, ".github", "bots.yml"));
+			if (bots == null) {
+				return true;
+			}
+		}
+		Yaml yaml = new Yaml();
+		Map<String, Object> botsMap = (Map<String, Object>) yaml.load(bots);
+		try {
+			if ((boolean) botsMap.get("allow-bots") == false) {
+				return false;
+			}
+		} catch (ClassCastException cce) {
+			List kinds = (List) botsMap.get("contribution-kinds");
+			List types = (List) ((Map) botsMap.get("allow-bots")).get("type");
+			List names = (List) ((Map) botsMap.get("allow-bots")).get("name");
+			if ((names != null && !names.contains("tool-recommender-bot")) || 
+				(types != null && !types.contains("research")) ||
+				(kinds != null && kinds.contains("new-pr"))) {
+			 	return false;
+			}
+		}
+		return true;
 	}
 }
